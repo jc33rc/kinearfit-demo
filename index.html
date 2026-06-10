@@ -126,7 +126,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 #screen-session{background:#000;position:fixed;inset:0;z-index:50;display:none}
 #screen-session.active{display:block}
 #pose-iframe{position:absolute;inset:0;width:100%;height:100%;border:none;z-index:1}
-#ar-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none}
+#ar-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:auto;cursor:pointer}
 #hud{position:absolute;inset:0;z-index:3;pointer-events:none;display:flex;flex-direction:column}
 .hud-top{background:linear-gradient(180deg,rgba(0,0,0,.75) 0%,transparent 100%);padding:56px 18px 20px;display:flex;justify-content:space-between;align-items:center}
 .hud-round{text-align:left}
@@ -661,12 +661,12 @@ const KP = {
 
 // Move definitions
 const MOVES = {
-  JAB:   { color:'#1A56FF', label:'JAB',    kp: KP.L_WRIST,  offX:-.18, offY:-.12, velThr:200, size:.09 },
-  CROSS: { color:'#FF4D00', label:'CROSS',  kp: KP.R_WRIST,  offX: .20, offY:-.14, velThr:200, size:.1  },
-  HOOK:  { color:'#F77F00', label:'HOOK',   kp: KP.L_WRIST,  offX: .28, offY:-.04, velThr:180, size:.085},
-  UPPER: { color:'#FFD60A', label:'UPPER',  kp: KP.R_WRIST,  offX: .04, offY: .06, velThr:180, size:.085},
-  KICKF: { color:'#7B2D8B', label:'KICK ↑', kp: KP.R_KNEE,   offX: .0,  offY: .32, velThr:150, size:.11 },
-  KICKS: { color:'#E040FB', label:'KICK →', kp: KP.R_ANKLE,  offX: .28, offY: .38, velThr:140, size:.11 },
+  JAB:   { color:'#1A56FF', label:'JAB',    kp: KP.L_WRIST,  offX:-.18, offY:-.12, velThr:30, size:.13 },
+  CROSS: { color:'#FF4D00', label:'CROSS',  kp: KP.R_WRIST,  offX: .20, offY:-.14, velThr:30, size:.14 },
+  HOOK:  { color:'#F77F00', label:'HOOK',   kp: KP.L_WRIST,  offX: .28, offY:-.04, velThr:25, size:.12 },
+  UPPER: { color:'#FFD60A', label:'UPPER',  kp: KP.R_WRIST,  offX: .04, offY: .06, velThr:25, size:.12 },
+  KICKF: { color:'#7B2D8B', label:'KICK ↑', kp: KP.R_KNEE,   offX: .0,  offY: .32, velThr:20, size:.15 },
+  KICKS: { color:'#E040FB', label:'KICK →', kp: KP.R_ANKLE,  offX: .28, offY: .38, velThr:20, size:.15 },
   DOGEL: { color:'#00B87A', label:'DODGE ←', kp: -1, offX:0, offY:.2, velThr:0, size:0 },
   DOGER: { color:'#00B87A', label:'DODGE →', kp: -1, offX:0, offY:.2, velThr:0, size:0 }
 };
@@ -1026,23 +1026,36 @@ let trackingQuality = 0; // 0=none, 1=partial, 2=good
 function initPoseTracker() {
   const iframe = document.getElementById('pose-iframe');
   const androidParam = IS_ANDROID ? '&isAndroid=true' : '';
-  const url = `https://app.posetracker.com/pose_tracker/tracking?token=${API_KEY}&keypoints=true&skeleton=false${androidParam}`;
+  const url = `https://app.posetracker.com/pose_tracker/tracking?token=${API_KEY}&keypoints=true&skeleton=false&angles=false${androidParam}`;
   iframe.src = url;
   document.getElementById('tracking-text').textContent = 'Cargando...';
   document.getElementById('tracking-dot').style.background = '#888';
 }
 
 window.addEventListener('message', (event) => {
-  if (!state.session.active && state.session.mode !== undefined) {
-    // Accept messages during session setup too
-  }
   try {
     let data = event.data;
-    if (typeof data === 'string') data = JSON.parse(data);
+    if (typeof data === 'string') {
+      try { data = JSON.parse(data); } catch(e) { return; }
+    }
     if (!data) return;
 
-    if (data.type === 'keypoints' && data.keypoints) {
-      handleKeypoints(data.keypoints);
+    // Debug: update tracking text with raw data type
+    const dbg = document.getElementById('tracking-text');
+
+    // Handle ALL possible PoseTracker message formats
+    let kpts = null;
+    if (data.type === 'keypoints' && data.keypoints) kpts = data.keypoints;
+    else if (data.keypoints) kpts = data.keypoints;
+    else if (Array.isArray(data) && data.length >= 17) kpts = data;
+    else if (data.type === 'pose' && data.data) kpts = data.data;
+    else if (data.poses && data.poses[0] && data.poses[0].keypoints) kpts = data.poses[0].keypoints;
+
+    if (kpts) {
+      handleKeypoints(kpts);
+    } else {
+      // Show what type of message we're getting for debugging
+      if (dbg && data.type) dbg.textContent = 'Msg: ' + data.type;
     }
   } catch(e) {}
 });
@@ -1287,7 +1300,67 @@ function initCanvas() {
   arRunning = true;
   hitEffects = [];
   bagSwing = { angle: 0, vel: 0 };
+
+  // TOUCH DETECTION — tap near bag or target to register hit
+  canvas.addEventListener('touchstart', handleCanvasTouch, { passive: true });
+  canvas.addEventListener('click', handleCanvasTouch);
+
   requestAnimationFrame(arLoop);
+}
+
+function handleCanvasTouch(e) {
+  if (!state.session.active) return;
+  const canvas = document.getElementById('ar-canvas');
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const touch = e.touches ? e.touches[0] : e;
+  const x = (touch.clientX - rect.left) * scaleX;
+  const y = (touch.clientY - rect.top) * scaleY;
+
+  const mode = state.session.mode;
+
+  if (mode === 'libre') {
+    // Tap anywhere near the bag
+    const bagPos = getBagPos();
+    const dist = Math.hypot(x - bagPos.x, y - bagPos.y);
+    if (dist < 130) {
+      const moves = ['JAB','CROSS','HOOK','UPPER'];
+      const mk = moves[state.session.hits % moves.length];
+      registerHit(mk, {x, y});
+    }
+  } else {
+    // Tap near the active target
+    const seq = COMBOS[state.session.selectedCombo]?.seq || [];
+    const currMoveKey = seq[state.session.comboIdx];
+    if (!currMoveKey) return;
+    const move = MOVES[currMoveKey];
+    if (!move || move.kp < 0) {
+      // Dodge — swipe detected by touch
+      state.session.dodges++;
+      state.session.score += 30;
+      state.session.comboStr++;
+      state.session.comboMax = Math.max(state.session.comboMax, state.session.comboStr);
+      addHitEffect({x, y}, '#00B87A', 'DODGE!');
+      playSound('dodge');
+      state.session.comboIdx++;
+      if (state.session.comboIdx >= seq.length) { state.session.comboIdx = 0; state.session.combos++; }
+      renderNextMoves(); updateHUD(); return;
+    }
+    const tPos = getTargetPos(currMoveKey);
+    const dist = Math.hypot(x - tPos.x, y - tPos.y);
+    const radius = move.size * canvas.width * 1.5; // Extra generous for touch
+    if (dist < radius) {
+      const now = Date.now();
+      if ((now - (hitCooldowns[currMoveKey]||0)) > HIT_COOLDOWN) {
+        hitCooldowns[currMoveKey] = now;
+        registerHit(currMoveKey, {x, y});
+        state.session.comboIdx++;
+        if (state.session.comboIdx >= seq.length) { state.session.comboIdx = 0; state.session.combos++; state.session.comboStr++; }
+        renderNextMoves();
+      }
+    }
+  }
 }
 
 function arLoop() {
