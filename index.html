@@ -8,8 +8,8 @@
 <title>KinearFit</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <!-- TensorFlow.js + MoveNet — corre directamente en el browser, sin APIs externas -->
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@4.10.0/dist/tf-core.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@4.10.0/dist/tf-backend-webgl.min.js"></script>
+<!-- TF.js full bundle — incluye core, backends, converter (necesario para MoveNet) -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.10.0/dist/tf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.0/dist/pose-detection.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -646,13 +646,19 @@ async function startCamera(){
 
 async function loadMoveNet(){
   try{
-    await tf.ready();
+    // Try WebGL first, fallback to WASM/CPU
+    try { await tf.setBackend('webgl'); await tf.ready(); }
+    catch(e) {
+      try { await tf.setBackend('wasm'); await tf.ready(); }
+      catch(e2) { await tf.setBackend('cpu'); await tf.ready(); }
+    }
+    setLoad(60,'Cargando modelo MoveNet...','Descargando ~3MB primera vez');
     detector=await poseDetection.createDetector(
       poseDetection.SupportedModels.MoveNet,
       { modelType:poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING, enableSmoothing:true }
     );
     setTrkBadge(2,'IA lista ✓');
-  }catch(e){ setTrkBadge(0,'Error IA: '+e.message.substring(0,20)); }
+  }catch(e){ setTrkBadge(0,'Error: '+e.message.substring(0,25)); console.error(e); }
 }
 
 async function detectLoop(){
