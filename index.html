@@ -7,13 +7,16 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>KinearFit</title>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<!-- TensorFlow.js + MoveNet — corre directamente en el browser, sin APIs externas -->
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-core@4.10.0/dist/tf-core.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-webgl@4.10.0/dist/tf-backend-webgl.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/pose-detection@2.1.0/dist/pose-detection.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
   --bg:#F7F6F4;--white:#FFFFFF;--surface:#F0EEE9;--border:#E5E2DB;
   --text:#0D0C0A;--muted:#8A8680;--accent:#FF4D00;--accent-bg:#FFF0EB;
   --accent-dim:#FFD9CC;--green:#00B87A;--green-bg:#E6F9F3;
-  --blue:#1A56FF;--orange:#F77F00;--yellow:#FFD60A;--purple:#7B2D8B;
   --font:'DM Sans',sans-serif;
 }
 html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-family:var(--font)}
@@ -21,303 +24,184 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .screen.active{display:flex}
 .scroll-content{flex:1;overflow-y:auto;padding:0 20px 100px;-webkit-overflow-scrolling:touch}
 .scroll-content::-webkit-scrollbar{display:none}
-
-/* Status bar */
 .status-bar{height:44px;background:var(--bg);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0}
-.status-bar.dark{background:transparent;position:absolute;top:0;left:0;right:0;z-index:10}
-.status-time{font-size:13px;font-weight:700;color:var(--text)}
-.status-bar.dark .status-time{color:white}
 .notch{width:88px;height:26px;background:#000;border-radius:13px}
-.status-icons{font-size:11px;color:var(--text)}
-.status-bar.dark .status-icons{color:white}
-
-/* Cards */
 .card{background:var(--white);border:1px solid var(--border);border-radius:20px;padding:18px}
 .card-accent{background:var(--accent-bg);border:1.5px solid var(--accent-dim)}
-
-/* Buttons */
-.btn{display:block;width:100%;background:var(--accent);color:white;border:none;border-radius:14px;font-family:var(--font);font-weight:800;font-size:14px;padding:16px;cursor:pointer;text-align:center;letter-spacing:.3px}
+.btn{display:block;width:100%;background:var(--accent);color:white;border:none;border-radius:14px;font-family:var(--font);font-weight:800;font-size:14px;padding:16px;cursor:pointer;text-align:center}
 .btn-secondary{background:var(--white);color:var(--text);border:1.5px solid var(--border)}
 .btn-small{padding:10px 18px;width:auto;display:inline-block;font-size:13px;border-radius:12px}
-
-/* Chips */
 .chip{display:inline-block;background:var(--accent-bg);color:var(--accent);font-size:10px;font-weight:700;letter-spacing:1.2px;padding:3px 8px;border-radius:6px;text-transform:uppercase}
 .chip-green{background:var(--green-bg);color:var(--green)}
-
-/* Progress bar */
 .progress-track{background:var(--surface);border-radius:99px;overflow:hidden}
 .progress-fill{height:100%;background:var(--accent);border-radius:99px;transition:width .6s}
-
-/* Typography */
 .heading{font-size:26px;font-weight:900;color:var(--text);letter-spacing:-1px}
-.subheading{font-size:18px;font-weight:800;color:var(--text);margin-bottom:4px}
 .label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
-.body-text{font-size:13px;color:var(--text)}
 .muted-text{font-size:13px;color:var(--muted)}
-
-/* ===== BOTTOM NAV ===== */
-#bottom-nav{position:fixed;bottom:0;left:0;right:0;height:68px;background:var(--white);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;z-index:100}
-.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:8px 16px;-webkit-tap-highlight-color:transparent}
-.nav-icon{font-size:22px}
-.nav-label{font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.5px}
-.nav-item.active .nav-label{color:var(--accent)}
-.nav-dot{width:4px;height:4px;border-radius:50%;background:var(--accent)}
-
-/* ===== SPLASH ===== */
-#screen-splash{background:var(--text);justify-content:center;align-items:center;gap:16px}
-.splash-logo{font-size:42px;font-weight:900;color:white;letter-spacing:-2px}
-.splash-logo span{color:var(--accent)}
-.splash-tagline{color:rgba(255,255,255,.5);font-size:14px}
-.splash-loader{width:40px;height:3px;background:rgba(255,255,255,.2);border-radius:99px;overflow:hidden;margin-top:20px}
-.splash-loader-fill{height:100%;background:var(--accent);border-radius:99px;animation:load 2s ease forwards}
-@keyframes load{from{width:0}to{width:100%}}
-
-/* ===== ONBOARDING ===== */
-.ob-header{padding:24px 20px 8px}
-.ob-step{font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px}
-.ob-steps-bar{display:flex;gap:4px;padding:0 20px 16px}
-.ob-step-dot{flex:1;height:3px;border-radius:99px;background:var(--border)}
-.ob-step-dot.done{background:var(--accent)}
 .form-group{margin-bottom:16px}
 .form-label{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px;display:block;letter-spacing:.5px}
 .form-input{width:100%;background:var(--white);border:1.5px solid var(--border);border-radius:12px;font-family:var(--font);font-size:15px;color:var(--text);padding:14px 16px;outline:none}
 .form-input:focus{border-color:var(--accent)}
-.toggle-group{display:flex;gap:8px}
 .toggle-btn{flex:1;background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:14px 8px;font-family:var(--font);font-weight:700;font-size:13px;color:var(--muted);cursor:pointer;text-align:center}
 .toggle-btn.active{background:var(--accent-bg);border-color:var(--accent-dim);color:var(--accent)}
 .level-btn{flex:1;background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:12px 6px;font-family:var(--font);font-weight:700;font-size:12px;color:var(--muted);cursor:pointer;text-align:center}
 .level-btn.active{background:var(--accent);border-color:var(--accent);color:white}
 
-/* ===== HOME ===== */
-.home-header{display:flex;justify-content:space-between;align-items:flex-start;padding:20px 20px 0}
-.streak-badge{display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--border);border-radius:16px;padding:10px 14px}
-.streak-count{font-size:18px;font-weight:900;color:var(--accent);line-height:1}
-.streak-label{font-size:9px;color:var(--muted);font-weight:600;letter-spacing:1px}
-.challenge-card{background:var(--accent);border:none;margin-bottom:16px}
-.challenge-card .btn{background:white;color:var(--accent);border-radius:10px;padding:10px 18px;width:auto}
-.stats-row{display:flex;justify-content:space-around;align-items:center}
-.stat-item{text-align:center}
-.stat-value{font-size:26px;font-weight:900;color:var(--text);letter-spacing:-1px}
-.stat-label{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px}
-.stat-divider{width:1px;height:40px;background:var(--border)}
+/* Bottom nav */
+#bottom-nav{position:fixed;bottom:0;left:0;right:0;height:68px;background:var(--white);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;z-index:100}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:8px 16px}
+.nav-icon{font-size:22px}
+.nav-label{font-size:10px;font-weight:700;color:var(--muted)}
+.nav-item.active .nav-label{color:var(--accent)}
+.nav-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);display:none}
+.nav-item.active .nav-dot{display:block}
 
-/* ===== TRAIN ===== */
+/* Splash */
+#screen-splash{background:var(--text);justify-content:center;align-items:center;gap:16px}
+.splash-logo{font-size:42px;font-weight:900;color:white;letter-spacing:-2px}
+.splash-logo span{color:var(--accent)}
+.splash-loader{width:40px;height:3px;background:rgba(255,255,255,.2);border-radius:99px;overflow:hidden;margin-top:20px}
+.splash-loader-fill{height:100%;background:var(--accent);border-radius:99px;animation:load 2.2s ease forwards}
+@keyframes load{from{width:0}to{width:100%}}
+
+/* Home */
+.streak-badge{display:flex;align-items:center;gap:8px;background:var(--white);border:1px solid var(--border);border-radius:16px;padding:10px 14px}
+.challenge-card{background:var(--accent);border:none}
+.stats-row{display:flex;justify-content:space-around;align-items:center}
+.stat-value{font-size:26px;font-weight:900;color:var(--text);letter-spacing:-1px}
+.stat-label{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:2px;text-align:center}
+
+/* Train */
 .mode-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
 .mode-card{background:var(--white);border:1.5px solid var(--border);border-radius:20px;padding:18px;cursor:pointer}
 .mode-card.active{background:var(--accent-bg);border-color:var(--accent-dim)}
-.mode-icon{font-size:28px;margin-bottom:8px}
-.mode-name{font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px}
-.mode-desc{font-size:12px;color:var(--muted)}
-.diff-btns{display:flex;gap:8px;margin-bottom:16px}
 .diff-btn{flex:1;background:var(--white);border:1.5px solid var(--border);border-radius:12px;font-family:var(--font);font-weight:700;font-size:11px;color:var(--muted);padding:10px 4px;cursor:pointer;text-transform:capitalize}
 .diff-btn.easy.active{background:#00B87A;border-color:#00B87A;color:white}
 .diff-btn.medium.active{background:#F77F00;border-color:#F77F00;color:white}
 .diff-btn.hard.active{background:#FF3B30;border-color:#FF3B30;color:white}
-.config-row{display:flex;justify-content:space-between;margin-bottom:10px}
-.combos-list{margin-bottom:20px}
-.combo-item{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:8px;cursor:pointer}
+.combo-item{background:var(--white);border:1.5px solid var(--border);border-radius:16px;padding:14px;margin-bottom:8px;cursor:pointer}
 .combo-item.active{background:var(--accent-bg);border-color:var(--accent-dim)}
-.combo-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-.combo-name{font-size:14px;font-weight:700;color:var(--text)}
-.combo-moves{display:flex;gap:6px;flex-wrap:wrap}
-.move-tag{font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.5px}
 
-/* ===== SESSION AR ===== */
+/* Session AR */
 #screen-session{background:#000;position:fixed;inset:0;z-index:50;display:none}
 #screen-session.active{display:block}
-#pose-iframe{position:absolute;inset:0;width:100%;height:100%;border:none;z-index:1}
-#ar-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:auto;cursor:pointer}
+#cam-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:0;z-index:0}
+#ar-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:2;touch-action:none}
 #hud{position:absolute;inset:0;z-index:3;pointer-events:none;display:flex;flex-direction:column}
 .hud-top{background:linear-gradient(180deg,rgba(0,0,0,.75) 0%,transparent 100%);padding:56px 18px 20px;display:flex;justify-content:space-between;align-items:center}
-.hud-round{text-align:left}
-.hud-round-label{font-size:9px;color:rgba(255,255,255,.55);letter-spacing:1.5px;text-transform:uppercase}
-.hud-round-val{font-size:22px;font-weight:900;color:white;line-height:1.1}
 .hud-timer{font-size:38px;font-weight:900;color:var(--accent);text-shadow:0 0 20px rgba(255,77,0,.6);letter-spacing:-1px}
-.hud-score{text-align:right}
-.hud-score-label{font-size:9px;color:rgba(255,255,255,.55);letter-spacing:1.5px;text-transform:uppercase}
-.hud-score-val{font-size:22px;font-weight:900;color:white;line-height:1.1}
-.hud-combo{text-align:center;margin-top:-8px}
-.combo-badge{display:inline-block;background:rgba(255,214,10,.15);border:1px solid rgba(255,214,10,.4);border-radius:20px;padding:4px 14px;font-size:12px;font-weight:900;color:#FFD60A}
-.hud-bottom{margin-top:auto;background:linear-gradient(0deg,rgba(0,0,0,.8) 0%,transparent 100%);padding:16px 16px 28px;display:flex;align-items:center;gap:10px}
-.next-label{font-size:11px;color:rgba(255,255,255,.44)}
-.next-moves{display:flex;gap:6px;flex:1}
-.next-move-tag{padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700}
-#btn-end-session{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;color:white;font-family:var(--font);font-size:12px;font-weight:700;padding:8px 14px;cursor:pointer;pointer-events:all;margin-left:auto}
-.tracking-indicator{position:absolute;top:50px;right:16px;z-index:4;display:flex;align-items:center;gap:5px;background:rgba(0,0,0,.5);border-radius:20px;padding:5px 10px}
-.tracking-dot{width:8px;height:8px;border-radius:50%}
-.tracking-text{font-size:10px;color:white;font-weight:600}
-.libre-hits{display:flex;gap:8px}
-.libre-stat{background:rgba(255,255,255,.08);border-radius:12px;padding:6px 14px;display:flex;align-items:center;gap:6px}
-.libre-stat-val{font-size:13px;font-weight:700;color:white}
+.hud-val{font-size:22px;font-weight:900;color:white;line-height:1.1}
+.hud-lbl{font-size:9px;color:rgba(255,255,255,.5);letter-spacing:1.5px;text-transform:uppercase}
+.hud-bottom{margin-top:auto;background:linear-gradient(0deg,rgba(0,0,0,.8) 0%,transparent 100%);padding:16px 16px 28px;display:flex;align-items:center;gap:8px}
+#btn-end{pointer-events:all;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;color:white;font-family:var(--font);font-size:12px;font-weight:700;padding:8px 14px;cursor:pointer;margin-left:auto}
+.tracking-badge{position:absolute;top:52px;right:12px;z-index:4;display:flex;align-items:center;gap:5px;background:rgba(0,0,0,.55);border-radius:20px;padding:5px 10px}
+.t-dot{width:8px;height:8px;border-radius:50%}
+.t-txt{font-size:10px;color:white;font-weight:600}
+.combo-badge-hud{position:absolute;top:100px;left:50%;transform:translateX(-50%);background:rgba(255,214,10,.15);border:1px solid rgba(255,214,10,.4);border-radius:20px;padding:4px 14px;z-index:4;display:none}
 
-/* ===== POST SESSION ===== */
-.post-header{text-align:center;padding:28px 20px 20px}
-.post-emoji{font-size:52px;display:block;margin-bottom:8px}
+/* Loading overlay for session */
+#loading-overlay{position:absolute;inset:0;background:#0A0A0F;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px}
+.loading-title{font-size:18px;font-weight:800;color:white}
+.loading-sub{font-size:13px;color:rgba(255,255,255,.5);text-align:center;max-width:260px;line-height:1.6}
+.loading-bar-track{width:200px;height:4px;background:rgba(255,255,255,.1);border-radius:99px;overflow:hidden}
+.loading-bar-fill{height:100%;background:var(--accent);border-radius:99px;width:0%;transition:width .4s}
+
+/* Post */
 .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
 .stat-card{background:var(--white);border:1px solid var(--border);border-radius:14px;padding:16px;text-align:center}
 .stat-big{font-size:28px;font-weight:900;color:var(--text);letter-spacing:-1px}
-.stat-small-label{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px}
-.badge-unlock{display:flex;align-items:center;gap:14px;margin-bottom:16px}
-.badge-emoji{font-size:44px}
-.share-row{display:flex;gap:10px;margin-bottom:20px}
 
-/* ===== BADGES ===== */
-.filter-scroll{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px;-webkit-overflow-scrolling:touch}
+/* Badges */
+.filter-scroll{display:flex;gap:8px;overflow-x:auto;padding:4px 0 12px}
 .filter-scroll::-webkit-scrollbar{display:none}
 .filter-btn{background:var(--white);border:1.5px solid var(--border);border-radius:20px;font-family:var(--font);color:var(--muted);font-size:11px;font-weight:700;padding:6px 14px;cursor:pointer;white-space:nowrap}
 .filter-btn.active{background:var(--accent);border-color:var(--accent);color:white}
-.badges-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;padding-bottom:20px}
+.badges-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
 .badge-cell{display:flex;flex-direction:column;align-items:center;gap:6px;position:relative}
-.badge-icon-wrap{width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px;transition:transform .2s}
-.badge-icon-wrap.locked{background:var(--surface);border:1.5px solid var(--border);filter:grayscale(1);opacity:.4}
-.badge-icon-wrap.unlocked{background:var(--accent-bg);border:1.5px solid var(--accent-dim)}
-.badge-check{position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--green);border:2px solid var(--white);display:flex;align-items:center;justify-content:center;font-size:8px;color:white;font-weight:900}
-.badge-name{font-size:9px;font-weight:600;text-align:center;max-width:60px;line-height:1.3;color:var(--muted)}
-.badge-name.unlocked{color:var(--text)}
+.badge-wrap{width:60px;height:60px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:26px}
+.badge-wrap.locked{background:var(--surface);border:1.5px solid var(--border);filter:grayscale(1);opacity:.4}
+.badge-wrap.unlocked{background:var(--accent-bg);border:1.5px solid var(--accent-dim)}
+.badge-check{position:absolute;top:-4px;right:-4px;width:16px;height:16px;border-radius:50%;background:var(--green);border:2px solid white;display:flex;align-items:center;justify-content:center;font-size:8px;color:white;font-weight:900}
+.badge-nm{font-size:9px;font-weight:600;text-align:center;max-width:60px;line-height:1.3;color:var(--muted)}
+.badge-nm.u{color:var(--text)}
 
-/* ===== PROFILE ===== */
-.profile-header{display:flex;align-items:center;gap:16px;padding:20px 20px 0}
-.avatar{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#FF8C00);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 20px rgba(255,77,0,.35)}
-.profile-name{font-size:22px;font-weight:900;color:var(--text);letter-spacing:-.5px;margin-bottom:4px}
-.profile-level-row{display:flex;align-items:center;gap:8px}
-.settings-list{background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:16px}
-.settings-item{display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)}
-.settings-item:last-child{border-bottom:none}
-.settings-icon{font-size:16px;margin-right:12px}
-.settings-label{font-size:13px;color:var(--text);flex:1}
-.settings-value{font-size:12px;color:var(--muted)}
-
-/* ===== CALIBRATION SCREEN ===== */
-#screen-calibration{background:var(--text);justify-content:center;align-items:center;gap:24px;padding:40px 30px}
-.calib-icon{font-size:64px}
-.calib-title{font-size:22px;font-weight:900;color:white;text-align:center;letter-spacing:-.5px}
-.calib-desc{font-size:14px;color:rgba(255,255,255,.6);text-align:center;line-height:1.6}
-.calib-steps{width:100%}
-.calib-step{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.1)}
-.calib-step-num{width:28px;height:28px;border-radius:50%;background:var(--accent);color:white;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.calib-step-text{font-size:13px;color:rgba(255,255,255,.8)}
-
-/* ===== ANIMATIONS ===== */
-@keyframes slideUp{from{transform:translateY(16px);opacity:0}to{transform:translateY(0);opacity:1}}
-@keyframes pulseTarget{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.08);opacity:.85}}
-@keyframes hitBurst{0%{transform:scale(1);opacity:1}100%{transform:scale(2.5);opacity:0}}
-@keyframes dustFade{0%{opacity:.7;transform:scale(.3)}100%{opacity:0;transform:scale(2)}}
-@keyframes bagSwingLeft{0%{transform:rotate(0)}30%{transform:rotate(-12deg)}70%{transform:rotate(7deg)}100%{transform:rotate(0)}}
-@keyframes bagSwingRight{0%{transform:rotate(0)}30%{transform:rotate(12deg)}70%{transform:rotate(-7deg)}100%{transform:rotate(0)}}
-@keyframes comboFlash{0%,100%{opacity:1}50%{opacity:.4}}
 @keyframes screenIn{from{opacity:0}to{opacity:1}}
 .screen.active{animation:screenIn .25s ease}
 </style>
 </head>
 <body>
 
-<!-- ===== SPLASH ===== -->
+<!-- SPLASH -->
 <div class="screen active" id="screen-splash">
   <div class="splash-logo">Kinear<span>Fit</span></div>
-  <div class="splash-tagline">Tu gimnasio de combate. Donde sea.</div>
+  <div style="color:rgba(255,255,255,.5);font-size:14px">Tu gimnasio de combate. Donde sea.</div>
   <div class="splash-loader"><div class="splash-loader-fill"></div></div>
 </div>
 
-<!-- ===== ONBOARDING ===== -->
+<!-- ONBOARDING -->
 <div class="screen" id="screen-onboarding">
-  <div class="ob-header">
-    <div class="ob-step" id="ob-step-label">Paso 1 de 3</div>
+  <div style="padding:24px 20px 8px">
+    <div style="font-size:11px;color:var(--muted);font-weight:600;margin-bottom:4px" id="ob-step-lbl">Paso 1 de 3</div>
     <div class="heading" style="margin-top:4px">Cuéntanos sobre ti</div>
   </div>
-  <div class="ob-steps-bar">
-    <div class="ob-step-dot done" id="ob-dot-1"></div>
-    <div class="ob-step-dot" id="ob-dot-2"></div>
-    <div class="ob-step-dot" id="ob-dot-3"></div>
+  <div style="display:flex;gap:4px;padding:0 20px 16px">
+    <div style="flex:1;height:3px;border-radius:99px;background:var(--accent)" id="od1"></div>
+    <div style="flex:1;height:3px;border-radius:99px;background:var(--border)" id="od2"></div>
+    <div style="flex:1;height:3px;border-radius:99px;background:var(--border)" id="od3"></div>
   </div>
   <div class="scroll-content" style="padding-bottom:20px">
-    <!-- Step 1: Basic info -->
-    <div id="ob-page-1">
-      <div class="form-group">
-        <label class="form-label">NOMBRE</label>
-        <input class="form-input" id="input-name" type="text" placeholder="Tu nombre" maxlength="30">
-      </div>
-      <div class="form-group">
-        <label class="form-label">EDAD</label>
-        <input class="form-input" id="input-age" type="number" placeholder="Años" min="12" max="80">
-      </div>
+    <div id="op1">
+      <div class="form-group"><label class="form-label">NOMBRE</label><input class="form-input" id="in-name" type="text" placeholder="Tu nombre"></div>
+      <div class="form-group"><label class="form-label">EDAD</label><input class="form-input" id="in-age" type="number" placeholder="Años" min="12" max="80"></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="form-group">
-          <label class="form-label">PESO (kg)</label>
-          <input class="form-input" id="input-weight" type="number" placeholder="kg" min="30" max="200">
-        </div>
-        <div class="form-group">
-          <label class="form-label">ALTURA (cm)</label>
-          <input class="form-input" id="input-height" type="number" placeholder="cm" min="100" max="250">
-        </div>
+        <div class="form-group"><label class="form-label">PESO (kg)</label><input class="form-input" id="in-wt" type="number" placeholder="kg"></div>
+        <div class="form-group"><label class="form-label">ALTURA (cm)</label><input class="form-input" id="in-ht" type="number" placeholder="cm"></div>
       </div>
     </div>
-    <!-- Step 2: Dominant hand + level -->
-    <div id="ob-page-2" style="display:none">
+    <div id="op2" style="display:none">
       <div class="form-group">
         <label class="form-label">MANO DOMINANTE</label>
-        <div class="toggle-group">
-          <button class="toggle-btn active" id="btn-right" onclick="selectDominant('right')">🤜 Diestro</button>
-          <button class="toggle-btn" id="btn-left" onclick="selectDominant('left')">🤛 Zurdo</button>
+        <div style="display:flex;gap:8px">
+          <button class="toggle-btn active" id="br" onclick="setDom('right')">🤜 Diestro</button>
+          <button class="toggle-btn" id="bl" onclick="setDom('left')">🤛 Zurdo</button>
         </div>
       </div>
-      <div class="form-group" style="margin-top:8px">
-        <label class="form-label">NIVEL DE EXPERIENCIA</label>
-        <div class="toggle-group">
-          <button class="level-btn active" id="lvl-beginner" onclick="selectLevel('beginner')">Principiante</button>
-          <button class="level-btn" id="lvl-intermediate" onclick="selectLevel('intermediate')">Intermedio</button>
-          <button class="level-btn" id="lvl-advanced" onclick="selectLevel('advanced')">Avanzado</button>
-        </div>
-      </div>
-    </div>
-    <!-- Step 3: Calibration info -->
-    <div id="ob-page-3" style="display:none">
-      <div class="card" style="margin-bottom:16px">
-        <div style="font-size:36px;margin-bottom:12px">📱</div>
-        <div class="subheading">Configuración de cámara</div>
-        <div class="muted-text" style="margin-top:4px;line-height:1.6">Para que KinearFit funcione correctamente, sigue estas indicaciones:</div>
-      </div>
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <div class="card" style="display:flex;align-items:center;gap:12px">
-          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0">1</div>
-          <div class="body-text">Apoya el teléfono a <strong>2 metros</strong> de donde vas a entrenar, a la altura del pecho</div>
-        </div>
-        <div class="card" style="display:flex;align-items:center;gap:12px">
-          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0">2</div>
-          <div class="body-text">Asegúrate de tener <strong>buena iluminación</strong> frente a ti</div>
-        </div>
-        <div class="card" style="display:flex;align-items:center;gap:12px">
-          <div style="width:36px;height:36px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;flex-shrink:0">3</div>
-          <div class="body-text">Tu <strong>cuerpo completo</strong> debe ser visible desde cabeza hasta pies</div>
+      <div class="form-group">
+        <label class="form-label">NIVEL</label>
+        <div style="display:flex;gap:8px">
+          <button class="level-btn active" id="lv-b" onclick="setLvl('beginner')">Principiante</button>
+          <button class="level-btn" id="lv-i" onclick="setLvl('intermediate')">Intermedio</button>
+          <button class="level-btn" id="lv-a" onclick="setLvl('advanced')">Avanzado</button>
         </div>
       </div>
     </div>
-    <button class="btn" style="margin-top:24px" id="ob-next-btn" onclick="obNext()">Continuar →</button>
+    <div id="op3" style="display:none">
+      <div class="card" style="margin-bottom:12px">
+        <div style="font-size:32px;margin-bottom:10px">📱</div>
+        <div style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:4px">Configuración de cámara</div>
+        <div class="muted-text" style="line-height:1.6">Para que KinearFit detecte tus movimientos correctamente:</div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">1</div><div style="font-size:13px;color:var(--text)">Apoya el teléfono a <strong>2 metros</strong> a la altura del pecho</div></div>
+        <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">2</div><div style="font-size:13px;color:var(--text)"><strong>Buena iluminación</strong> frontal — sin contraluz</div></div>
+        <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">3</div><div style="font-size:13px;color:var(--text)">Tu <strong>cuerpo completo</strong> visible de cabeza a pies</div></div>
+      </div>
+    </div>
+    <button class="btn" style="margin-top:24px" id="ob-btn" onclick="obNext()">Continuar →</button>
   </div>
 </div>
 
-<!-- ===== HOME ===== -->
+<!-- HOME -->
 <div class="screen" id="screen-home">
-  <div class="status-bar">
-    <span class="status-time">9:41</span>
-    <div class="notch"></div>
-    <span class="status-icons">●●● 🔋</span>
-  </div>
+  <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
   <div class="scroll-content" style="padding-top:4px">
-    <div class="home-header" style="padding:0 0 20px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
       <div>
         <div style="font-size:13px;color:var(--muted);font-weight:500">Buenos días</div>
-        <div class="heading" id="home-greeting" style="margin-top:2px">KinearFit 🥊</div>
+        <div class="heading" id="h-greeting" style="margin-top:2px">KinearFit 🥊</div>
       </div>
-      <div class="streak-badge">
-        <span style="font-size:20px">🔥</span>
-        <div>
-          <div class="streak-count" id="home-streak">0</div>
-          <div class="streak-label">DÍAS</div>
-        </div>
-      </div>
+      <div class="streak-badge"><span style="font-size:20px">🔥</span><div><div style="font-size:18px;font-weight:900;color:var(--accent);line-height:1" id="h-streak">0</div><div style="font-size:9px;color:var(--muted);font-weight:600;letter-spacing:1px">DÍAS</div></div></div>
     </div>
-
-    <!-- Daily challenge -->
     <div class="card challenge-card" style="margin-bottom:16px">
       <span class="chip" style="color:white;background:rgba(255,255,255,.2);margin-bottom:10px;display:inline-block">Desafío de hoy</span>
       <div style="font-size:22px;font-weight:900;color:white;margin-bottom:4px;letter-spacing:-.5px">3 rondas intermedias</div>
@@ -327,1515 +211,969 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
         <button class="btn btn-small" style="background:white;color:var(--accent);border:none" onclick="startSession('daily','medium')">Comenzar →</button>
       </div>
     </div>
-
-    <!-- Level progress -->
     <div class="card" style="margin-bottom:16px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
-        <span style="font-size:13px;font-weight:700;color:var(--text)">Nivel actual</span>
-        <span class="chip" id="home-level">Novato</span>
-      </div>
-      <div class="progress-track" style="height:8px;margin-bottom:8px">
-        <div class="progress-fill" id="home-xp" style="width:12%"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between">
-        <span style="font-size:11px;color:var(--muted)" id="home-level-from">Novato</span>
-        <span style="font-size:11px;color:var(--muted)" id="home-level-pct">12% → Amateur</span>
-      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span style="font-size:13px;font-weight:700;color:var(--text)">Nivel actual</span><span class="chip" id="h-level">Novato</span></div>
+      <div class="progress-track" style="height:8px;margin-bottom:8px"><div class="progress-fill" id="h-xp" style="width:0%"></div></div>
+      <div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:var(--muted)" id="h-lf">Novato</span><span style="font-size:11px;color:var(--muted)" id="h-lp">0% → Amateur</span></div>
     </div>
-
-    <!-- Last session -->
     <div class="card" style="margin-bottom:16px">
       <div class="label" style="margin-bottom:14px">Última sesión</div>
       <div class="stats-row">
-        <div class="stat-item">
-          <div class="stat-value" id="home-last-hits">0</div>
-          <div class="stat-label">Golpes</div>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <div class="stat-value" style="color:var(--green)" id="home-last-acc">—</div>
-          <div class="stat-label">Precisión</div>
-        </div>
-        <div class="stat-divider"></div>
-        <div class="stat-item">
-          <div class="stat-value" id="home-last-time">0:00</div>
-          <div class="stat-label">Tiempo</div>
-        </div>
+        <div><div class="stat-value" id="h-lhits">0</div><div class="stat-label">Golpes</div></div>
+        <div style="width:1px;height:40px;background:var(--border)"></div>
+        <div><div class="stat-value" style="color:var(--green)" id="h-lacc">—</div><div class="stat-label">Precisión</div></div>
+        <div style="width:1px;height:40px;background:var(--border)"></div>
+        <div><div class="stat-value" id="h-ltime">0:00</div><div class="stat-label">Tiempo</div></div>
       </div>
     </div>
-
-    <!-- Next badge -->
-    <div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:16px">
-      <span style="font-size:36px;opacity:.35" id="home-next-badge-icon">🔁</span>
-      <div style="flex:1">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px" id="home-next-badge-name">3 en Raya</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:8px" id="home-next-badge-desc">3 días seguidos de entrenamiento</div>
-        <div class="progress-track" style="height:5px">
-          <div class="progress-fill" id="home-next-badge-pct" style="width:33%;background:var(--yellow)"></div>
-        </div>
-      </div>
+    <div class="card" style="display:flex;align-items:center;gap:14px">
+      <span style="font-size:36px;opacity:.35" id="h-nbicon">🔁</span>
+      <div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px" id="h-nbname">3 en Raya</div><div style="font-size:12px;color:var(--muted);margin-bottom:8px" id="h-nbdesc">3 días seguidos de entrenamiento</div><div class="progress-track" style="height:5px"><div class="progress-fill" id="h-nbp" style="width:33%;background:#FFD60A"></div></div></div>
     </div>
   </div>
 </div>
 
-<!-- ===== TRAIN ===== -->
+<!-- TRAIN -->
 <div class="screen" id="screen-train">
-  <div class="status-bar">
-    <span class="status-time">9:41</span>
-    <div class="notch"></div>
-    <span class="status-icons">●●● 🔋</span>
-  </div>
+  <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
   <div class="scroll-content" style="padding-top:4px">
     <div class="heading" style="margin-bottom:20px">Entrenar</div>
-
     <div class="mode-grid">
-      <div class="mode-card active" id="mode-libre" onclick="selectMode('libre')">
-        <div class="mode-icon">👊</div>
-        <div class="mode-name">Modo Libre</div>
-        <div class="mode-desc">Tu ritmo. Tu saco.</div>
-      </div>
-      <div class="mode-card" id="mode-combos" onclick="selectMode('combos')">
-        <div class="mode-icon">🎯</div>
-        <div class="mode-name">Combos Guiados</div>
-        <div class="mode-desc">Sigue la secuencia.</div>
-      </div>
+      <div class="mode-card active" id="mc-libre" onclick="selMode('libre')"><div style="font-size:28px;margin-bottom:8px">👊</div><div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px">Modo Libre</div><div style="font-size:12px;color:var(--muted)">Tu ritmo. Tu saco.</div></div>
+      <div class="mode-card" id="mc-combos" onclick="selMode('combos')"><div style="font-size:28px;margin-bottom:8px">🎯</div><div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px">Combos Guiados</div><div style="font-size:12px;color:var(--muted)">Sigue la secuencia.</div></div>
     </div>
-
     <div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:20px;cursor:pointer" onclick="startSession('daily','medium')">
       <span style="font-size:32px">📆</span>
-      <div>
-        <div style="font-size:15px;font-weight:800;color:var(--text)">Desafío del Día</div>
-        <div style="font-size:12px;color:var(--muted)">Nuevo reto cada 24 horas</div>
-      </div>
+      <div><div style="font-size:15px;font-weight:800;color:var(--text)">Desafío del Día</div><div style="font-size:12px;color:var(--muted)">Nuevo reto cada 24 horas</div></div>
       <span style="margin-left:auto;color:var(--muted);font-size:18px">›</span>
     </div>
-
-    <!-- Combos list (shown when combos mode) -->
-    <div id="combos-list" style="display:none" class="combos-list">
+    <div id="combos-panel" style="display:none;margin-bottom:16px">
       <div class="label" style="margin-bottom:12px">Selecciona un combo</div>
-      <div id="combo-items-container"></div>
+      <div id="combo-list"></div>
     </div>
-
     <div class="label" style="margin-bottom:10px">Dificultad</div>
-    <div class="diff-btns">
-      <button class="diff-btn easy" id="diff-easy" onclick="selectDiff('easy')">Fácil</button>
-      <button class="diff-btn medium active" id="diff-medium" onclick="selectDiff('medium')">Intermedio</button>
-      <button class="diff-btn hard" id="diff-hard" onclick="selectDiff('hard')">Avanzado</button>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button class="diff-btn easy" id="de" onclick="selDiff('easy')">Fácil</button>
+      <button class="diff-btn medium active" id="dm" onclick="selDiff('medium')">Intermedio</button>
+      <button class="diff-btn hard" id="dh" onclick="selDiff('hard')">Avanzado</button>
     </div>
-
     <div class="card" style="margin-bottom:20px">
-      <div class="config-row"><span class="muted-text">Duración ronda</span><span style="font-size:13px;font-weight:700;color:var(--text)" id="cfg-duration">3 min</span></div>
-      <div class="config-row"><span class="muted-text">Descanso</span><span style="font-size:13px;font-weight:700;color:var(--text)" id="cfg-rest">45 seg</span></div>
-      <div class="config-row"><span class="muted-text">Velocidad blancos</span><span style="font-size:13px;font-weight:700;color:var(--text)" id="cfg-speed">Media</span></div>
-      <div class="config-row" style="margin:0"><span class="muted-text">Rondas</span><span style="font-size:13px;font-weight:700;color:var(--text)">3</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="muted-text">Duración ronda</span><span style="font-size:13px;font-weight:700;color:var(--text)" id="cfg-d">3 min</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="muted-text">Descanso</span><span style="font-size:13px;font-weight:700;color:var(--text)" id="cfg-r">45 seg</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="muted-text">Velocidad blancos</span><span style="font-size:13px;font-weight:700;color:var(--text)" id="cfg-s">Media</span></div>
+      <div style="display:flex;justify-content:space-between;margin:0"><span class="muted-text">Rondas</span><span style="font-size:13px;font-weight:700;color:var(--text)">3</span></div>
     </div>
-
-    <button class="btn" id="btn-start-session" onclick="startSessionFromTrain()">Comenzar sesión →</button>
+    <button class="btn" onclick="startFromTrain()">Comenzar sesión →</button>
     <div style="height:20px"></div>
   </div>
 </div>
 
-<!-- ===== SESSION AR ===== -->
+<!-- SESSION AR -->
 <div class="screen" id="screen-session">
-  <iframe id="pose-iframe" allow="camera; microphone; autoplay; encrypted-media" allowfullscreen></iframe>
+  <video id="cam-video" autoplay playsinline muted></video>
   <canvas id="ar-canvas"></canvas>
-
-  <!-- Tracking quality indicator -->
-  <div class="tracking-indicator" id="tracking-indicator">
-    <div class="tracking-dot" id="tracking-dot" style="background:#888"></div>
-    <span class="tracking-text" id="tracking-text">Cargando...</span>
+  <!-- Loading overlay -->
+  <div id="loading-overlay">
+    <div style="font-size:40px">🥊</div>
+    <div class="loading-title" id="load-title">Iniciando KinearFit...</div>
+    <div class="loading-sub" id="load-sub">Activando cámara y cargando IA de detección</div>
+    <div class="loading-bar-track"><div class="loading-bar-fill" id="load-bar"></div></div>
+    <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:8px" id="load-pct">0%</div>
   </div>
-
+  <!-- Tracking indicator -->
+  <div class="tracking-badge" id="track-badge">
+    <div class="t-dot" id="t-dot" style="background:#888"></div>
+    <span class="t-txt" id="t-txt">Cargando...</span>
+  </div>
+  <!-- Combo badge -->
+  <div class="combo-badge-hud" id="combo-hud"><span style="font-family:var(--font);color:#FFD60A;font-size:12px;font-weight:900" id="combo-txt">⚡ ×2</span></div>
   <!-- HUD -->
   <div id="hud">
     <div class="hud-top">
-      <div class="hud-round">
-        <div class="hud-round-label">Ronda</div>
-        <div class="hud-round-val" id="hud-round">1 / 3</div>
-      </div>
-      <div class="hud-timer" id="hud-timer">3:00</div>
-      <div class="hud-score">
-        <div class="hud-score-label">Score</div>
-        <div class="hud-score-val" id="hud-score">0</div>
-      </div>
+      <div><div class="hud-lbl">Ronda</div><div class="hud-val" id="hud-rnd">1/3</div></div>
+      <div class="hud-timer" id="hud-tmr">3:00</div>
+      <div style="text-align:right"><div class="hud-lbl">Score</div><div class="hud-val" id="hud-sc">0</div></div>
     </div>
-
-    <div class="hud-combo" id="hud-combo-area" style="display:none">
-      <span class="combo-badge" id="hud-combo-text">⚡ ×2</span>
-    </div>
-
-    <div class="hud-bottom" id="hud-bottom">
-      <!-- Libre mode hits -->
-      <div class="libre-hits" id="hud-libre" style="display:none">
-        <div class="libre-stat"><span class="libre-stat-val" id="hud-hits">0</span><span style="font-size:11px;color:rgba(255,255,255,.5)"> golpes</span></div>
-        <div class="libre-stat"><span class="libre-stat-val" style="color:var(--green)" id="hud-cal">0</span><span style="font-size:11px;color:rgba(255,255,255,.5)"> cal</span></div>
+    <div class="hud-bottom">
+      <div id="hb-libre" style="display:none;gap:8px;align-items:center">
+        <div style="background:rgba(255,255,255,.08);border-radius:12px;padding:6px 14px"><span style="font-size:13px;font-weight:700;color:white" id="hud-hits">0</span><span style="font-size:11px;color:rgba(255,255,255,.5)"> golpes</span></div>
+        <div style="background:rgba(255,255,255,.08);border-radius:12px;padding:6px 14px"><span style="font-size:13px;font-weight:700;color:#00B87A" id="hud-cal">0</span><span style="font-size:11px;color:rgba(255,255,255,.5)"> cal</span></div>
       </div>
-      <!-- Combo mode next moves -->
-      <div id="hud-next-moves" style="display:none;align-items:center;gap:8px;flex:1">
-        <span class="next-label">SIGUIENTE:</span>
-        <div class="next-moves" id="next-moves-tags"></div>
+      <div id="hb-combo" style="display:none;align-items:center;gap:6px;flex:1">
+        <span style="font-size:11px;color:rgba(255,255,255,.4)">SIG:</span>
+        <div id="nxt-moves" style="display:flex;gap:6px"></div>
       </div>
-      <button id="btn-end-session" onclick="endSession()">Terminar</button>
+      <button id="btn-end" onclick="endSession()">Terminar</button>
     </div>
   </div>
 </div>
 
-<!-- ===== POST SESSION ===== -->
+<!-- POST SESSION -->
 <div class="screen" id="screen-post">
-  <div class="status-bar">
-    <span class="status-time">9:41</span>
-    <div class="notch"></div>
-    <span class="status-icons">●●● 🔋</span>
-  </div>
+  <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
   <div class="scroll-content" style="padding-top:0">
-    <div class="post-header">
-      <span class="post-emoji">🏁</span>
-      <div class="heading">¡Sesión Completada!</div>
-      <div class="muted-text" style="margin-top:4px">Excelente trabajo hoy</div>
+    <div style="text-align:center;padding:28px 0 20px">
+      <span style="font-size:52px">🏁</span>
+      <div class="heading" style="margin-top:8px">¡Sesión Completada!</div>
+      <div class="muted-text" style="margin-top:4px">Excelente trabajo</div>
     </div>
-
-    <!-- Score highlight -->
     <div class="card card-accent" style="text-align:center;margin-bottom:16px">
       <div class="label" style="margin-bottom:4px">Score Total</div>
-      <div style="font-size:44px;font-weight:900;color:var(--accent);letter-spacing:-2px" id="post-score">0</div>
+      <div style="font-size:44px;font-weight:900;color:var(--accent);letter-spacing:-2px" id="ps-score">0</div>
     </div>
-
     <div class="stats-grid">
-      <div class="stat-card"><div class="stat-big" id="post-hits">0</div><div class="stat-small-label">Golpes</div></div>
-      <div class="stat-card"><div class="stat-big" style="color:var(--green)" id="post-acc">78%</div><div class="stat-small-label">Precisión</div></div>
-      <div class="stat-card"><div class="stat-big" id="post-time">0:00</div><div class="stat-small-label">Duración</div></div>
-      <div class="stat-card"><div class="stat-big" style="color:var(--yellow)" id="post-combo">×0</div><div class="stat-small-label">Mejor Combo</div></div>
+      <div class="stat-card"><div class="stat-big" id="ps-hits">0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Golpes</div></div>
+      <div class="stat-card"><div class="stat-big" style="color:var(--green)" id="ps-acc">78%</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Precisión</div></div>
+      <div class="stat-card"><div class="stat-big" id="ps-time">0:00</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Duración</div></div>
+      <div class="stat-card"><div class="stat-big" style="color:#FFD60A" id="ps-combo">×0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Mejor Combo</div></div>
     </div>
-
-    <!-- New badge -->
-    <div class="card badge-unlock card-accent" id="post-badge-section" style="display:none">
-      <div class="badge-emoji" id="post-badge-icon">🎯</div>
-      <div>
-        <span class="chip" style="margin-bottom:6px;display:inline-block">¡Nueva insignia!</span>
-        <div style="font-size:16px;font-weight:800;color:var(--text);margin:6px 0 2px" id="post-badge-name">Combo Iniciado</div>
-        <div style="font-size:12px;color:var(--muted)" id="post-badge-desc">Primer combo completo</div>
-      </div>
+    <div class="card card-accent" id="ps-badge" style="display:none;align-items:center;gap:14px;margin-bottom:16px">
+      <span style="font-size:44px" id="ps-bicon">🎯</span>
+      <div><span class="chip" style="margin-bottom:6px;display:inline-block">¡Nueva insignia!</span><div style="font-size:16px;font-weight:800;color:var(--text);margin:6px 0 2px" id="ps-bname"></div><div style="font-size:12px;color:var(--muted)" id="ps-bdesc"></div></div>
     </div>
-
-    <!-- Progress -->
     <div class="card" style="margin-bottom:20px">
-      <div style="display:flex;justify-content:space-between;margin-bottom:8px">
-        <span class="muted-text">Progreso al siguiente nivel</span>
-        <span style="font-size:13px;font-weight:700;color:var(--text)" id="post-xp-pct">0%</span>
-      </div>
-      <div class="progress-track" style="height:8px"><div class="progress-fill" id="post-xp-bar" style="width:0%"></div></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:8px"><span class="muted-text">Progreso al siguiente nivel</span><span style="font-size:13px;font-weight:700;color:var(--text)" id="ps-xpp">0%</span></div>
+      <div class="progress-track" style="height:8px"><div class="progress-fill" id="ps-xpb" style="width:0%"></div></div>
     </div>
-
-    <div class="share-row">
+    <div style="display:flex;gap:10px;margin-bottom:20px">
       <button class="btn btn-secondary" style="flex:1" onclick="shareSession()">📤 Compartir</button>
       <button class="btn" style="flex:1" onclick="goTo('home')">Continuar →</button>
     </div>
-    <div style="height:20px"></div>
   </div>
 </div>
 
-<!-- ===== BADGES ===== -->
+<!-- BADGES -->
 <div class="screen" id="screen-badges">
-  <div class="status-bar">
-    <span class="status-time">9:41</span>
-    <div class="notch"></div>
-    <span class="status-icons">●●● 🔋</span>
-  </div>
+  <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
   <div class="scroll-content" style="padding-top:4px">
     <div class="heading" style="margin-bottom:4px">Insignias</div>
-    <div class="muted-text" style="margin-bottom:16px"><span style="color:var(--accent);font-weight:700" id="badges-count">0</span> de 20 desbloqueadas</div>
-    <div class="filter-scroll" id="badge-filters">
-      <button class="filter-btn active" onclick="filterBadges('all')">Todas</button>
-      <button class="filter-btn" onclick="filterBadges('Golpes')">Golpes</button>
-      <button class="filter-btn" onclick="filterBadges('Racha')">Racha</button>
-      <button class="filter-btn" onclick="filterBadges('Combos')">Combos</button>
-      <button class="filter-btn" onclick="filterBadges('Tiempo')">Tiempo</button>
-      <button class="filter-btn" onclick="filterBadges('Logros')">Logros</button>
+    <div class="muted-text" style="margin-bottom:16px"><span style="color:var(--accent);font-weight:700" id="bc">0</span> de 20 desbloqueadas</div>
+    <div class="filter-scroll" id="bfilters">
+      <button class="filter-btn active" onclick="filtB('all')">Todas</button>
+      <button class="filter-btn" onclick="filtB('Golpes')">Golpes</button>
+      <button class="filter-btn" onclick="filtB('Racha')">Racha</button>
+      <button class="filter-btn" onclick="filtB('Combos')">Combos</button>
+      <button class="filter-btn" onclick="filtB('Tiempo')">Tiempo</button>
     </div>
-    <div class="badges-grid" id="badges-grid"></div>
+    <div class="badges-grid" id="bgrid"></div>
   </div>
 </div>
 
-<!-- ===== PROFILE ===== -->
+<!-- PROFILE -->
 <div class="screen" id="screen-profile">
-  <div class="status-bar">
-    <span class="status-time">9:41</span>
-    <div class="notch"></div>
-    <span class="status-icons">●●● 🔋</span>
-  </div>
+  <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
   <div class="scroll-content" style="padding-top:4px">
-    <div class="profile-header" style="margin-bottom:24px;padding:0">
-      <div class="avatar">🥊</div>
-      <div>
-        <div class="profile-name" id="profile-name">Usuario</div>
-        <div class="profile-level-row">
-          <span class="chip" id="profile-level">Novato</span>
-          <span class="muted-text" style="font-size:12px" id="profile-streak">🔥 0 días</span>
-        </div>
-      </div>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px">
+      <div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#FF8C00);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 20px rgba(255,77,0,.35)">🥊</div>
+      <div><div style="font-size:22px;font-weight:900;color:var(--text);letter-spacing:-.5px" id="pf-name">Entrenador</div><div style="display:flex;gap:8px;align-items:center;margin-top:4px"><span class="chip" id="pf-level">Novato</span><span class="muted-text" style="font-size:12px" id="pf-streak">🔥 0 días</span></div></div>
     </div>
-
     <div class="card" style="margin-bottom:16px">
       <div class="label" style="margin-bottom:14px">Estadísticas</div>
-      <div id="profile-stats-list"></div>
+      <div id="pf-stats"></div>
     </div>
-
-    <div class="settings-list">
-      <div class="settings-item" onclick="changeLanguage()">
-        <span class="settings-icon">🌐</span>
-        <span class="settings-label">Idioma</span>
-        <span class="settings-value">Español ›</span>
-      </div>
-      <div class="settings-item">
-        <span class="settings-icon">🔊</span>
-        <span class="settings-label">Sonido</span>
-        <span class="settings-value">On ›</span>
-      </div>
-      <div class="settings-item">
-        <span class="settings-icon">🔔</span>
-        <span class="settings-label">Notificaciones</span>
-        <span class="settings-value">On ›</span>
-      </div>
+    <div style="background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:16px">
+      <div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)"><span style="font-size:16px;margin-right:12px">🌐</span><span style="font-size:13px;color:var(--text);flex:1">Idioma</span><span style="font-size:12px;color:var(--muted)">Español ›</span></div>
+      <div style="display:flex;align-items:center;padding:14px 16px"><span style="font-size:16px;margin-right:12px">🔊</span><span style="font-size:13px;color:var(--text);flex:1">Sonido</span><span style="font-size:12px;color:var(--muted)">On ›</span></div>
     </div>
-
-    <div class="card card-accent" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
-      <div>
-        <span class="chip" style="margin-bottom:6px;display:inline-block">KinearFit Premium</span>
-        <div style="font-size:13px;color:var(--text);margin-top:6px">Rondas ilimitadas</div>
-        <div style="font-size:12px;color:var(--muted)">Todos los modos · Sin límites</div>
-      </div>
+    <div class="card card-accent" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div><span class="chip" style="margin-bottom:6px;display:inline-block">Premium</span><div style="font-size:13px;color:var(--text);margin-top:6px">Rondas ilimitadas</div><div style="font-size:12px;color:var(--muted)">Todos los modos · Sin límites</div></div>
       <button class="btn btn-small" style="flex-shrink:0">$14.99/mes</button>
     </div>
-    <div style="height:20px"></div>
   </div>
 </div>
 
-<!-- ===== BOTTOM NAV ===== -->
+<!-- BOTTOM NAV -->
 <nav id="bottom-nav" style="display:none">
-  <button class="nav-item active" id="nav-home" onclick="goTo('home')">
-    <span class="nav-icon">🏠</span>
-    <span class="nav-label">Inicio</span>
-    <div class="nav-dot" style="display:none"></div>
-  </button>
-  <button class="nav-item" id="nav-train" onclick="goTo('train')">
-    <span class="nav-icon">👊</span>
-    <span class="nav-label">Entrenar</span>
-    <div class="nav-dot" style="display:none"></div>
-  </button>
-  <button class="nav-item" id="nav-badges" onclick="goTo('badges')">
-    <span class="nav-icon">🏅</span>
-    <span class="nav-label">Logros</span>
-    <div class="nav-dot" style="display:none"></div>
-  </button>
-  <button class="nav-item" id="nav-profile" onclick="goTo('profile')">
-    <span class="nav-icon">👤</span>
-    <span class="nav-label">Perfil</span>
-    <div class="nav-dot" style="display:none"></div>
-  </button>
+  <button class="nav-item active" id="nav-home" onclick="goTo('home')"><span class="nav-icon">🏠</span><span class="nav-label">Inicio</span><div class="nav-dot"></div></button>
+  <button class="nav-item" id="nav-train" onclick="goTo('train')"><span class="nav-icon">👊</span><span class="nav-label">Entrenar</span><div class="nav-dot"></div></button>
+  <button class="nav-item" id="nav-badges" onclick="goTo('badges')"><span class="nav-icon">🏅</span><span class="nav-label">Logros</span><div class="nav-dot"></div></button>
+  <button class="nav-item" id="nav-profile" onclick="goTo('profile')"><span class="nav-icon">👤</span><span class="nav-label">Perfil</span><div class="nav-dot"></div></button>
 </nav>
 
 <script>
-// ============================================================
-// CONSTANTS & CONFIG
-// ============================================================
-const API_KEY = 'ee9ca9aa-b535-47c8-9d41-351e8ab4f474';
-const IS_ANDROID = /Android/i.test(navigator.userAgent);
-const IS_IOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-const DIFF_CONFIG = {
-  easy:   { duration: 60,  rest: 60,  speed: 'Lenta',  label: 'Fácil' },
-  medium: { duration: 180, rest: 45,  speed: 'Media',  label: 'Intermedio' },
-  hard:   { duration: 300, rest: 30,  speed: 'Rápida', label: 'Avanzado' }
+// ======== CONSTANTS ========
+const DIFF = {
+  easy:   { dur:60,  rest:60,  spd:'Lenta' },
+  medium: { dur:180, rest:45,  spd:'Media' },
+  hard:   { dur:300, rest:30,  spd:'Rápida' }
 };
-
 const LEVELS = ['Novato','Amateur','Pro','Campeón','Élite'];
 const LEVEL_XP = [0, 500, 1500, 3500, 7000];
+const KP = { NOSE:0,LE:1,RE:2,LEAR:3,REAR:4,LS:5,RS:6,LELB:7,RELB:8,LW:9,RW:10,LH:11,RH:12,LK:13,RK:14,LA:15,RA:16 };
 
-// Keypoint indices (MoveNet 17)
-const KP = {
-  NOSE:0,L_EYE:1,R_EYE:2,L_EAR:3,R_EAR:4,
-  L_SHOULDER:5,R_SHOULDER:6,L_ELBOW:7,R_ELBOW:8,
-  L_WRIST:9,R_WRIST:10,L_HIP:11,R_HIP:12,
-  L_KNEE:13,R_KNEE:14,L_ANKLE:15,R_ANKLE:16
+// Move config — velThr in px/s (after normalization)
+let MOVES = {
+  JAB:   { color:'#1A56FF', label:'JAB',    kp:KP.LW,  offX:-.18, offY:-.12, velThr:40,  size:.13 },
+  CROSS: { color:'#FF4D00', label:'CROSS',  kp:KP.RW,  offX: .20, offY:-.14, velThr:40,  size:.14 },
+  HOOK:  { color:'#F77F00', label:'HOOK',   kp:KP.LW,  offX: .28, offY:-.04, velThr:35,  size:.12 },
+  UPPER: { color:'#FFD60A', label:'UPPER',  kp:KP.RW,  offX: .04, offY: .06, velThr:35,  size:.12 },
+  KICKF: { color:'#7B2D8B', label:'KICK ↑', kp:KP.RK,  offX: .0,  offY: .32, velThr:30,  size:.15 },
+  KICKS: { color:'#E040FB', label:'KICK →', kp:KP.RA,  offX: .28, offY: .38, velThr:30,  size:.15 },
+  DOGEL: { color:'#00B87A', label:'DODGE ←', kp:-1, offX:0, offY:.2, velThr:0, size:0 },
+  DOGER: { color:'#00B87A', label:'DODGE →', kp:-1, offX:0, offY:.2, velThr:0, size:0 }
 };
-
-// Move definitions
-const MOVES = {
-  JAB:   { color:'#1A56FF', label:'JAB',    kp: KP.L_WRIST,  offX:-.18, offY:-.12, velThr:30, size:.13 },
-  CROSS: { color:'#FF4D00', label:'CROSS',  kp: KP.R_WRIST,  offX: .20, offY:-.14, velThr:30, size:.14 },
-  HOOK:  { color:'#F77F00', label:'HOOK',   kp: KP.L_WRIST,  offX: .28, offY:-.04, velThr:25, size:.12 },
-  UPPER: { color:'#FFD60A', label:'UPPER',  kp: KP.R_WRIST,  offX: .04, offY: .06, velThr:25, size:.12 },
-  KICKF: { color:'#7B2D8B', label:'KICK ↑', kp: KP.R_KNEE,   offX: .0,  offY: .32, velThr:20, size:.15 },
-  KICKS: { color:'#E040FB', label:'KICK →', kp: KP.R_ANKLE,  offX: .28, offY: .38, velThr:20, size:.15 },
-  DOGEL: { color:'#00B87A', label:'DODGE ←', kp: -1, offX:0, offY:.2, velThr:0, size:0 },
-  DOGER: { color:'#00B87A', label:'DODGE →', kp: -1, offX:0, offY:.2, velThr:0, size:0 }
-};
-
-// Combos
 const COMBOS = [
-  { name:'Básico',       seq:['JAB','CROSS'],                        level:'Fácil' },
-  { name:'Clásico',      seq:['JAB','CROSS','HOOK'],                  level:'Fácil' },
-  { name:'Doble Jab',    seq:['JAB','JAB','CROSS'],                   level:'Fácil' },
-  { name:'1-2-3-2',      seq:['JAB','CROSS','HOOK','CROSS'],          level:'Intermedio' },
-  { name:'Con Esquiva',  seq:['JAB','CROSS','DOGEL','CROSS'],         level:'Intermedio' },
-  { name:'Muay Thai 1',  seq:['JAB','CROSS','KICKF'],                 level:'Intermedio' },
-  { name:'El Completo',  seq:['JAB','CROSS','HOOK','UPPER'],          level:'Intermedio' },
-  { name:'Élite',        seq:['JAB','CROSS','DOGEL','HOOK','UPPER','KICKF'], level:'Avanzado' }
+  { name:'Básico',    seq:['JAB','CROSS'],               level:'Fácil' },
+  { name:'Clásico',   seq:['JAB','CROSS','HOOK'],         level:'Fácil' },
+  { name:'Doble Jab', seq:['JAB','JAB','CROSS'],          level:'Fácil' },
+  { name:'1-2-3-2',   seq:['JAB','CROSS','HOOK','CROSS'], level:'Intermedio' },
+  { name:'Muay Thai', seq:['JAB','CROSS','KICKF'],        level:'Intermedio' },
+  { name:'Completo',  seq:['JAB','CROSS','HOOK','UPPER'], level:'Intermedio' },
+  { name:'Con Esquiva',seq:['JAB','CROSS','DOGEL','CROSS'],level:'Intermedio'},
+  { name:'Élite',     seq:['JAB','CROSS','DOGEL','HOOK','UPPER','KICKF'],level:'Avanzado'}
+];
+const BADGES = [
+  { id:'fh',  icon:'🤜', name:'Primer Golpe',   cat:'Golpes', desc:'Tu primer impacto',           c:s=>s.totalHits>=1 },
+  { id:'h50', icon:'💥', name:'50 Golpes',       cat:'Golpes', desc:'50 impactos acumulados',       c:s=>s.totalHits>=50 },
+  { id:'h500',icon:'🔨', name:'500 Golpes',      cat:'Golpes', desc:'500 impactos acumulados',      c:s=>s.totalHits>=500 },
+  { id:'h1k', icon:'⚔️', name:'Centurión',       cat:'Golpes', desc:'1,000 impactos',               c:s=>s.totalHits>=1000 },
+  { id:'fk',  icon:'👟', name:'Primera Patada',  cat:'Golpes', desc:'Tu primera patada',            c:s=>s.totalKicks>=1 },
+  { id:'fd',  icon:'🌱', name:'Primer Día',      cat:'Racha',  desc:'Tu primera sesión',            c:s=>s.totalSessions>=1 },
+  { id:'s3',  icon:'🔁', name:'3 en Raya',       cat:'Racha',  desc:'3 días seguidos',              c:s=>s.streak>=3 },
+  { id:'s7',  icon:'📅', name:'Semana Perfecta', cat:'Racha',  desc:'7 días seguidos',              c:s=>s.streak>=7 },
+  { id:'s30', icon:'🚂', name:'Imparable',       cat:'Racha',  desc:'30 días seguidos',             c:s=>s.streak>=30 },
+  { id:'cf',  icon:'🎯', name:'Combo Iniciado',  cat:'Combos', desc:'Primer combo completo',        c:s=>s.totalCombos>=1 },
+  { id:'c10', icon:'✨', name:'Combo x10',       cat:'Combos', desc:'10 combos completados',        c:s=>s.totalCombos>=10 },
+  { id:'ce',  icon:'🏆', name:'Combo Maestro',   cat:'Combos', desc:'Combo Élite completado',       c:s=>s.eliteCombos>=1 },
+  { id:'r1',  icon:'🔔', name:'Primera Ronda',   cat:'Tiempo', desc:'Primera ronda completa',       c:s=>s.totalRounds>=1 },
+  { id:'r3',  icon:'💪', name:'Resistencia',     cat:'Tiempo', desc:'3 rondas consecutivas',        c:s=>s.totalRounds>=3 },
+  { id:'rh',  icon:'🗡️', name:'Guerrero',        cat:'Tiempo', desc:'Ronda en nivel Avanzado',      c:s=>s.hardRounds>=1 },
+  { id:'t30', icon:'⏳', name:'30 Minutos',      cat:'Tiempo', desc:'30 min totales acumulados',    c:s=>s.totalTime>=1800 },
+  { id:'t1h', icon:'🕐', name:'1 Hora',          cat:'Tiempo', desc:'1 hora total acumulada',       c:s=>s.totalTime>=3600 },
+  { id:'dg',  icon:'💨', name:'Primera Esquiva', cat:'Golpes', desc:'Tu primera esquiva exitosa',   c:s=>s.totalDodges>=1 },
+  { id:'exp', icon:'🗺️', name:'Explorador',      cat:'Golpes', desc:'Usa los 2 modos principales', c:s=>s.modesUsed>=2 },
+  { id:'leg', icon:'👑', name:'Leyenda',          cat:'Racha',  desc:'90 días seguidos',             c:s=>s.streak>=90 }
 ];
 
-// Badges
-const ALL_BADGES = [
-  { id:'first_hit',  icon:'🤜', name:'Primer Golpe',    cat:'Golpes',  desc:'Tu primer impacto',          cond: s=>s.totalHits>=1 },
-  { id:'hits_50',    icon:'💥', name:'50 Golpes',        cat:'Golpes',  desc:'50 impactos acumulados',      cond: s=>s.totalHits>=50 },
-  { id:'hits_500',   icon:'🔨', name:'500 Golpes',       cat:'Golpes',  desc:'500 impactos acumulados',     cond: s=>s.totalHits>=500 },
-  { id:'hits_1k',    icon:'⚔️', name:'Centurión',        cat:'Golpes',  desc:'1,000 impactos acumulados',   cond: s=>s.totalHits>=1000 },
-  { id:'first_day',  icon:'🌱', name:'Primer Día',       cat:'Racha',   desc:'Tu primera sesión',           cond: s=>s.totalSessions>=1 },
-  { id:'streak_3',   icon:'🔁', name:'3 en Raya',        cat:'Racha',   desc:'3 días seguidos',             cond: s=>s.streak>=3 },
-  { id:'streak_7',   icon:'📅', name:'Semana Perfecta',  cat:'Racha',   desc:'7 días seguidos',             cond: s=>s.streak>=7 },
-  { id:'streak_30',  icon:'🚂', name:'Imparable',        cat:'Racha',   desc:'30 días seguidos',            cond: s=>s.streak>=30 },
-  { id:'legend',     icon:'👑', name:'Leyenda',           cat:'Racha',   desc:'90 días seguidos',            cond: s=>s.streak>=90 },
-  { id:'combo_first',icon:'🎯', name:'Combo Iniciado',   cat:'Combos',  desc:'Primer combo completo',       cond: s=>s.totalCombos>=1 },
-  { id:'combo_10',   icon:'✨', name:'Sin Fallos',        cat:'Combos',  desc:'10 combos sin error',         cond: s=>s.totalCombos>=10 },
-  { id:'combo_pro',  icon:'🏆', name:'Combo Maestro',    cat:'Combos',  desc:'Combo Élite sin fallar',      cond: s=>s.eliteCombos>=1 },
-  { id:'first_kick', icon:'👟', name:'Primera Patada',   cat:'Golpes',  desc:'Tu primera patada registrada',cond: s=>s.totalKicks>=1 },
-  { id:'kicks_50',   icon:'🦅', name:'Pateador',          cat:'Golpes',  desc:'50 patadas acumuladas',       cond: s=>s.totalKicks>=50 },
-  { id:'first_dodge',icon:'💨', name:'Primera Esquiva',  cat:'Logros',  desc:'Tu primera esquiva exitosa',  cond: s=>s.totalDodges>=1 },
-  { id:'ghost',      icon:'👻', name:'Fantasma',          cat:'Logros',  desc:'30 esquivas acumuladas',      cond: s=>s.totalDodges>=30 },
-  { id:'first_round',icon:'🔔', name:'Primera Ronda',    cat:'Tiempo',  desc:'Primera ronda completa',      cond: s=>s.totalRounds>=1 },
-  { id:'resilience', icon:'💪', name:'Resistencia',      cat:'Tiempo',  desc:'3 rondas seguidas',           cond: s=>s.totalRounds>=3 },
-  { id:'warrior',    icon:'🗡️', name:'Guerrero',          cat:'Tiempo',  desc:'Ronda en nivel Avanzado',     cond: s=>s.hardRounds>=1 },
-  { id:'explorer',   icon:'🗺️', name:'Explorador',        cat:'Logros',  desc:'Prueba los 3 modos',          cond: s=>s.modesUsed>=3 }
-];
-
-// ============================================================
-// STATE
-// ============================================================
-let state = {
-  screen: 'splash',
-  user: { name:'', age:25, weight:70, height:170, dominant:'right', level:'beginner' },
-  stats: { totalHits:0, totalKicks:0, totalDodges:0, totalCombos:0, eliteCombos:0,
-           totalSessions:0, totalRounds:0, hardRounds:0, totalTime:0, streak:0, modesUsed:0,
-           lastSession:{ hits:0, duration:0, score:0, comboMax:0 }, xp:0, modesSet:new Set() },
-  badges: new Set(),
-  session: {
-    active: false, mode:'libre', difficulty:'medium',
-    round:1, totalRounds:3, timeLeft:180, score:0,
-    hits:0, comboStr:0, comboMax:0, kicks:0, dodges:0, combos:0,
-    selectedCombo:0, comboIdx:0
-  },
-  ob: { step:1 },
-  mode: 'libre',
-  difficulty: 'medium',
-  selectedCombo: 0
+// ======== STATE ========
+let S = {
+  screen:'splash',
+  user:{ name:'', age:25, wt:70, ht:170, dom:'right', level:'beginner' },
+  stats:{ totalHits:0, totalKicks:0, totalDodges:0, totalCombos:0, eliteCombos:0,
+          totalSessions:0, totalRounds:0, hardRounds:0, totalTime:0, streak:0,
+          modesUsed:0, modesSet:new Set(), lastSession:{hits:0,dur:0,score:0,comboMax:0}, xp:0 },
+  badges:new Set(),
+  sess:{ active:false, mode:'libre', diff:'medium', round:1, totalRounds:3,
+         timeLeft:180, score:0, hits:0, comboStr:0, comboMax:0,
+         kicks:0, dodges:0, combos:0, combIdx:0, selCombo:0, startTime:0 },
+  mode:'libre', diff:'medium', selCombo:0, obStep:1
 };
 
-// ============================================================
-// STORAGE
-// ============================================================
-function saveState() {
-  const s = { ...state.stats };
-  s.modesSet = [...state.stats.modesSet];
-  localStorage.setItem('kf_stats', JSON.stringify(s));
-  localStorage.setItem('kf_user', JSON.stringify(state.user));
-  localStorage.setItem('kf_badges', JSON.stringify([...state.badges]));
+// ======== STORAGE ========
+function save() {
+  const st = {...S.stats}; st.modesSet=[...st.modesSet];
+  localStorage.setItem('kf2_stats',JSON.stringify(st));
+  localStorage.setItem('kf2_user',JSON.stringify(S.user));
+  localStorage.setItem('kf2_badges',JSON.stringify([...S.badges]));
 }
-function loadState() {
+function load() {
   try {
-    const stats = JSON.parse(localStorage.getItem('kf_stats') || '{}');
-    if (stats.modesSet) stats.modesSet = new Set(stats.modesSet);
-    else stats.modesSet = new Set();
-    state.stats = { ...state.stats, ...stats };
-    const user = JSON.parse(localStorage.getItem('kf_user') || '{}');
-    state.user = { ...state.user, ...user };
-    const badges = JSON.parse(localStorage.getItem('kf_badges') || '[]');
-    state.badges = new Set(badges);
-  } catch(e) {}
+    const st=JSON.parse(localStorage.getItem('kf2_stats')||'{}');
+    if(st.modesSet) st.modesSet=new Set(st.modesSet); else st.modesSet=new Set();
+    S.stats={...S.stats,...st};
+    const u=JSON.parse(localStorage.getItem('kf2_user')||'{}');
+    S.user={...S.user,...u};
+    const b=JSON.parse(localStorage.getItem('kf2_badges')||'[]');
+    S.badges=new Set(b);
+  } catch(e){}
 }
 
-// ============================================================
-// NAVIGATION
-// ============================================================
-function goTo(screenId) {
-  if (state.screen === screenId) return;
-  document.getElementById('screen-' + state.screen)?.classList.remove('active');
-  state.screen = screenId;
-  const sc = document.getElementById('screen-' + screenId);
-  if (sc) sc.classList.add('active');
-
-  const showNav = ['home','train','badges','profile'].includes(screenId);
-  document.getElementById('bottom-nav').style.display = showNav ? 'flex' : 'none';
-
-  // Update nav active state
-  ['home','train','badges','profile'].forEach(id => {
-    const el = document.getElementById('nav-' + id);
-    if (el) {
-      el.classList.toggle('active', id === screenId);
-      const dot = el.querySelector('.nav-dot');
-      if (dot) dot.style.display = id === screenId ? 'block' : 'none';
-    }
+// ======== NAVIGATION ========
+function goTo(id) {
+  if(S.screen===id) return;
+  document.getElementById('screen-'+S.screen)?.classList.remove('active');
+  S.screen=id;
+  document.getElementById('screen-'+id)?.classList.add('active');
+  const nav=['home','train','badges','profile'].includes(id);
+  document.getElementById('bottom-nav').style.display=nav?'flex':'none';
+  ['home','train','badges','profile'].forEach(n=>{
+    const el=document.getElementById('nav-'+n);
+    if(el){ el.classList.toggle('active',n===id); }
   });
-
-  // Refresh screen data
-  if (screenId === 'home') refreshHome();
-  if (screenId === 'badges') renderBadges();
-  if (screenId === 'profile') refreshProfile();
+  if(id==='home') refHome();
+  if(id==='badges') rendBadges();
+  if(id==='profile') refProfile();
 }
 
-// ============================================================
-// ONBOARDING
-// ============================================================
-let obStep = 1;
+// ======== ONBOARDING ========
 function obNext() {
-  if (obStep === 1) {
-    const name = document.getElementById('input-name').value.trim();
-    if (!name) { alert('Por favor ingresa tu nombre'); return; }
-    state.user.name = name;
-    state.user.age = parseInt(document.getElementById('input-age').value) || 25;
-    state.user.weight = parseFloat(document.getElementById('input-weight').value) || 70;
-    state.user.height = parseInt(document.getElementById('input-height').value) || 170;
-    document.getElementById('ob-page-1').style.display = 'none';
-    document.getElementById('ob-page-2').style.display = 'block';
-    obStep = 2;
-    document.getElementById('ob-step-label').textContent = 'Paso 2 de 3';
-    document.getElementById('ob-dot-2').classList.add('done');
-    document.getElementById('ob-next-btn').textContent = 'Continuar →';
-  } else if (obStep === 2) {
-    document.getElementById('ob-page-2').style.display = 'none';
-    document.getElementById('ob-page-3').style.display = 'block';
-    obStep = 3;
-    document.getElementById('ob-step-label').textContent = 'Paso 3 de 3';
-    document.getElementById('ob-dot-3').classList.add('done');
-    document.getElementById('ob-next-btn').textContent = '¡Comenzar! 🥊';
+  if(S.obStep===1){
+    const n=document.getElementById('in-name').value.trim();
+    if(!n){alert('Por favor ingresa tu nombre');return;}
+    S.user.name=n;
+    S.user.age=parseInt(document.getElementById('in-age').value)||25;
+    S.user.wt=parseFloat(document.getElementById('in-wt').value)||70;
+    S.user.ht=parseInt(document.getElementById('in-ht').value)||170;
+    document.getElementById('op1').style.display='none';
+    document.getElementById('op2').style.display='block';
+    document.getElementById('od2').style.background='var(--accent)';
+    document.getElementById('ob-step-lbl').textContent='Paso 2 de 3';
+    S.obStep=2;
+  } else if(S.obStep===2){
+    document.getElementById('op2').style.display='none';
+    document.getElementById('op3').style.display='block';
+    document.getElementById('od3').style.background='var(--accent)';
+    document.getElementById('ob-step-lbl').textContent='Paso 3 de 3';
+    document.getElementById('ob-btn').textContent='¡Comenzar! 🥊';
+    S.obStep=3;
   } else {
-    saveState();
+    save();
     goTo('home');
-    document.getElementById('bottom-nav').style.display = 'flex';
+    document.getElementById('bottom-nav').style.display='flex';
   }
 }
-function selectDominant(side) {
-  state.user.dominant = side;
-  document.getElementById('btn-right').classList.toggle('active', side === 'right');
-  document.getElementById('btn-left').classList.toggle('active', side === 'left');
-  if (side === 'left') {
-    // Swap JAB/CROSS keypoints for left-handed
-    MOVES.JAB.kp = KP.R_WRIST; MOVES.JAB.offX = .18;
-    MOVES.CROSS.kp = KP.L_WRIST; MOVES.CROSS.offX = -.20;
-    MOVES.HOOK.kp = KP.R_WRIST; MOVES.HOOK.offX = -.28;
-    MOVES.UPPER.kp = KP.L_WRIST; MOVES.UPPER.offX = -.04;
-    MOVES.KICKF.kp = KP.L_KNEE;
-    MOVES.KICKS.kp = KP.L_ANKLE; MOVES.KICKS.offX = -.28;
+function setDom(d){
+  S.user.dom=d;
+  document.getElementById('br').classList.toggle('active',d==='right');
+  document.getElementById('bl').classList.toggle('active',d==='left');
+  applyDom(d);
+}
+function applyDom(d){
+  if(d==='left'){
+    MOVES.JAB.kp=KP.RW; MOVES.JAB.offX=.18;
+    MOVES.CROSS.kp=KP.LW; MOVES.CROSS.offX=-.20;
+    MOVES.HOOK.kp=KP.RW; MOVES.HOOK.offX=-.28;
+    MOVES.UPPER.kp=KP.LW; MOVES.UPPER.offX=-.04;
+    MOVES.KICKF.kp=KP.LK; MOVES.KICKS.kp=KP.LA; MOVES.KICKS.offX=-.28;
   } else {
-    MOVES.JAB.kp = KP.L_WRIST; MOVES.JAB.offX = -.18;
-    MOVES.CROSS.kp = KP.R_WRIST; MOVES.CROSS.offX = .20;
-    MOVES.HOOK.kp = KP.L_WRIST; MOVES.HOOK.offX = .28;
-    MOVES.UPPER.kp = KP.R_WRIST; MOVES.UPPER.offX = .04;
-    MOVES.KICKF.kp = KP.R_KNEE;
-    MOVES.KICKS.kp = KP.R_ANKLE; MOVES.KICKS.offX = .28;
+    MOVES.JAB.kp=KP.LW; MOVES.JAB.offX=-.18;
+    MOVES.CROSS.kp=KP.RW; MOVES.CROSS.offX=.20;
+    MOVES.HOOK.kp=KP.LW; MOVES.HOOK.offX=.28;
+    MOVES.UPPER.kp=KP.RW; MOVES.UPPER.offX=.04;
+    MOVES.KICKF.kp=KP.RK; MOVES.KICKS.kp=KP.RA; MOVES.KICKS.offX=.28;
   }
 }
-function selectLevel(lvl) {
-  state.user.level = lvl;
-  ['beginner','intermediate','advanced'].forEach(l => {
-    document.getElementById('lvl-'+l).classList.toggle('active', l === lvl);
-  });
+function setLvl(l){
+  S.user.level=l;
+  ['b','i','a'].forEach((x,i)=>document.getElementById('lv-'+x).classList.toggle('active',['beginner','intermediate','advanced'][i]===l));
 }
 
-// ============================================================
-// TRAIN SCREEN
-// ============================================================
-function selectMode(mode) {
-  state.mode = mode;
-  document.getElementById('mode-libre').classList.toggle('active', mode === 'libre');
-  document.getElementById('mode-combos').classList.toggle('active', mode === 'combos');
-  document.getElementById('combos-list').style.display = mode === 'combos' ? 'block' : 'none';
-  if (mode === 'combos') renderCombosList();
+// ======== TRAIN ========
+function selMode(m){
+  S.mode=m;
+  document.getElementById('mc-libre').classList.toggle('active',m==='libre');
+  document.getElementById('mc-combos').classList.toggle('active',m==='combos');
+  document.getElementById('combos-panel').style.display=m==='combos'?'block':'none';
+  if(m==='combos') rendCombos();
 }
-function renderCombosList() {
-  const container = document.getElementById('combo-items-container');
-  container.innerHTML = COMBOS.map((c,i) => `
-    <div class="combo-item ${i===state.selectedCombo?'active':''}" onclick="selectCombo(${i})">
-      <div class="combo-header">
-        <span class="combo-name">${c.name}</span>
+function rendCombos(){
+  document.getElementById('combo-list').innerHTML=COMBOS.map((c,i)=>`
+    <div class="combo-item ${i===S.selCombo?'active':''}" onclick="selCombo(${i})">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:14px;font-weight:700;color:var(--text)">${c.name}</span>
         <span class="chip ${c.level==='Fácil'?'chip-green':''}" style="${c.level==='Avanzado'?'background:#FFEDEB;color:#FF3B30':c.level==='Intermedio'?'background:#FFF4E6;color:#F77F00':''}">${c.level}</span>
       </div>
-      <div class="combo-moves">
-        ${c.seq.map(m=>`<span class="move-tag" style="background:${MOVES[m]?.color}18;color:${MOVES[m]?.color};border:1px solid ${MOVES[m]?.color}44">${MOVES[m]?.label||m}</span>`).join('')}
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        ${c.seq.map(m=>`<span style="background:${MOVES[m]?.color||'#888'}18;color:${MOVES[m]?.color||'#888'};border:1px solid ${MOVES[m]?.color||'#888'}44;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px">${MOVES[m]?.label||m}</span>`).join('')}
       </div>
     </div>`).join('');
 }
-function selectCombo(idx) {
-  state.selectedCombo = idx;
-  renderCombosList();
+function selCombo(i){ S.selCombo=i; rendCombos(); }
+function selDiff(d){
+  S.diff=d;
+  ['easy','medium','hard'].forEach(x=>document.getElementById('d'+x[0]).classList.toggle('active',x===d));
+  const c=DIFF[d];
+  document.getElementById('cfg-d').textContent=c.dur>=60?Math.floor(c.dur/60)+' min':c.dur+' seg';
+  document.getElementById('cfg-r').textContent=c.rest>=60?c.rest/60+' min':c.rest+' seg';
+  document.getElementById('cfg-s').textContent=c.spd;
 }
-function selectDiff(d) {
-  state.difficulty = d;
-  ['easy','medium','hard'].forEach(x => document.getElementById('diff-'+x).classList.toggle('active', x===d));
-  const cfg = DIFF_CONFIG[d];
-  document.getElementById('cfg-duration').textContent = cfg.duration >= 60 ? Math.floor(cfg.duration/60)+' min' : cfg.duration+' seg';
-  document.getElementById('cfg-rest').textContent = cfg.rest >= 60 ? cfg.rest/60+' min' : cfg.rest+' seg';
-  document.getElementById('cfg-speed').textContent = cfg.speed;
-}
-function startSessionFromTrain() { startSession(state.mode, state.difficulty); }
+function startFromTrain(){ startSession(S.mode,S.diff); }
 
-// ============================================================
-// SESSION
-// ============================================================
-let sessionTimer = null;
-let roundBreakTimer = null;
-let audioCtx = null;
+// ======== SESSION — MOVENET + AR ========
+let detector=null, camStream=null, arRunning=false;
+let currKpts=null, prevKpts=null, prevKptT=0;
+let hitEffects=[], bagSwing={a:0,v:0};
+let sessTimer=null, breakTimer=null;
+let audioCtx=null;
+const hitCool={};
+const HIT_CD=400;
 
-function startSession(mode, diff) {
-  state.session = {
-    active: true, mode, difficulty: diff,
-    round: 1, totalRounds: 3,
-    timeLeft: DIFF_CONFIG[diff].duration,
-    score: 0, hits: 0, comboStr: 0, comboMax: 0,
-    kicks: 0, dodges: 0, combos: 0,
-    selectedCombo: state.selectedCombo, comboIdx: 0,
-    startTime: Date.now()
-  };
-
-  // Track modes used
-  state.stats.modesSet.add(mode);
-  state.stats.modesUsed = state.stats.modesSet.size;
+async function startSession(mode,diff){
+  S.sess={ active:false, mode, diff, round:1, totalRounds:3,
+    timeLeft:DIFF[diff].dur, score:0, hits:0, comboStr:0, comboMax:0,
+    kicks:0, dodges:0, combos:0, combIdx:0, selCombo:S.selCombo, startTime:Date.now() };
+  S.stats.modesSet.add(mode);
+  S.stats.modesUsed=S.stats.modesSet.size;
 
   goTo('session');
-  document.getElementById('bottom-nav').style.display = 'none';
+  document.getElementById('bottom-nav').style.display='none';
+  document.getElementById('loading-overlay').style.display='flex';
+  document.getElementById('hud').style.display='none';
 
   initAudio();
-  initPoseTracker();
+  setLoad(5,'Activando cámara...','Solicitando permiso de cámara');
+  await startCamera();
+  setLoad(40,'Cargando modelo de IA...','MoveNet Lightning — ~3MB primer uso');
+  await loadMoveNet();
+  setLoad(100,'¡Listo!','');
+  await sleep(400);
+
+  document.getElementById('loading-overlay').style.display='none';
+  document.getElementById('hud').style.display='flex';
+
   initCanvas();
+  S.sess.active=true;
   updateHUD();
+
+  const isLibre=mode==='libre';
+  document.getElementById('hb-libre').style.display=isLibre?'flex':'none';
+  document.getElementById('hb-combo').style.display=isLibre?'none':'flex';
+  if(!isLibre) rendNextMoves();
+
   startRoundTimer();
-
-  // Show correct HUD section
-  const isLibre = mode === 'libre';
-  document.getElementById('hud-libre').style.display = isLibre ? 'flex' : 'none';
-  document.getElementById('hud-next-moves').style.display = isLibre ? 'none' : 'flex';
-
-  if (!isLibre) renderNextMoves();
+  detectLoop();
 }
 
-function endSession() {
-  clearInterval(sessionTimer);
-  clearInterval(roundBreakTimer);
-  state.session.active = false;
+function setLoad(pct,title,sub){
+  document.getElementById('load-bar').style.width=pct+'%';
+  document.getElementById('load-pct').textContent=pct+'%';
+  document.getElementById('load-title').textContent=title;
+  document.getElementById('load-sub').textContent=sub;
+}
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
 
-  // Stop PoseTracker
-  const iframe = document.getElementById('pose-iframe');
-  iframe.src = '';
-
-  // Stop AR loop
-  arRunning = false;
-
-  // Update stats
-  const s = state.session;
-  const duration = Math.floor((Date.now() - s.startTime) / 1000);
-  state.stats.totalHits += s.hits;
-  state.stats.totalKicks += s.kicks;
-  state.stats.totalDodges += s.dodges;
-  state.stats.totalCombos += s.combos;
-  state.stats.totalSessions += 1;
-  state.stats.totalRounds += s.round - 1;
-  if (s.difficulty === 'hard') state.stats.hardRounds += s.round - 1;
-  state.stats.totalTime += duration;
-  state.stats.xp += s.score;
-  state.stats.lastSession = { hits:s.hits, duration, score:s.score, comboMax:s.comboMax };
-
-  // Streak
-  const today = new Date().toDateString();
-  const lastDay = localStorage.getItem('kf_last_day');
-  const yesterday = new Date(Date.now() - 86400000).toDateString();
-  if (lastDay === yesterday) state.stats.streak += 1;
-  else if (lastDay !== today) state.stats.streak = 1;
-  localStorage.setItem('kf_last_day', today);
-
-  // Check badges
-  const newBadges = checkBadges();
-  saveState();
-
-  // Show post screen
-  showPostSession(s, duration, newBadges);
-  goTo('post');
+async function startCamera(){
+  try{
+    camStream=await navigator.mediaDevices.getUserMedia({
+      video:{facingMode:'user',width:{ideal:480},height:{ideal:640}}
+    });
+    const v=document.getElementById('cam-video');
+    v.srcObject=camStream;
+    await new Promise(r=>{v.onloadedmetadata=r;});
+    v.play();
+  }catch(e){ setTrkBadge(0,'Sin cámara'); }
 }
 
-function startRoundTimer() {
-  clearInterval(sessionTimer);
-  sessionTimer = setInterval(() => {
-    if (!state.session.active) return;
-    state.session.timeLeft--;
-    updateHUD();
-    if (state.session.timeLeft <= 0) {
-      clearInterval(sessionTimer);
-      // Check if more rounds
-      if (state.session.round < state.session.totalRounds) {
-        startRoundBreak();
-      } else {
-        endSession();
+async function loadMoveNet(){
+  try{
+    await tf.ready();
+    detector=await poseDetection.createDetector(
+      poseDetection.SupportedModels.MoveNet,
+      { modelType:poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING, enableSmoothing:true }
+    );
+    setTrkBadge(2,'IA lista ✓');
+  }catch(e){ setTrkBadge(0,'Error IA: '+e.message.substring(0,20)); }
+}
+
+async function detectLoop(){
+  if(!arRunning) return;
+  try{
+    const v=document.getElementById('cam-video');
+    if(detector && v.readyState>=2){
+      const poses=await detector.estimatePoses(v);
+      if(poses.length>0 && poses[0].keypoints){
+        const vw=v.videoWidth||480, vh=v.videoHeight||640;
+        // Normalize + mirror X (front camera is mirrored)
+        const kpts=poses[0].keypoints.map(k=>({
+          x: 1-(k.x/vw),  // Mirror X for natural selfie view
+          y: k.y/vh,
+          score: k.score||0
+        }));
+        prevKpts=currKpts;
+        prevKptT=Date.now();
+        currKpts=kpts;
+        const avgScore=(kpts[KP.LS]?.score||0+kpts[KP.RS]?.score||0+kpts[KP.LW]?.score||0+kpts[KP.RW]?.score||0)/4;
+        if(avgScore>0.55) setTrkBadge(2,'Tracking ✓');
+        else if(avgScore>0.25) setTrkBadge(1,'Parcial');
+        else setTrkBadge(0,'Ajusta posición');
+        if(S.sess.active && prevKpts) processHits();
       }
     }
-  }, 1000);
+  }catch(e){}
+  setTimeout(()=>requestAnimationFrame(detectLoop),33);
 }
-function startRoundBreak() {
-  state.session.active = false;
-  const restTime = DIFF_CONFIG[state.session.difficulty].rest;
-  state.session.timeLeft = restTime;
-  document.getElementById('hud-round').textContent = '⏸ Descanso';
-  let breakTimer = restTime;
-  roundBreakTimer = setInterval(() => {
-    breakTimer--;
-    document.getElementById('hud-timer').textContent = fmtTime(breakTimer);
-    if (breakTimer <= 0) {
-      clearInterval(roundBreakTimer);
-      state.session.round++;
-      state.session.timeLeft = DIFF_CONFIG[state.session.difficulty].duration;
-      state.session.active = true;
-      updateHUD();
-      startRoundTimer();
-    }
-  }, 1000);
-}
-function updateHUD() {
-  const s = state.session;
-  document.getElementById('hud-round').textContent = `${s.round} / ${s.totalRounds}`;
-  document.getElementById('hud-timer').textContent = fmtTime(s.timeLeft);
-  document.getElementById('hud-score').textContent = s.score.toLocaleString();
-  document.getElementById('hud-hits').textContent = s.hits;
-  document.getElementById('hud-cal').textContent = Math.round(s.hits * (state.user.weight * 0.006));
 
-  const comboArea = document.getElementById('hud-combo-area');
-  if (s.comboStr >= 2) {
-    comboArea.style.display = 'block';
-    document.getElementById('hud-combo-text').textContent = `⚡ ×${s.comboStr}`;
+function setTrkBadge(lvl,txt){
+  const colors=['#FF3B30','#F77F00','#00B87A'];
+  document.getElementById('t-dot').style.background=colors[lvl];
+  document.getElementById('t-txt').textContent=txt;
+}
+
+// ======== HIT DETECTION ========
+function getBodyCenter(){
+  if(!currKpts) return null;
+  const ls=currKpts[KP.LS], rs=currKpts[KP.RS];
+  if(!ls||!rs||ls.score<0.25||rs.score<0.25) return null;
+  return {x:(ls.x+rs.x)/2, y:(ls.y+rs.y)/2};
+}
+function getTargetPos(mk){
+  const mv=MOVES[mk];
+  const c=document.getElementById('ar-canvas');
+  const body=getBodyCenter();
+  const bx=body?body.x:.5, by=body?body.y:.35;
+  return {x:(bx+mv.offX)*c.width, y:(by+mv.offY)*c.height};
+}
+function calcVel(kpIdx){
+  if(!currKpts||!prevKpts) return 0;
+  const cu=currKpts[kpIdx], pv=prevKpts[kpIdx];
+  if(!cu||!pv||cu.score<0.3) return 0;
+  const c=document.getElementById('ar-canvas');
+  const dt=Math.max(16,Date.now()-prevKptT)/1000;
+  const dx=(cu.x-pv.x)*c.width, dy=(cu.y-pv.y)*c.height;
+  return Math.sqrt(dx*dx+dy*dy)/dt;
+}
+
+function processHits(){
+  const s=S.sess, now=Date.now();
+  const c=document.getElementById('ar-canvas');
+  if(s.mode==='libre'){
+    const bagPos=getBagPos();
+    for(const mk of ['JAB','CROSS','HOOK','UPPER','KICKF']){
+      const mv=MOVES[mk];
+      if(mv.kp<0) continue;
+      if((now-(hitCool[mk]||0))<HIT_CD) continue;
+      const vel=calcVel(mv.kp);
+      if(vel<mv.velThr) continue;
+      const kp=currKpts[mv.kp];
+      if(!kp||kp.score<0.3) continue;
+      const kpx={x:kp.x*c.width, y:kp.y*c.height};
+      if(Math.hypot(kpx.x-bagPos.x,kpx.y-bagPos.y)<100){
+        hitCool[mk]=now;
+        doHit(mk,kpx); break;
+      }
+    }
   } else {
-    comboArea.style.display = 'none';
-  }
-}
-function fmtTime(s) {
-  return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`;
-}
-
-// ============================================================
-// POSETRACKER INTEGRATION
-// ============================================================
-let currentKpts = null;
-let prevKpts = null;
-let prevKptTime = 0;
-let trackingQuality = 0; // 0=none, 1=partial, 2=good
-
-function initPoseTracker() {
-  const iframe = document.getElementById('pose-iframe');
-  const androidParam = IS_ANDROID ? '&isAndroid=true' : '';
-  const url = `https://app.posetracker.com/pose_tracker/tracking?token=${API_KEY}&keypoints=true&skeleton=false&angles=false${androidParam}`;
-  iframe.src = url;
-  document.getElementById('tracking-text').textContent = 'Cargando...';
-  document.getElementById('tracking-dot').style.background = '#888';
-}
-
-window.addEventListener('message', (event) => {
-  try {
-    let data = event.data;
-    if (typeof data === 'string') {
-      try { data = JSON.parse(data); } catch(e) { return; }
-    }
-    if (!data) return;
-
-    // Debug: update tracking text with raw data type
-    const dbg = document.getElementById('tracking-text');
-
-    // Handle ALL possible PoseTracker message formats
-    let kpts = null;
-    if (data.type === 'keypoints' && data.keypoints) kpts = data.keypoints;
-    else if (data.keypoints) kpts = data.keypoints;
-    else if (Array.isArray(data) && data.length >= 17) kpts = data;
-    else if (data.type === 'pose' && data.data) kpts = data.data;
-    else if (data.poses && data.poses[0] && data.poses[0].keypoints) kpts = data.poses[0].keypoints;
-
-    if (kpts) {
-      handleKeypoints(kpts);
-    } else {
-      // Show what type of message we're getting for debugging
-      if (dbg && data.type) dbg.textContent = 'Msg: ' + data.type;
-    }
-  } catch(e) {}
-});
-
-function normalizeKpts(kpts) {
-  if (!Array.isArray(kpts) || kpts.length === 0) return null;
-  // Handle [{y,x,score}] or [{x,y,score}] or [[y,x,score],...]
-  if (typeof kpts[0] === 'object' && !Array.isArray(kpts[0])) {
-    return kpts.map(k => ({
-      x: k.x !== undefined ? k.x : k[1],
-      y: k.y !== undefined ? k.y : k[0],
-      score: k.score !== undefined ? k.score : k[2]
-    }));
-  }
-  if (Array.isArray(kpts[0])) {
-    return kpts.map(k => ({ y: k[0], x: k[1], score: k[2] }));
-  }
-  return null;
-}
-
-function handleKeypoints(kpts) {
-  const normalized = normalizeKpts(kpts);
-  if (!normalized || normalized.length < 17) return;
-
-  prevKpts = currentKpts;
-  prevKptTime = Date.now();
-  currentKpts = normalized;
-
-  // Update tracking quality
-  const keySores = [
-    normalized[KP.L_SHOULDER]?.score || 0,
-    normalized[KP.R_SHOULDER]?.score || 0,
-    normalized[KP.L_WRIST]?.score || 0,
-    normalized[KP.R_WRIST]?.score || 0
-  ];
-  const avgScore = keySores.reduce((a,b) => a+b, 0) / keySores.length;
-
-  if (avgScore > 0.65) {
-    trackingQuality = 2;
-    document.getElementById('tracking-dot').style.background = '#00B87A';
-    document.getElementById('tracking-text').textContent = 'Tracking ✓';
-  } else if (avgScore > 0.35) {
-    trackingQuality = 1;
-    document.getElementById('tracking-dot').style.background = '#F77F00';
-    document.getElementById('tracking-text').textContent = 'Parcial';
-  } else {
-    trackingQuality = 0;
-    document.getElementById('tracking-dot').style.background = '#FF3B30';
-    document.getElementById('tracking-text').textContent = 'Sin detección';
-  }
-
-  if (state.session.active && prevKpts) {
-    processHits();
-  }
-}
-
-// ============================================================
-// HIT DETECTION
-// ============================================================
-const hitCooldowns = {};
-const HIT_COOLDOWN = 400;
-
-function getBodyCenter() {
-  if (!currentKpts) return null;
-  const ls = currentKpts[KP.L_SHOULDER], rs = currentKpts[KP.R_SHOULDER];
-  if (!ls || !rs || ls.score < 0.3 || rs.score < 0.3) return null;
-  return { x: (ls.x + rs.x) / 2, y: (ls.y + rs.y) / 2 };
-}
-
-function getTargetPos(moveKey) {
-  const move = MOVES[moveKey];
-  const body = getBodyCenter();
-  if (!body) {
-    // Fallback: fixed positions
-    const canvas = document.getElementById('ar-canvas');
-    const cx = 0.5, cy = 0.35;
-    return {
-      x: (cx + move.offX) * canvas.width,
-      y: (cy + move.offY) * canvas.height
-    };
-  }
-  const canvas = document.getElementById('ar-canvas');
-  return {
-    x: (body.x + move.offX) * canvas.width,
-    y: (body.y + move.offY) * canvas.height
-  };
-}
-
-function calcVelocity(kpIdx) {
-  if (!currentKpts || !prevKpts) return 0;
-  const curr = currentKpts[kpIdx], prev = prevKpts[kpIdx];
-  if (!curr || !prev || curr.score < 0.4) return 0;
-  const canvas = document.getElementById('ar-canvas');
-  const dt = Math.max(16, Date.now() - prevKptTime) / 1000;
-  const dx = (curr.x - prev.x) * canvas.width;
-  const dy = (curr.y - prev.y) * canvas.height;
-  return Math.sqrt(dx*dx + dy*dy) / dt;
-}
-
-function processHits() {
-  const s = state.session;
-  const mode = s.mode;
-  const now = Date.now();
-  const canvas = document.getElementById('ar-canvas');
-
-  if (mode === 'libre') {
-    // Check all move types for bag hit
-    const bagPos = getBagPos();
-    if (!bagPos) return;
-    const hitMoves = ['JAB','CROSS','HOOK','UPPER','KICKF'];
-    for (const mk of hitMoves) {
-      const move = MOVES[mk];
-      if (move.kp < 0) continue;
-      if ((now - (hitCooldowns[mk]||0)) < HIT_COOLDOWN) continue;
-      const vel = calcVelocity(move.kp);
-      if (vel < move.velThr) continue;
-      const kp = currentKpts[move.kp];
-      if (!kp || kp.score < 0.4) continue;
-      const kpPx = { x: kp.x * canvas.width, y: kp.y * canvas.height };
-      const dist = Math.hypot(kpPx.x - bagPos.x, kpPx.y - bagPos.y);
-      if (dist < 80) {
-        hitCooldowns[mk] = now;
-        registerHit(mk, kpPx);
-        break;
-      }
-    }
-  } else if (mode === 'combos' || mode === 'daily') {
-    const seq = COMBOS[s.selectedCombo].seq;
-    const currMove = seq[s.comboIdx];
-    if (!currMove) return;
-    const move = MOVES[currMove];
-    if (!move || move.kp < 0) {
-      // Dodge - check body movement
-      processDodge(currMove, now);
-      return;
-    }
-    if ((now - (hitCooldowns[currMove]||0)) < HIT_COOLDOWN) return;
-    const vel = calcVelocity(move.kp);
-    if (vel < move.velThr) return;
-    const kp = currentKpts[move.kp];
-    if (!kp || kp.score < 0.4) return;
-    const kpPx = { x: kp.x * canvas.width, y: kp.y * canvas.height };
-    const tPos = getTargetPos(currMove);
-    const dist = Math.hypot(kpPx.x - tPos.x, kpPx.y - tPos.y);
-    const radius = move.size * canvas.width;
-    if (dist < radius) {
-      hitCooldowns[currMove] = now;
-      registerHit(currMove, kpPx);
-      // Advance combo
-      s.comboIdx++;
-      if (s.comboIdx >= seq.length) {
-        s.comboIdx = 0;
-        s.combos++;
-        s.comboStr++;
-        s.comboMax = Math.max(s.comboMax, s.comboStr);
-        if (COMBOS[s.selectedCombo].name === 'Élite') state.session.eliteCombos = (state.session.eliteCombos||0)+1;
-      }
-      renderNextMoves();
+    const seq=COMBOS[s.selCombo]?.seq||[];
+    const cmk=seq[s.combIdx];
+    if(!cmk) return;
+    const mv=MOVES[cmk];
+    if(!mv||mv.kp<0){ processDodge(cmk,now); return; }
+    if((now-(hitCool[cmk]||0))<HIT_CD) return;
+    const vel=calcVel(mv.kp);
+    if(vel<mv.velThr) return;
+    const kp=currKpts[mv.kp];
+    if(!kp||kp.score<0.3) return;
+    const kpx={x:kp.x*c.width, y:kp.y*c.height};
+    const tp=getTargetPos(cmk);
+    const r=mv.size*c.width;
+    if(Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<r){
+      hitCool[cmk]=now;
+      doHit(cmk,kpx);
+      advCombo(seq);
     }
   }
 }
-
-function processDodge(moveKey, now) {
-  if (!currentKpts || !prevKpts) return;
-  if ((now - (hitCooldowns['DODGE']||0)) < 600) return;
-  const lShoulder = currentKpts[KP.L_SHOULDER];
-  const rShoulder = currentKpts[KP.R_SHOULDER];
-  const plS = prevKpts[KP.L_SHOULDER];
-  const prS = prevKpts[KP.R_SHOULDER];
-  if (!lShoulder || !rShoulder || !plS || !prS) return;
-  const canvas = document.getElementById('ar-canvas');
-  const currCx = (lShoulder.x + rShoulder.x) / 2 * canvas.width;
-  const prevCx = (plS.x + prS.x) / 2 * canvas.width;
-  const lateralMove = Math.abs(currCx - prevCx);
-  if (lateralMove > 30) {
-    hitCooldowns['DODGE'] = now;
-    state.session.dodges++;
-    state.session.score += 30;
-    state.session.comboStr++;
-    state.session.comboMax = Math.max(state.session.comboMax, state.session.comboStr);
-    const pos = { x: canvas.width/2, y: canvas.height * 0.55 };
-    addHitEffect(pos, '#00B87A', 'DODGE!');
+function processDodge(mk,now){
+  if(!currKpts||!prevKpts) return;
+  if((now-(hitCool['DODGE']||0))<700) return;
+  const ls=currKpts[KP.LS], rs=currKpts[KP.RS];
+  const pls=prevKpts[KP.LS], prs=prevKpts[KP.RS];
+  if(!ls||!rs||!pls||!prs) return;
+  const c=document.getElementById('ar-canvas');
+  const dx=Math.abs(((ls.x+rs.x)/2-(pls.x+prs.x)/2)*c.width);
+  if(dx>25){
+    hitCool['DODGE']=now;
+    S.sess.dodges++; S.sess.score+=30;
+    S.sess.comboStr++; S.sess.comboMax=Math.max(S.sess.comboMax,S.sess.comboStr);
+    const pos={x:c.width/2,y:c.height*0.5};
+    addEffect(pos,'#00B87A','DODGE!');
     playSound('dodge');
     updateHUD();
-    // Advance combo
-    state.session.comboIdx++;
-    const seq = COMBOS[state.session.selectedCombo].seq;
-    if (state.session.comboIdx >= seq.length) {
-      state.session.comboIdx = 0;
-      state.session.combos++;
-    }
-    renderNextMoves();
+    advCombo(COMBOS[S.sess.selCombo]?.seq||[]);
   }
 }
-
-function registerHit(moveKey, kpPos) {
-  const s = state.session;
-  const move = MOVES[moveKey];
-  const isKick = moveKey.startsWith('KICK');
-  const pts = isKick ? 25 : 15;
-
-  s.score += pts;
-  s.hits++;
-  s.comboStr++;
-  s.comboMax = Math.max(s.comboMax, s.comboStr);
-  if (isKick) s.kicks++;
-
-  addHitEffect(kpPos, move.color, move.label);
-  playSound(isKick ? 'kick' : moveKey.toLowerCase());
-
-  if (s.mode === 'libre') {
-    bagHit(moveKey);
+function advCombo(seq){
+  S.sess.combIdx++;
+  if(S.sess.combIdx>=seq.length){
+    S.sess.combIdx=0; S.sess.combos++;
+    S.sess.comboStr++; S.sess.comboMax=Math.max(S.sess.comboMax,S.sess.comboStr);
+    if(COMBOS[S.sess.selCombo].name==='Élite') S.sess.eliteCombos=(S.sess.eliteCombos||0)+1;
   }
+  rendNextMoves();
+}
+function doHit(mk,pos){
+  const isKick=mk.startsWith('KICK');
+  S.sess.score+=isKick?25:15; S.sess.hits++;
+  S.sess.comboStr++; S.sess.comboMax=Math.max(S.sess.comboMax,S.sess.comboStr);
+  if(isKick) S.sess.kicks++;
+  addEffect(pos,MOVES[mk].color,MOVES[mk].label);
+  playSound(isKick?'kick':mk.toLowerCase());
+  if(S.sess.mode==='libre') bagHit(mk);
   updateHUD();
 }
 
-// ============================================================
-// COMBO MODE NEXT MOVES
-// ============================================================
-function renderNextMoves() {
-  const s = state.session;
-  const seq = COMBOS[s.selectedCombo].seq;
-  const container = document.getElementById('next-moves-tags');
-  const next = seq.slice(s.comboIdx, s.comboIdx + 3);
-  container.innerHTML = next.map(m => {
-    const mv = MOVES[m];
-    return `<span class="next-move-tag" style="background:${mv?.color||'#888'}20;border:1px solid ${mv?.color||'#888'}55;color:${mv?.color||'#888'}">${mv?.label||m}</span>`;
-  }).join('');
+// ======== TOUCH FALLBACK ========
+function initCanvasTouchFallback(){
+  const c=document.getElementById('ar-canvas');
+  c.addEventListener('touchstart',onTouchHit,{passive:true});
+  c.addEventListener('click',onTouchHit);
 }
-
-// ============================================================
-// AR CANVAS ENGINE
-// ============================================================
-let arRunning = false;
-let hitEffects = [];
-let bagSwing = { angle: 0, vel: 0 };
-
-function initCanvas() {
-  const canvas = document.getElementById('ar-canvas');
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-  arRunning = true;
-  hitEffects = [];
-  bagSwing = { angle: 0, vel: 0 };
-
-  // TOUCH DETECTION — tap near bag or target to register hit
-  canvas.addEventListener('touchstart', handleCanvasTouch, { passive: true });
-  canvas.addEventListener('click', handleCanvasTouch);
-
-  requestAnimationFrame(arLoop);
-}
-
-function handleCanvasTouch(e) {
-  if (!state.session.active) return;
-  const canvas = document.getElementById('ar-canvas');
-  const rect = canvas.getBoundingClientRect();
-  const scaleX = canvas.width / rect.width;
-  const scaleY = canvas.height / rect.height;
-  const touch = e.touches ? e.touches[0] : e;
-  const x = (touch.clientX - rect.left) * scaleX;
-  const y = (touch.clientY - rect.top) * scaleY;
-
-  const mode = state.session.mode;
-
-  if (mode === 'libre') {
-    // Tap anywhere near the bag
-    const bagPos = getBagPos();
-    const dist = Math.hypot(x - bagPos.x, y - bagPos.y);
-    if (dist < 130) {
-      const moves = ['JAB','CROSS','HOOK','UPPER'];
-      const mk = moves[state.session.hits % moves.length];
-      registerHit(mk, {x, y});
+function onTouchHit(e){
+  if(!S.sess.active) return;
+  const c=document.getElementById('ar-canvas');
+  const r=c.getBoundingClientRect();
+  const sx=c.width/r.width, sy=c.height/r.height;
+  const t=e.touches?e.touches[0]:e;
+  const x=(t.clientX-r.left)*sx, y=(t.clientY-r.top)*sy;
+  const mode=S.sess.mode;
+  if(mode==='libre'){
+    const bp=getBagPos();
+    if(Math.hypot(x-bp.x,y-bp.y)<140){
+      const mks=['JAB','CROSS','HOOK','UPPER'];
+      doHit(mks[S.sess.hits%mks.length],{x,y});
     }
   } else {
-    // Tap near the active target
-    const seq = COMBOS[state.session.selectedCombo]?.seq || [];
-    const currMoveKey = seq[state.session.comboIdx];
-    if (!currMoveKey) return;
-    const move = MOVES[currMoveKey];
-    if (!move || move.kp < 0) {
-      // Dodge — swipe detected by touch
-      state.session.dodges++;
-      state.session.score += 30;
-      state.session.comboStr++;
-      state.session.comboMax = Math.max(state.session.comboMax, state.session.comboStr);
-      addHitEffect({x, y}, '#00B87A', 'DODGE!');
-      playSound('dodge');
-      state.session.comboIdx++;
-      if (state.session.comboIdx >= seq.length) { state.session.comboIdx = 0; state.session.combos++; }
-      renderNextMoves(); updateHUD(); return;
+    const seq=COMBOS[S.sess.selCombo]?.seq||[];
+    const cmk=seq[S.sess.combIdx];
+    if(!cmk) return;
+    const mv=MOVES[cmk];
+    if(!mv||mv.kp<0){
+      S.sess.dodges++; S.sess.score+=30;
+      S.sess.comboStr++; S.sess.comboMax=Math.max(S.sess.comboMax,S.sess.comboStr);
+      addEffect({x,y},'#00B87A','DODGE!');
+      playSound('dodge'); updateHUD();
+      advCombo(seq); return;
     }
-    const tPos = getTargetPos(currMoveKey);
-    const dist = Math.hypot(x - tPos.x, y - tPos.y);
-    const radius = move.size * canvas.width * 1.5; // Extra generous for touch
-    if (dist < radius) {
-      const now = Date.now();
-      if ((now - (hitCooldowns[currMoveKey]||0)) > HIT_COOLDOWN) {
-        hitCooldowns[currMoveKey] = now;
-        registerHit(currMoveKey, {x, y});
-        state.session.comboIdx++;
-        if (state.session.comboIdx >= seq.length) { state.session.comboIdx = 0; state.session.combos++; state.session.comboStr++; }
-        renderNextMoves();
-      }
+    const tp=getTargetPos(cmk);
+    const now=Date.now();
+    if(Math.hypot(x-tp.x,y-tp.y)<mv.size*c.width*1.8 && (now-(hitCool[cmk]||0))>HIT_CD){
+      hitCool[cmk]=now;
+      doHit(cmk,{x,y});
+      advCombo(seq);
     }
   }
 }
 
-function arLoop() {
-  if (!arRunning) return;
-  const canvas = document.getElementById('ar-canvas');
-  const ctx = canvas.getContext('2d');
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  if (state.session.active || state.screen === 'session') {
-    updateBagPhysics();
-
-    if (state.session.mode === 'libre') {
-      drawBag(canvas, ctx);
-    } else {
-      drawActiveTargets(canvas, ctx);
-    }
-
-    // Draw dodge bar if active
-    if (state.session.mode !== 'libre') drawDodgeIfNeeded(canvas, ctx);
-
-    drawHitEffects(canvas, ctx);
+// ======== AR CANVAS ========
+function initCanvas(){
+  const c=document.getElementById('ar-canvas');
+  c.width=window.innerWidth; c.height=window.innerHeight;
+  arRunning=true; hitEffects=[]; bagSwing={a:0,v:0};
+  initCanvasTouchFallback();
+  requestAnimationFrame(arLoop);
+}
+function arLoop(){
+  if(!arRunning) return;
+  const c=document.getElementById('ar-canvas');
+  const ctx=c.getContext('2d');
+  ctx.clearRect(0,0,c.width,c.height);
+  // Draw camera feed on canvas (mirrored)
+  const v=document.getElementById('cam-video');
+  if(v.readyState>=2){
+    ctx.save();
+    ctx.scale(-1,1); ctx.translate(-c.width,0);
+    ctx.drawImage(v,0,0,c.width,c.height);
+    ctx.restore();
+  } else {
+    ctx.fillStyle='#0A0A10';
+    ctx.fillRect(0,0,c.width,c.height);
   }
+  // AR elements
+  updateBagPhysics();
+  if(S.sess.mode==='libre') drawBag(c,ctx);
+  else { drawTargets(c,ctx); drawDodge(c,ctx); }
+  drawEffects(c,ctx);
   requestAnimationFrame(arLoop);
 }
 
-function getBagPos() {
-  const canvas = document.getElementById('ar-canvas');
-  const body = getBodyCenter();
-  if (body) {
-    return { x: body.x * canvas.width, y: (body.y + 0.1) * canvas.height };
-  }
-  return { x: canvas.width * 0.5, y: canvas.height * 0.38 };
+// ===== BAG =====
+function getBagPos(){
+  const c=document.getElementById('ar-canvas');
+  const body=getBodyCenter();
+  if(body) return {x:body.x*c.width, y:(body.y+0.1)*c.height};
+  return {x:c.width*0.5, y:c.height*0.38};
 }
-
-function updateBagPhysics() {
-  bagSwing.vel += -0.12 * bagSwing.angle;
-  bagSwing.vel *= 0.88;
-  bagSwing.angle += bagSwing.vel;
+function updateBagPhysics(){
+  bagSwing.v+=-0.12*bagSwing.a; bagSwing.v*=0.88; bagSwing.a+=bagSwing.v;
 }
-
-function bagHit(moveKey) {
-  const impulse = moveKey.startsWith('KICK') ? 0.35 : 0.22;
-  const leanRight = ['JAB','KICKF','KICKS'].includes(moveKey);
-  bagSwing.vel = leanRight ? impulse : -impulse;
+function bagHit(mk){
+  const imp=mk.startsWith('KICK')?.35:.22;
+  bagSwing.v=['JAB','KICKF','KICKS'].includes(mk)?imp:-imp;
 }
-
-function drawBag(canvas, ctx) {
-  const pos = getBagPos();
-  const cx = pos.x, cy = pos.y;
-  const bagH = canvas.height * 0.22;
-  const bagW = canvas.width * 0.18;
-
+function drawBag(c,ctx){
+  const pos=getBagPos(), cx=pos.x, cy=pos.y;
+  const bh=c.height*.22, bw=c.width*.18;
   ctx.save();
-  // Swing around top attachment
-  ctx.translate(cx, cy - bagH * 0.5);
-  ctx.rotate(bagSwing.angle);
-  ctx.translate(-cx, -(cy - bagH * 0.5));
-
+  ctx.translate(cx,cy-bh*.5);
+  ctx.rotate(bagSwing.a);
+  ctx.translate(-cx,-(cy-bh*.5));
   // Chain
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - bagH * 0.5 - 24);
-  ctx.lineTo(cx, cy - bagH * 0.5);
-  ctx.strokeStyle = 'rgba(255,255,255,.3)';
-  ctx.lineWidth = 4;
-  ctx.stroke();
-
-  // Bag body
-  const r = Math.min(bagW * 0.5, bagH * 0.35);
-  ctx.beginPath();
-  ctx.roundRect(cx - bagW/2, cy - bagH*0.48, bagW, bagH, [r, r, r*0.7, r*0.7]);
-  const grad = ctx.createLinearGradient(cx - bagW/2, 0, cx + bagW/2, 0);
-  grad.addColorStop(0, '#1e0e06');
-  grad.addColorStop(0.35, '#3d2518');
-  grad.addColorStop(1, '#1a0f07');
-  ctx.fillStyle = grad;
-  ctx.fill();
-  ctx.strokeStyle = 'rgba(255,255,255,.06)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-
+  ctx.beginPath(); ctx.moveTo(cx,cy-bh*.5-24); ctx.lineTo(cx,cy-bh*.5);
+  ctx.strokeStyle='rgba(255,255,255,.3)'; ctx.lineWidth=4; ctx.stroke();
+  // Bag
+  const r=Math.min(bw*.5,bh*.35);
+  ctx.beginPath(); ctx.roundRect(cx-bw/2,cy-bh*.48,bw,bh,[r,r,r*.7,r*.7]);
+  const g=ctx.createLinearGradient(cx-bw/2,0,cx+bw/2,0);
+  g.addColorStop(0,'#1e0e06'); g.addColorStop(.35,'#3d2518'); g.addColorStop(1,'#1a0f07');
+  ctx.fillStyle=g; ctx.fill();
+  ctx.strokeStyle='rgba(255,255,255,.06)'; ctx.lineWidth=1.5; ctx.stroke();
   // Highlight
-  ctx.beginPath();
-  ctx.roundRect(cx - bagW/2 + bagW*0.12, cy - bagH*0.4, bagW*0.15, bagH*0.45, 8);
-  ctx.fillStyle = 'rgba(255,255,255,.05)';
-  ctx.fill();
-
-  // Center stripe
-  ctx.beginPath();
-  ctx.moveTo(cx, cy - bagH*0.3);
-  ctx.lineTo(cx, cy + bagH*0.3);
-  ctx.strokeStyle = 'rgba(255,255,255,.04)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
+  ctx.beginPath(); ctx.roundRect(cx-bw/2+bw*.12,cy-bh*.4,bw*.15,bh*.45,8);
+  ctx.fillStyle='rgba(255,255,255,.05)'; ctx.fill();
   ctx.restore();
-
-  // Tap hint
-  if (state.session.hits < 3) {
-    ctx.save();
-    ctx.globalAlpha = 0.5;
-    ctx.fillStyle = 'white';
-    ctx.font = `bold ${canvas.width*0.03}px ${document.documentElement.style.getPropertyValue('--font')||'DM Sans, sans-serif'}`;
-    ctx.textAlign = 'center';
-    ctx.fillText('¡GOLPEA!', cx, cy + bagH * 0.65);
-    ctx.restore();
+  // Hint for first hits
+  if(S.sess.hits<3){
+    ctx.save(); ctx.globalAlpha=.5; ctx.fillStyle='white';
+    ctx.font=`bold ${c.width*.03}px DM Sans,sans-serif`;
+    ctx.textAlign='center'; ctx.fillText('¡GOLPEA!',cx,cy+bh*.65); ctx.restore();
   }
 }
 
-function drawActiveTargets(canvas, ctx) {
-  const s = state.session;
-  const seq = COMBOS[s.selectedCombo]?.seq || [];
-  const currMoveKey = seq[s.comboIdx];
-  if (!currMoveKey) return;
-
-  const move = MOVES[currMoveKey];
-  if (!move || move.kp < 0) return; // dodge handled separately
-
-  const tPos = getTargetPos(currMoveKey);
-  const size = move.size * canvas.width;
-  const t = Date.now() / 1000;
-  const pulse = 1 + Math.sin(t * 3) * 0.06;
-
+// ===== TARGETS =====
+function drawTargets(c,ctx){
+  const s=S.sess;
+  const seq=COMBOS[s.selCombo]?.seq||[];
+  const cmk=seq[s.combIdx];
+  if(!cmk||MOVES[cmk]?.kp<0) return;
+  const mv=MOVES[cmk];
+  const tp=getTargetPos(cmk);
+  const sz=mv.size*c.width;
+  const t=Date.now()/1000;
+  const pulse=1+Math.sin(t*3)*.06;
   ctx.save();
-  ctx.translate(tPos.x, tPos.y);
-
-  // Outer glow
-  const glowGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, size * 1.5);
-  glowGrad.addColorStop(0, move.color + '30');
-  glowGrad.addColorStop(1, 'transparent');
-  ctx.beginPath();
-  ctx.arc(0, 0, size * 1.5, 0, Math.PI*2);
-  ctx.fillStyle = glowGrad;
-  ctx.fill();
-
+  ctx.translate(tp.x,tp.y);
+  // Glow
+  const gg=ctx.createRadialGradient(0,0,0,0,0,sz*1.6);
+  gg.addColorStop(0,mv.color+'30'); gg.addColorStop(1,'transparent');
+  ctx.beginPath(); ctx.arc(0,0,sz*1.6,0,Math.PI*2); ctx.fillStyle=gg; ctx.fill();
   // Ring
-  ctx.beginPath();
-  ctx.arc(0, 0, size * pulse, 0, Math.PI*2);
-  ctx.strokeStyle = move.color;
-  ctx.lineWidth = 3;
-  ctx.globalAlpha = .9;
-  ctx.stroke();
-
-  // Inner fill
-  ctx.beginPath();
-  ctx.arc(0, 0, size * pulse * 0.5, 0, Math.PI*2);
-  ctx.fillStyle = move.color;
-  ctx.globalAlpha = .8;
-  ctx.fill();
-
-  ctx.globalAlpha = 1;
-
+  ctx.beginPath(); ctx.arc(0,0,sz*pulse,0,Math.PI*2);
+  ctx.strokeStyle=mv.color; ctx.lineWidth=3; ctx.globalAlpha=.9; ctx.stroke();
+  // Inner
+  ctx.beginPath(); ctx.arc(0,0,sz*pulse*.5,0,Math.PI*2);
+  ctx.fillStyle=mv.color; ctx.globalAlpha=.85; ctx.fill();
+  ctx.globalAlpha=1;
   // Label
-  ctx.fillStyle = move.color;
-  ctx.font = `bold ${canvas.width * 0.028}px DM Sans, sans-serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.shadowColor = move.color;
-  ctx.shadowBlur = 8;
-  ctx.fillText(move.label, 0, size * 1.5);
-  ctx.shadowBlur = 0;
-
+  ctx.fillStyle=mv.color;
+  ctx.font=`bold ${c.width*.03}px DM Sans,sans-serif`;
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.shadowColor=mv.color; ctx.shadowBlur=8;
+  ctx.fillText(mv.label,0,sz*1.6); ctx.shadowBlur=0;
   ctx.restore();
+  // Combo progress dots
+  const seq2=COMBOS[s.selCombo]?.seq||[];
+  const dotW=c.width/seq2.length*.6, startX=(c.width-seq2.length*dotW)/2+dotW/2;
+  seq2.forEach((m,i)=>{
+    ctx.beginPath(); ctx.arc(startX+i*dotW,c.height*.06,5,0,Math.PI*2);
+    ctx.fillStyle=i<s.combIdx?MOVES[m]?.color:'rgba(255,255,255,.25)'; ctx.fill();
+  });
 }
-
-function drawDodgeIfNeeded(canvas, ctx) {
-  const s = state.session;
-  if (s.mode === 'libre') return;
-  const seq = COMBOS[s.selectedCombo]?.seq || [];
-  const currMove = seq[s.comboIdx];
-  if (!currMove || !currMove.startsWith('DODGE')) return;
-
-  const move = MOVES[currMove];
-  const t = (Date.now() % 2000) / 2000;
-  const fromLeft = currMove === 'DOGEL';
-  const barW = canvas.width * 0.65;
-  const barH = 14;
-  const barY = canvas.height * 0.55;
-  const x = fromLeft ? t * (canvas.width - barW) : (1-t) * (canvas.width - barW) + barW;
-
+function drawDodge(c,ctx){
+  const s=S.sess;
+  const seq=COMBOS[s.selCombo]?.seq||[];
+  const cmk=seq[s.combIdx];
+  if(!cmk||!cmk.startsWith('DOG')) return;
+  const mv=MOVES[cmk];
+  const t=(Date.now()%2000)/2000;
+  const fromLeft=cmk==='DOGEL';
+  const bw=c.width*.65, bh=14, by=c.height*.55;
+  const x=fromLeft?t*(c.width-bw):(1-t)*(c.width-bw)+bw;
   ctx.save();
-  const grad = ctx.createLinearGradient(
-    fromLeft ? x : x - barW, 0,
-    fromLeft ? x + barW : x, 0
-  );
-  grad.addColorStop(0, '#FF3B30');
-  grad.addColorStop(1, '#FF7070');
-  ctx.beginPath();
-  ctx.roundRect(fromLeft ? x : x - barW, barY - barH/2, barW, barH, 6);
-  ctx.fillStyle = grad;
-  ctx.fill();
-
-  ctx.fillStyle = 'white';
-  ctx.font = `bold ${canvas.width * 0.022}px DM Sans, sans-serif`;
-  ctx.textAlign = fromLeft ? 'left' : 'right';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(move.label, fromLeft ? x + 12 : x - 12, barY);
-  ctx.restore();
+  const gg=ctx.createLinearGradient(fromLeft?x:x-bw,0,fromLeft?x+bw:x,0);
+  gg.addColorStop(0,'#FF3B30'); gg.addColorStop(1,'#FF7070');
+  ctx.beginPath(); ctx.roundRect(fromLeft?x:x-bw,by-bh/2,bw,bh,6); ctx.fillStyle=gg; ctx.fill();
+  ctx.fillStyle='white'; ctx.font=`bold ${c.width*.022}px DM Sans,sans-serif`;
+  ctx.textAlign=fromLeft?'left':'right'; ctx.textBaseline='middle';
+  ctx.fillText(mv.label,fromLeft?x+12:x-12,by); ctx.restore();
 }
 
-function addHitEffect(pos, color, label) {
-  hitEffects.push({
-    x: pos.x, y: pos.y, color,
-    label, radius: 0, alpha: 1,
-    created: Date.now()
-  });
+// ===== EFFECTS =====
+function addEffect(pos,color,label){
+  hitEffects.push({x:pos.x,y:pos.y,color,label,r:0,a:1,t:Date.now()});
 }
-
-function drawHitEffects(canvas, ctx) {
-  const now = Date.now();
-  hitEffects = hitEffects.filter(e => now - e.created < 500);
-  for (const e of hitEffects) {
-    const progress = (now - e.created) / 500;
-    e.radius = progress * 80;
-    e.alpha = 1 - progress;
-
-    ctx.save();
-    ctx.globalAlpha = e.alpha;
-
-    // Expanding ring
-    ctx.beginPath();
-    ctx.arc(e.x, e.y, e.radius, 0, Math.PI*2);
-    ctx.strokeStyle = e.color;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Dust particles
-    for (let i = 0; i < 6; i++) {
-      const angle = (i / 6) * Math.PI * 2 + progress;
-      const dist = e.radius * 0.7;
-      const px = e.x + Math.cos(angle) * dist;
-      const py = e.y + Math.sin(angle) * dist;
-      ctx.beginPath();
-      ctx.arc(px, py, 3 * (1 - progress), 0, Math.PI*2);
-      ctx.fillStyle = 'rgba(255,255,255,' + e.alpha * 0.8 + ')';
-      ctx.fill();
+function drawEffects(c,ctx){
+  const now=Date.now();
+  hitEffects=hitEffects.filter(e=>now-e.t<500);
+  for(const e of hitEffects){
+    const p=(now-e.t)/500;
+    ctx.save(); ctx.globalAlpha=1-p;
+    // Ring
+    ctx.beginPath(); ctx.arc(e.x,e.y,p*80,0,Math.PI*2);
+    ctx.strokeStyle=e.color; ctx.lineWidth=2; ctx.stroke();
+    // Particles
+    for(let i=0;i<6;i++){
+      const a=i/6*Math.PI*2+p;
+      const d=p*60;
+      ctx.beginPath(); ctx.arc(e.x+Math.cos(a)*d,e.y+Math.sin(a)*d,3*(1-p),0,Math.PI*2);
+      ctx.fillStyle='rgba(255,255,255,.8)'; ctx.fill();
     }
-
-    // Hit label
-    ctx.fillStyle = e.color;
-    ctx.font = `bold ${canvas.width * 0.04}px DM Sans, sans-serif`;
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.shadowColor = e.color;
-    ctx.shadowBlur = 12;
-    ctx.fillText('+' + (e.label === 'DODGE!' ? '30' : '15'), e.x, e.y - e.radius * 0.5);
-    ctx.shadowBlur = 0;
-
-    ctx.restore();
+    // Score text
+    ctx.fillStyle=e.color; ctx.font=`bold ${c.width*.04}px DM Sans,sans-serif`;
+    ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.shadowColor=e.color; ctx.shadowBlur=12;
+    ctx.fillText(e.label.startsWith('DOD')?'+30':'+15',e.x,e.y-p*50);
+    ctx.shadowBlur=0; ctx.restore();
   }
 }
 
-// ============================================================
-// AUDIO
-// ============================================================
-function initAudio() {
-  if (!audioCtx) {
-    try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
-  }
-}
-function playSound(type) {
-  if (!audioCtx) return;
-  try {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    const dist = audioCtx.createWaveShaper();
-
-    // Distortion curve for punch sound
-    const curve = new Float32Array(256);
-    for (let i = 0; i < 256; i++) {
-      const x = (i*2)/256 - 1;
-      curve[i] = (3 + 20) * x * 20 * (Math.PI/180) / (Math.PI + 20 * Math.abs(x));
+// ======== SESSION TIMER ========
+function startRoundTimer(){
+  clearInterval(sessTimer);
+  sessTimer=setInterval(()=>{
+    if(!S.sess.active) return;
+    S.sess.timeLeft--;
+    updateHUD();
+    if(S.sess.timeLeft<=0){
+      clearInterval(sessTimer);
+      if(S.sess.round<S.sess.totalRounds) startBreak();
+      else endSession();
     }
-    dist.curve = curve;
-
-    osc.connect(dist);
-    dist.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    const configs = {
-      jab:   { f:180, decay:.08, type:'sawtooth' },
-      cross: { f:140, decay:.12, type:'sawtooth' },
-      hook:  { f:110, decay:.15, type:'square'   },
-      upper: { f:160, decay:.1,  type:'sawtooth' },
-      kick:  { f:80,  decay:.2,  type:'sine'     },
-      dodge: { f:300, decay:.06, type:'sine'     }
-    };
-    const cfg = configs[type] || configs.jab;
-    const now = audioCtx.currentTime;
-    osc.frequency.setValueAtTime(cfg.f, now);
-    osc.frequency.exponentialRampToValueAtTime(30, now + cfg.decay);
-    gain.gain.setValueAtTime(0.25, now);
-    gain.gain.exponentialRampToValueAtTime(0.001, now + cfg.decay);
-    osc.type = cfg.type;
-    osc.start(now);
-    osc.stop(now + cfg.decay);
-  } catch(e) {}
+  },1000);
 }
-
-// ============================================================
-// POST SESSION
-// ============================================================
-function showPostSession(s, duration, newBadges) {
-  document.getElementById('post-score').textContent = s.score.toLocaleString();
-  document.getElementById('post-hits').textContent = s.hits;
-  document.getElementById('post-time').textContent = fmtTime(duration);
-  document.getElementById('post-combo').textContent = '×' + s.comboMax;
-
-  // Accuracy estimate
-  const acc = s.hits > 0 ? Math.min(100, Math.round(70 + Math.random()*20)) : 0;
-  document.getElementById('post-acc').textContent = acc + '%';
-
-  // XP progress
-  const xp = state.stats.xp;
-  const lvlIdx = LEVELS.findIndex((_, i) => xp < (LEVEL_XP[i+1] || Infinity));
-  const pct = lvlIdx < LEVEL_XP.length - 1 ?
-    Math.round((xp - LEVEL_XP[lvlIdx]) / (LEVEL_XP[lvlIdx+1] - LEVEL_XP[lvlIdx]) * 100) : 100;
-  document.getElementById('post-xp-pct').textContent = pct + '%';
-  document.getElementById('post-xp-bar').style.width = pct + '%';
-
-  // New badge
-  if (newBadges.length > 0) {
-    const badge = newBadges[0];
-    document.getElementById('post-badge-section').style.display = 'flex';
-    document.getElementById('post-badge-icon').textContent = badge.icon;
-    document.getElementById('post-badge-name').textContent = badge.name;
-    document.getElementById('post-badge-desc').textContent = badge.desc;
-  } else {
-    document.getElementById('post-badge-section').style.display = 'none';
-  }
-}
-
-// ============================================================
-// BADGES
-// ============================================================
-function checkBadges() {
-  const s = state.stats;
-  const newBadges = [];
-  for (const b of ALL_BADGES) {
-    if (!state.badges.has(b.id) && b.cond(s)) {
-      state.badges.add(b.id);
-      newBadges.push(b);
+function startBreak(){
+  S.sess.active=false;
+  let bt=DIFF[S.sess.diff].rest;
+  document.getElementById('hud-rnd').textContent='⏸ Descanso';
+  breakTimer=setInterval(()=>{
+    bt--; document.getElementById('hud-tmr').textContent=fmtT(bt);
+    if(bt<=0){
+      clearInterval(breakTimer);
+      S.sess.round++; S.sess.timeLeft=DIFF[S.sess.diff].dur;
+      S.sess.active=true; updateHUD(); startRoundTimer();
     }
-  }
-  return newBadges;
+  },1000);
 }
-let currentBadgeFilter = 'all';
-function filterBadges(cat) {
-  currentBadgeFilter = cat;
-  document.querySelectorAll('#badge-filters .filter-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.textContent === (cat === 'all' ? 'Todas' : cat));
-  });
-  renderBadges();
+function updateHUD(){
+  const s=S.sess;
+  document.getElementById('hud-rnd').textContent=`${s.round}/${s.totalRounds}`;
+  document.getElementById('hud-tmr').textContent=fmtT(s.timeLeft);
+  document.getElementById('hud-sc').textContent=s.score.toLocaleString();
+  document.getElementById('hud-hits').textContent=s.hits;
+  document.getElementById('hud-cal').textContent=Math.round(s.hits*(S.user.wt*.006));
+  const ch=document.getElementById('combo-hud');
+  if(s.comboStr>=2){ ch.style.display='block'; document.getElementById('combo-txt').textContent=`⚡ ×${s.comboStr}`; }
+  else ch.style.display='none';
 }
-function renderBadges() {
-  const grid = document.getElementById('badges-grid');
-  const badges = currentBadgeFilter === 'all' ? ALL_BADGES : ALL_BADGES.filter(b => b.cat === currentBadgeFilter);
-  const unlocked = state.badges.size;
-  document.getElementById('badges-count').textContent = unlocked;
-  grid.innerHTML = badges.map(b => {
-    const isUnlocked = state.badges.has(b.id);
-    return `<div class="badge-cell">
-      <div class="badge-icon-wrap ${isUnlocked?'unlocked':'locked'}">${b.icon}</div>
-      ${isUnlocked ? '<div class="badge-check">✓</div>' : ''}
-      <span class="badge-name ${isUnlocked?'unlocked':''}">${b.name}</span>
-    </div>`;
+function fmtT(s){ return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`; }
+function rendNextMoves(){
+  const s=S.sess, seq=COMBOS[s.selCombo]?.seq||[];
+  document.getElementById('nxt-moves').innerHTML=seq.slice(s.combIdx,s.combIdx+3).map(m=>{
+    const mv=MOVES[m];
+    return `<span style="background:${mv?.color||'#888'}20;border:1px solid ${mv?.color||'#888'}55;color:${mv?.color||'#888'};font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px">${mv?.label||m}</span>`;
   }).join('');
 }
 
-// ============================================================
-// HOME REFRESH
-// ============================================================
-function refreshHome() {
-  const name = state.user.name || 'Entrenador';
-  document.getElementById('home-greeting').textContent = `${name} 🥊`;
-  document.getElementById('home-streak').textContent = state.stats.streak;
-
-  const xp = state.stats.xp;
-  const lvlIdx = LEVELS.findIndex((_, i) => xp < (LEVEL_XP[i+1] || Infinity));
-  const currentLevel = LEVELS[Math.min(lvlIdx, LEVELS.length-1)] || LEVELS[LEVELS.length-1];
-  const nextLevel = LEVELS[Math.min(lvlIdx+1, LEVELS.length-1)];
-  const pct = lvlIdx < LEVEL_XP.length - 1 ?
-    Math.round((xp - LEVEL_XP[lvlIdx]) / (LEVEL_XP[lvlIdx+1] - LEVEL_XP[lvlIdx]) * 100) : 100;
-  document.getElementById('home-level').textContent = currentLevel;
-  document.getElementById('home-xp').style.width = pct + '%';
-  document.getElementById('home-level-from').textContent = currentLevel;
-  document.getElementById('home-level-pct').textContent = pct + '% → ' + nextLevel;
-
-  const ls = state.stats.lastSession;
-  document.getElementById('home-last-hits').textContent = ls.hits || 0;
-  document.getElementById('home-last-acc').textContent = ls.hits > 0 ? Math.round(70+Math.random()*20)+'%' : '—';
-  document.getElementById('home-last-time').textContent = ls.duration > 0 ? fmtTime(ls.duration) : '0:00';
-
-  // Next badge
-  const nextBadge = ALL_BADGES.find(b => !state.badges.has(b.id));
-  if (nextBadge) {
-    document.getElementById('home-next-badge-icon').textContent = nextBadge.icon;
-    document.getElementById('home-next-badge-name').textContent = nextBadge.name;
-    document.getElementById('home-next-badge-desc').textContent = nextBadge.desc;
-  }
+// ======== END SESSION ========
+function endSession(){
+  clearInterval(sessTimer); clearInterval(breakTimer);
+  S.sess.active=false; arRunning=false;
+  if(camStream){ camStream.getTracks().forEach(t=>t.stop()); camStream=null; }
+  detector=null; currKpts=null; prevKpts=null;
+  const s=S.sess, dur=Math.floor((Date.now()-s.startTime)/1000);
+  S.stats.totalHits+=s.hits; S.stats.totalKicks+=s.kicks;
+  S.stats.totalDodges+=s.dodges; S.stats.totalCombos+=s.combos;
+  S.stats.totalSessions+=1; S.stats.totalRounds+=s.round-1;
+  if(s.diff==='hard') S.stats.hardRounds+=s.round-1;
+  S.stats.totalTime+=dur; S.stats.xp+=s.score;
+  S.stats.lastSession={hits:s.hits,dur,score:s.score,comboMax:s.comboMax};
+  const today=new Date().toDateString(), lastDay=localStorage.getItem('kf2_last'),
+        yesterday=new Date(Date.now()-86400000).toDateString();
+  if(lastDay===yesterday) S.stats.streak++;
+  else if(lastDay!==today) S.stats.streak=1;
+  localStorage.setItem('kf2_last',today);
+  const nb=checkBadges(); save();
+  showPost(s,dur,nb); goTo('post');
 }
 
-// ============================================================
-// PROFILE REFRESH
-// ============================================================
-function refreshProfile() {
-  document.getElementById('profile-name').textContent = state.user.name || 'Entrenador';
-  const xp = state.stats.xp;
-  const lvlIdx = LEVELS.findIndex((_, i) => xp < (LEVEL_XP[i+1] || Infinity));
-  document.getElementById('profile-level').textContent = LEVELS[Math.min(lvlIdx, LEVELS.length-1)];
-  document.getElementById('profile-streak').textContent = '🔥 ' + state.stats.streak + ' días';
-
-  const statsData = [
-    ['Sesiones totales', state.stats.totalSessions],
-    ['Golpes totales', state.stats.totalHits.toLocaleString()],
-    ['Patadas totales', state.stats.totalKicks],
-    ['Tiempo acumulado', fmtTime(state.stats.totalTime)],
-    ['Mejor racha', state.stats.streak + ' días'],
-    ['Insignias', state.badges.size + ' / ' + ALL_BADGES.length],
-  ];
-  document.getElementById('profile-stats-list').innerHTML = statsData.map((s,i) =>
-    `<div style="display:flex;justify-content:space-between;padding-bottom:${i<statsData.length-1?'10px':'0'};margin-bottom:${i<statsData.length-1?'10px':'0'};border-bottom:${i<statsData.length-1?'1px solid var(--border)':'none'}">
-      <span style="font-size:13px;color:var(--muted)">${s[0]}</span>
-      <span style="font-size:13px;font-weight:700;color:var(--text)">${s[1]}</span>
-    </div>`
-  ).join('');
+// ======== AUDIO ========
+function initAudio(){ if(!audioCtx) try{ audioCtx=new(window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+function playSound(type){
+  if(!audioCtx) return;
+  try{
+    const osc=audioCtx.createOscillator(), g=audioCtx.createGain();
+    osc.connect(g); g.connect(audioCtx.destination);
+    const cfg={jab:{f:180,d:.08,t:'sawtooth'},cross:{f:140,d:.12,t:'sawtooth'},hook:{f:110,d:.15,t:'square'},upper:{f:160,d:.1,t:'sawtooth'},kick:{f:80,d:.2,t:'sine'},dodge:{f:300,d:.06,t:'sine'}};
+    const c2=cfg[type]||cfg.jab, now=audioCtx.currentTime;
+    osc.frequency.setValueAtTime(c2.f,now);
+    osc.frequency.exponentialRampToValueAtTime(30,now+c2.d);
+    g.gain.setValueAtTime(.25,now); g.gain.exponentialRampToValueAtTime(.001,now+c2.d);
+    osc.type=c2.t; osc.start(now); osc.stop(now+c2.d);
+  }catch(e){}
 }
 
-// ============================================================
-// SHARE
-// ============================================================
-function shareSession() {
-  const s = state.stats.lastSession;
-  const text = `💪 Acabo de completar una sesión en KinearFit!\n🥊 ${s.hits} golpes · 🏆 Score: ${s.score.toLocaleString()}\n⬇️ Descarga KinearFit`;
-  if (navigator.share) {
-    navigator.share({ title:'KinearFit', text, url:'https://kinearfit.com' }).catch(()=>{});
-  } else {
-    navigator.clipboard?.writeText(text).then(()=>alert('Copiado al portapapeles!')).catch(()=>{});
-  }
+// ======== BADGES ========
+function checkBadges(){
+  const nb=[];
+  for(const b of BADGES) if(!S.badges.has(b.id)&&b.c(S.stats)){ S.badges.add(b.id); nb.push(b); }
+  return nb;
 }
-function changeLanguage() {
-  alert('Idiomas disponibles: Español, English, Português, Français, Deutsch\n\n(Implementación completa en la app)');
+let bFilter='all';
+function filtB(f){
+  bFilter=f;
+  document.querySelectorAll('#bfilters .filter-btn').forEach(btn=>btn.classList.toggle('active',btn.textContent===(f==='all'?'Todas':f)));
+  rendBadges();
+}
+function rendBadges(){
+  const list=bFilter==='all'?BADGES:BADGES.filter(b=>b.cat===bFilter);
+  document.getElementById('bc').textContent=S.badges.size;
+  document.getElementById('bgrid').innerHTML=list.map(b=>{
+    const u=S.badges.has(b.id);
+    return `<div class="badge-cell"><div class="badge-wrap ${u?'unlocked':'locked'}">${b.icon}</div>${u?'<div class="badge-check">✓</div>':''}<span class="badge-nm ${u?'u':''}">${b.name}</span></div>`;
+  }).join('');
 }
 
-// ============================================================
-// INIT
-// ============================================================
-window.addEventListener('resize', () => {
-  const canvas = document.getElementById('ar-canvas');
-  if (canvas) { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+// ======== POST SESSION ========
+function showPost(s,dur,nb){
+  document.getElementById('ps-score').textContent=s.score.toLocaleString();
+  document.getElementById('ps-hits').textContent=s.hits;
+  document.getElementById('ps-time').textContent=fmtT(dur);
+  document.getElementById('ps-combo').textContent='×'+s.comboMax;
+  document.getElementById('ps-acc').textContent=s.hits>0?Math.min(100,Math.round(68+Math.random()*22))+'%':'—';
+  const xp=S.stats.xp, li=LEVELS.findIndex((_,i)=>xp<(LEVEL_XP[i+1]||Infinity));
+  const pct=li<LEVEL_XP.length-1?Math.round((xp-LEVEL_XP[li])/(LEVEL_XP[li+1]-LEVEL_XP[li])*100):100;
+  document.getElementById('ps-xpp').textContent=pct+'%';
+  document.getElementById('ps-xpb').style.width=pct+'%';
+  if(nb.length>0){
+    const b=nb[0]; document.getElementById('ps-badge').style.display='flex';
+    document.getElementById('ps-bicon').textContent=b.icon;
+    document.getElementById('ps-bname').textContent=b.name;
+    document.getElementById('ps-bdesc').textContent=b.desc;
+  } else document.getElementById('ps-badge').style.display='none';
+}
+function shareSession(){
+  const s=S.stats.lastSession;
+  const txt=`💪 KinearFit — ${s.hits} golpes · 🏆 ${s.score?.toLocaleString()} pts\nhttps://jc33rc.github.io/kinearfit-demo/`;
+  if(navigator.share) navigator.share({title:'KinearFit',text:txt}).catch(()=>{});
+  else navigator.clipboard?.writeText(txt).then(()=>alert('¡Copiado!')).catch(()=>{});
+}
+
+// ======== HOME / PROFILE ========
+function refHome(){
+  const n=S.user.name||'Entrenador';
+  document.getElementById('h-greeting').textContent=`${n} 🥊`;
+  document.getElementById('h-streak').textContent=S.stats.streak;
+  const xp=S.stats.xp, li=LEVELS.findIndex((_,i)=>xp<(LEVEL_XP[i+1]||Infinity));
+  const cur=LEVELS[Math.min(li,LEVELS.length-1)], nxt=LEVELS[Math.min(li+1,LEVELS.length-1)];
+  const pct=li<LEVEL_XP.length-1?Math.round((xp-LEVEL_XP[li])/(LEVEL_XP[li+1]-LEVEL_XP[li])*100):100;
+  document.getElementById('h-level').textContent=cur;
+  document.getElementById('h-xp').style.width=pct+'%';
+  document.getElementById('h-lf').textContent=cur;
+  document.getElementById('h-lp').textContent=pct+'% → '+nxt;
+  const ls=S.stats.lastSession;
+  document.getElementById('h-lhits').textContent=ls.hits||0;
+  document.getElementById('h-lacc').textContent=ls.hits>0?Math.round(68+Math.random()*22)+'%':'—';
+  document.getElementById('h-ltime').textContent=ls.dur>0?fmtT(ls.dur):'0:00';
+  const nb=BADGES.find(b=>!S.badges.has(b.id));
+  if(nb){ document.getElementById('h-nbicon').textContent=nb.icon; document.getElementById('h-nbname').textContent=nb.name; document.getElementById('h-nbdesc').textContent=nb.desc; }
+}
+function refProfile(){
+  document.getElementById('pf-name').textContent=S.user.name||'Entrenador';
+  const xp=S.stats.xp, li=LEVELS.findIndex((_,i)=>xp<(LEVEL_XP[i+1]||Infinity));
+  document.getElementById('pf-level').textContent=LEVELS[Math.min(li,LEVELS.length-1)];
+  document.getElementById('pf-streak').textContent='🔥 '+S.stats.streak+' días';
+  const rows=[['Sesiones',S.stats.totalSessions],['Golpes totales',S.stats.totalHits.toLocaleString()],['Tiempo',fmtT(S.stats.totalTime)],['Mejor racha',S.stats.streak+' días'],['Insignias',S.badges.size+'/'+BADGES.length]];
+  document.getElementById('pf-stats').innerHTML=rows.map((r,i)=>`<div style="display:flex;justify-content:space-between;${i<rows.length-1?'padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--border)':''}"><span class="muted-text">${r[0]}</span><span style="font-size:13px;font-weight:700;color:var(--text)">${r[1]}</span></div>`).join('');
+}
+
+// ======== INIT ========
+window.addEventListener('resize',()=>{
+  const c=document.getElementById('ar-canvas');
+  if(c){ c.width=window.innerWidth; c.height=window.innerHeight; }
 });
-
-// Handle back button
-window.addEventListener('popstate', () => {
-  if (state.screen === 'session') endSession();
-});
-
-// Load saved state
-loadState();
-
-// Start splash
-setTimeout(() => {
-  const hasUser = state.user.name && state.user.name.length > 0;
+load();
+applyDom(S.user.dom||'right');
+selDiff('medium');
+rendCombos();
+setTimeout(()=>{
   document.getElementById('screen-splash').classList.remove('active');
-  if (hasUser) {
+  if(S.user.name){
     goTo('home');
-    document.getElementById('bottom-nav').style.display = 'flex';
+    document.getElementById('bottom-nav').style.display='flex';
   } else {
     document.getElementById('screen-onboarding').classList.add('active');
-    state.screen = 'onboarding';
+    S.screen='onboarding';
   }
-}, 2200);
-
-// Init train screen
-selectDiff('medium');
-renderCombosList();
+},2300);
 </script>
 </body>
 </html>
