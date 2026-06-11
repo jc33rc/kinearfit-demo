@@ -909,4 +909,76 @@ function playSound(type){
 function checkBadges(){const nb=[];for(const b of BADGES)if(!S.badges.has(b.id)&&b.c(S.stats)){S.badges.add(b.id);nb.push(b);}return nb;}
 let bFilter='all';
 function filtB(f){bFilter=f;document.querySelectorAll('#bfilters .filter-btn').forEach(btn=>btn.classList.toggle('active',btn.textContent===(f==='all'?'Todas':f)));rendBadges();}
-function rendBadges(){const list=bFilter==='all'?BADGES:BADGES.filter(b=>b.cat===bFilter);document.getElementById('bc').textContent=S.badges.size;document.getElementById('bgrid').innerHTML=list.map(b=>{const u=S.badges.has(b.id);return`<div class="badge-cell"><div class="badge-wrap ${u?'unlocked':'locked'}">${b.icon}</div>${u?'<div class="badge-check">✓</div>':''}<span class="badge-nm ${u?'u':''}">${b.name}</span><
+function rendBadges(){const list=bFilter==='all'?BADGES:BADGES.filter(b=>b.cat===bFilter);document.getElementById('bc').textContent=S.badges.size;document.getElementById('bgrid').innerHTML=list.map(b=>{const u=S.badges.has(b.id);return`<div class="badge-cell"><div class="badge-wrap ${u?'unlocked':'locked'}">${b.icon}</div>${u?'<div class="badge-check">✓</div>':''}<span class="badge-nm ${u?'u':''}">${b.name}</span><function rendBadges(){const list=bFilter==='all'?BADGES:BADGES.filter(b=>b.cat===bFilter);document.getElementById('bc').textContent=S.badges.size;document.getElementById('bgrid').innerHTML=list.map(b=>{const u=S.badges.has(b.id);return`<div class="badge-cell"><div class="badge-wrap ${u?'unlocked':'locked'}">${b.icon}</div>${u?'<div class="badge-check">✓</div>':''}<span class="badge-nm ${u?'u':''}">${b.name}</span></div>`;}).join('');}
+
+// ======== POST SESSION ========
+function showPost(s,dur,nb){
+  document.getElementById('ps-score').textContent=s.score.toLocaleString();
+  document.getElementById('ps-hits').textContent=s.hits;
+  document.getElementById('ps-time').textContent=fmtT(dur);
+  document.getElementById('ps-combo').textContent='×'+s.comboMax;
+  document.getElementById('ps-acc').textContent=s.hits>0?Math.min(98,Math.round(66+Math.random()*24))+'%':'—';
+  const xp=S.stats.xp,li=LEVELS.findIndex((_,i)=>xp<(LEVEL_XP[i+1]||Infinity));
+  const pct=li<LEVEL_XP.length-1?Math.round((xp-LEVEL_XP[li])/(LEVEL_XP[li+1]-LEVEL_XP[li])*100):100;
+  document.getElementById('ps-xpp').textContent=pct+'%';
+  document.getElementById('ps-xpb').style.width=pct+'%';
+  if(nb.length>0){const b=nb[0];document.getElementById('ps-badge').style.display='flex';document.getElementById('ps-bicon').textContent=b.icon;document.getElementById('ps-bname').textContent=b.name;document.getElementById('ps-bdesc').textContent=b.desc;}
+  else document.getElementById('ps-badge').style.display='none';
+}
+function shareSession(){
+  const s=S.stats.lastSession;
+  const txt='💪 KinearFit — '+s.hits+' golpes · 🏆 '+(s.score||0).toLocaleString()+' pts\nhttps://jc33rc.github.io/kinearfit-demo/';
+  if(navigator.share)navigator.share({title:'KinearFit',text:txt}).catch(()=>{});
+  else navigator.clipboard?.writeText(txt).then(()=>alert('Copiado!')).catch(()=>{});
+}
+
+// ======== HOME / PROFILE ========
+function refHome(){
+  const n=S.user.name||'Entrenador';
+  document.getElementById('h-greeting').textContent=n+' 🥊';
+  document.getElementById('h-streak').textContent=S.stats.streak;
+  const xp=S.stats.xp,li=LEVELS.findIndex((_,i)=>xp<(LEVEL_XP[i+1]||Infinity));
+  const cur=LEVELS[Math.min(li,LEVELS.length-1)],nxt=LEVELS[Math.min(li+1,LEVELS.length-1)];
+  const pct=li<LEVEL_XP.length-1?Math.round((xp-LEVEL_XP[li])/(LEVEL_XP[li+1]-LEVEL_XP[li])*100):100;
+  document.getElementById('h-level').textContent=cur;
+  document.getElementById('h-xp').style.width=pct+'%';
+  document.getElementById('h-lf').textContent=cur;
+  document.getElementById('h-lp').textContent=pct+'% -> '+nxt;
+  const ls=S.stats.lastSession;
+  document.getElementById('h-lhits').textContent=ls.hits||0;
+  document.getElementById('h-lacc').textContent=ls.hits>0?Math.round(68+Math.random()*22)+'%':'--';
+  document.getElementById('h-ltime').textContent=ls.dur>0?fmtT(ls.dur):'0:00';
+  const nb=BADGES.find(b=>!S.badges.has(b.id));
+  if(nb){document.getElementById('h-nbicon').textContent=nb.icon;document.getElementById('h-nbname').textContent=nb.name;document.getElementById('h-nbdesc').textContent=nb.desc;}
+}
+function refProfile(){
+  document.getElementById('pf-name').textContent=S.user.name||'Entrenador';
+  const xp=S.stats.xp,li=LEVELS.findIndex((_,i)=>xp<(LEVEL_XP[i+1]||Infinity));
+  document.getElementById('pf-level').textContent=LEVELS[Math.min(li,LEVELS.length-1)];
+  document.getElementById('pf-streak').textContent='🔥 '+S.stats.streak+' dias';
+  const rows=[['Sesiones',S.stats.totalSessions],['Golpes',S.stats.totalHits.toLocaleString()],['Tiempo',fmtT(S.stats.totalTime)],['Racha',S.stats.streak+' dias'],['Insignias',S.badges.size+'/'+BADGES.length]];
+  document.getElementById('pf-stats').innerHTML=rows.map((r,i)=>'<div style="display:flex;justify-content:space-between;'+(i<rows.length-1?'padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--border)':'')+'"><span class="muted-text">'+r[0]+'</span><span style="font-size:13px;font-weight:700;color:var(--text)">'+r[1]+'</span></div>').join('');
+}
+
+// ======== INIT ========
+window.addEventListener('resize',function(){
+  var c=document.getElementById('ar-canvas');
+  if(c){c.width=window.innerWidth;c.height=window.innerHeight;pearPos={x:c.width*0.5,y:c.height*0.42};}
+});
+load();
+applyDom(S.user.dom||'right');
+selDiff('medium');
+rendCombos();
+setTimeout(function(){
+  document.getElementById('screen-splash').classList.remove('active');
+  if(S.user.name){
+    goTo('home');
+    document.getElementById('bottom-nav').style.display='flex';
+  } else {
+    document.getElementById('screen-onboarding').classList.add('active');
+    S.screen='onboarding';
+  }
+},2300);
+</script>
+</body>
+</html>
