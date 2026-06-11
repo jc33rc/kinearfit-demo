@@ -944,6 +944,10 @@ function drawGlove(ctx,x,y,sz,isLeft){
 }
 
 // ======== GAME FEEL — Sparks + Floating Text ========
+function addEffect(pos,color,label,pts){
+  hitEffects.push({x:pos.x,y:pos.y,color:color,label:label,pts:pts||15,t:Date.now()});
+}
+
 function drawEffects(c,ctx){
   var now=Date.now();
   hitEffects=hitEffects.filter(function(e){return now-e.t<750;});
