@@ -487,9 +487,9 @@ function processHits(){
       var cKey='L'+ck.idx;
       if((now-(hitCool[cKey]||0))<HIT_CD)continue;
       var lkp=currKpts[ck.idx];
-      if(!lkp||lkp.score<0.2)continue;
-      var lvel=calcVel(ck.idx,'total');
-      if(lvel<20)continue;
+      if(!lkp||lkp.score<0.15)continue;
+      var lvel=Math.max(calcVel(ck.idx,'total'),calcVel(ck.idx,'lateral')*1.2);
+      if(lvel<13)continue;
       var lkpx={x:lkp.x*c.width,y:lkp.y*c.height};
       if(Math.hypot(lkpx.x-pearPos.x,lkpx.y-pearPos.y)>hitR)continue;
       hitCool[cKey]=now;
@@ -632,7 +632,6 @@ function arLoop(){
   updatePearPhysics();
   if(S.sess.mode==='libre')drawPear(c,ctx);
   else{drawTargets(c,ctx);drawDodgeZone(c,ctx);}
-  drawGloves(c,ctx);
   drawEffects(c,ctx);
   requestAnimationFrame(arLoop);
 }
@@ -661,100 +660,97 @@ function hitPear(mk){
   pearDamage=Math.min(100,pearDamage+(isKick?7:4));
 }
 function drawPear(c,ctx){
-  const px=pearPos.x+pearBounce.x, py=pearPos.y+pearBounce.y;
-  const r=c.width*0.13; // Radius of speed bag
-  const dmg=pearDamage/100;
+  var px=pearPos.x+pearBounce.x, py=pearPos.y+pearBounce.y;
+  var r=Math.min(c.width,c.height)*0.095; // Responsive size
+  var dmg=pearDamage/100;
 
   ctx.save();
   ctx.translate(px,py);
 
-  // ── Mount bracket ──
-  var rrx=-r*0.18,rry=-r*1.52,rrw=r*0.36,rrh=r*0.55,rrr=4;
-  ctx.beginPath();ctx.moveTo(rrx+rrr,rry);ctx.lineTo(rrx+rrw-rrr,rry);ctx.arcTo(rrx+rrw,rry,rrx+rrw,rry+rrr,rrr);ctx.lineTo(rrx+rrw,rry+rrh-rrr);ctx.arcTo(rrx+rrw,rry+rrh,rrx+rrw-rrr,rry+rrh,rrr);ctx.lineTo(rrx+rrr,rry+rrh);ctx.arcTo(rrx,rry+rrh,rrx,rry+rrh-rrr,rrr);ctx.lineTo(rrx,rry+rrr);ctx.arcTo(rrx,rry,rrx+rrr,rry,rrr);ctx.closePath();
-  ctx.fillStyle='rgba(180,180,180,0.55)';ctx.fill();
-  // Swivel ball
-  ctx.beginPath();ctx.arc(0,-r*1.02,r*0.14,0,Math.PI*2);
-  ctx.fillStyle='rgba(210,210,210,0.7)';ctx.fill();
+  // ── Mounting cord/spring ──
+  ctx.strokeStyle='rgba(200,200,200,0.5)';
+  ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(0,-r*1.1);ctx.lineTo(0,-r*1.9);ctx.stroke();
+  // Mounting platform
+  ctx.fillStyle='rgba(160,160,160,0.5)';
+  ctx.beginPath();ctx.arc(0,-r*2.05,r*0.22,0,Math.PI*2);ctx.fill();
 
-  // ── Speed bag outer glow ──
-  const glow=ctx.createRadialGradient(0,0,r*0.4,0,0,r*1.6);
-  const glowColor=dmg>0.5?'rgba(220,50,20,0.22)':'rgba(180,80,30,0.15)';
-  glow.addColorStop(0,glowColor);glow.addColorStop(1,'transparent');
-  ctx.beginPath();ctx.arc(0,0,r*1.6,0,Math.PI*2);ctx.fillStyle=glow;ctx.fill();
+  // ── Outer shadow/glow ──
+  var shadow=ctx.createRadialGradient(0,0,r*0.6,0,0,r*1.5);
+  var sdwColor=dmg>0.5?'rgba(200,40,20,0.3)':'rgba(120,50,20,0.2)';
+  shadow.addColorStop(0,sdwColor);shadow.addColorStop(1,'transparent');
+  ctx.beginPath();ctx.arc(0,0,r*1.5,0,Math.PI*2);ctx.fillStyle=shadow;ctx.fill();
 
-  // ── Bag body ──
-  // Color: leather brown → red with damage
-  const baseR=Math.round(140+dmg*100), baseG=Math.round(55-dmg*40), baseB=Math.round(20);
-  const mainGrad=ctx.createRadialGradient(-r*0.28,-r*0.32,r*0.05,0,0,r);
-  mainGrad.addColorStop(0,`rgb(${Math.min(255,baseR+65)},${Math.min(255,baseG+40)},${baseB+25})`);
-  mainGrad.addColorStop(0.35,`rgb(${baseR},${baseG},${baseB})`);
-  mainGrad.addColorStop(0.75,`rgb(${Math.max(0,baseR-45)},${Math.max(0,baseG-25)},${Math.max(0,baseB-10)}`);
-  mainGrad.addColorStop(1,`rgb(${Math.max(0,baseR-70)},${Math.max(0,baseG-40)},0)`);
-
+  // ── Main bag body ──
+  var baseR=Math.round(150+dmg*90), baseG=Math.round(60-dmg*45), baseB=20;
+  var mainG=ctx.createRadialGradient(-r*0.3,-r*0.3,r*0.05,r*0.1,r*0.1,r*1.1);
+  mainG.addColorStop(0,'rgb('+(Math.min(255,baseR+70))+','+(Math.min(255,baseG+45))+','+(baseB+30)+')');
+  mainG.addColorStop(0.4,'rgb('+baseR+','+baseG+','+baseB+')');
+  mainG.addColorStop(0.8,'rgb('+(Math.max(0,baseR-50))+','+(Math.max(0,baseG-30))+','+Math.max(0,baseB-10)+')');
+  mainG.addColorStop(1,'rgb('+(Math.max(0,baseR-80))+','+(Math.max(0,baseG-45))+',0)');
   ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);
-  ctx.fillStyle=mainGrad;ctx.fill();
+  ctx.fillStyle=mainG;ctx.fill();
 
-  // ── Leather seams (stitch lines) ──
-  ctx.strokeStyle=`rgba(${Math.max(0,baseR-60)},${Math.max(0,baseG-30)},0,0.6)`;
-  ctx.lineWidth=1.5;
-  // Vertical seam
-  ctx.beginPath();ctx.moveTo(0,-r*0.85);ctx.lineTo(0,r*0.85);ctx.stroke();
-  // Horizontal seam
-  ctx.beginPath();ctx.moveTo(-r*0.85,0);ctx.lineTo(r*0.85,0);ctx.stroke();
-  // Curved panel lines
-  for(var a=0;a<4;a++){
-    ctx.beginPath();
-    ctx.arc(0,0,r*0.5,a*Math.PI*0.5,(a+1)*Math.PI*0.5);
-    ctx.strokeStyle=`rgba(${Math.max(0,baseR-50)},${Math.max(0,baseG-25)},0,0.4)`;
-    ctx.stroke();
+  // ── Leather panel seams ──
+  ctx.strokeStyle='rgba('+(Math.max(0,baseR-55))+','+(Math.max(0,baseG-30))+',0,0.55)';
+  ctx.lineWidth=2;
+  // Cross seams
+  ctx.beginPath();ctx.moveTo(0,-r*0.88);ctx.lineTo(0,r*0.88);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-r*0.88,0);ctx.lineTo(r*0.88,0);ctx.stroke();
+  // Diagonal panel curves
+  for(var i=0;i<4;i++){
+    var startA=i*Math.PI/2, endA=(i+1)*Math.PI/2;
+    ctx.beginPath();ctx.arc(0,0,r*0.52,startA,endA);ctx.stroke();
   }
 
-  // ── Specular highlight (3D look) ──
-  const spec=ctx.createRadialGradient(-r*0.3,-r*0.35,0,-r*0.3,-r*0.35,r*0.42);
-  spec.addColorStop(0,'rgba(255,255,255,0.52)');
-  spec.addColorStop(0.5,'rgba(255,255,255,0.12)');
-  spec.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);
-  ctx.fillStyle=spec;ctx.fill();
+  // ── Brand circle (center detail) ──
+  ctx.beginPath();ctx.arc(0,0,r*0.18,0,Math.PI*2);
+  ctx.strokeStyle='rgba('+(Math.max(0,baseR-40))+','+(Math.max(0,baseG-20))+',0,0.4)';
+  ctx.lineWidth=1.5;ctx.stroke();
 
-  // ── Edge shadow ──
-  const edge=ctx.createRadialGradient(0,0,r*0.6,0,0,r);
-  edge.addColorStop(0,'transparent');
-  edge.addColorStop(1,'rgba(0,0,0,0.35)');
-  ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);
-  ctx.fillStyle=edge;ctx.fill();
+  // ── 3D specular highlight ──
+  var spec=ctx.createRadialGradient(-r*0.32,-r*0.38,0,-r*0.32,-r*0.38,r*0.48);
+  spec.addColorStop(0,'rgba(255,255,255,0.55)');
+  spec.addColorStop(0.6,'rgba(255,255,255,0.1)');
+  spec.addColorStop(1,'rgba(255,255,255,0)');
+  ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fillStyle=spec;ctx.fill();
+
+  // ── Edge darkening ──
+  var edge=ctx.createRadialGradient(0,0,r*0.55,0,0,r);
+  edge.addColorStop(0,'transparent');edge.addColorStop(1,'rgba(0,0,0,0.4)');
+  ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fillStyle=edge;ctx.fill();
 
   // ── Damage cracks ──
-  if(dmg>0.35){
-    ctx.strokeStyle=`rgba(0,0,0,${dmg*0.5})`;ctx.lineWidth=1.2;
-    var nCracks=Math.floor(dmg*6);
-    for(var i=0;i<nCracks;i++){
-      var ang=(i/nCracks)*Math.PI*2+(i*0.8);
+  if(dmg>0.3){
+    ctx.strokeStyle='rgba(0,0,0,'+(dmg*0.5)+')';ctx.lineWidth=1.2;
+    var nc=Math.floor(dmg*7);
+    for(var ci=0;ci<nc;ci++){
+      var ca=(ci/nc)*Math.PI*2+(ci*0.9);
       ctx.beginPath();
-      ctx.moveTo(Math.cos(ang)*r*0.15,Math.sin(ang)*r*0.15);
-      ctx.lineTo(Math.cos(ang+0.5)*r*0.75,Math.sin(ang+0.5)*r*0.72);
+      ctx.moveTo(Math.cos(ca)*r*0.12,Math.sin(ca)*r*0.12);
+      ctx.lineTo(Math.cos(ca+0.6)*r*0.72,Math.sin(ca+0.6)*r*0.68);
       ctx.stroke();
     }
   }
 
   // ── Impact flash ──
   if(pearFlash>0){
-    const fl=ctx.createRadialGradient(0,0,0,0,0,r);
-    fl.addColorStop(0,`rgba(255,200,50,${pearFlash*0.8})`);
-    fl.addColorStop(1,`rgba(255,100,0,${pearFlash*0.3})`);
-    ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);
-    ctx.fillStyle=fl;ctx.fill();
+    var fl=ctx.createRadialGradient(0,0,0,0,0,r);
+    fl.addColorStop(0,'rgba(255,210,60,'+(pearFlash*0.85)+')');
+    fl.addColorStop(0.6,'rgba(255,100,10,'+(pearFlash*0.4)+')');
+    fl.addColorStop(1,'transparent');
+    ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fillStyle=fl;ctx.fill();
   }
 
   ctx.restore();
 
-  // ── Tap hint ──
+  // ── Hit hint ──
   if(S.sess.hits<4){
-    ctx.save();ctx.globalAlpha=0.6;ctx.fillStyle='white';
-    ctx.font='bold '+Math.round(c.width*0.036)+'px DM Sans,sans-serif';
+    ctx.save();ctx.globalAlpha=0.65;ctx.fillStyle='white';
+    ctx.font='bold '+Math.round(c.width*0.038)+'px DM Sans,sans-serif';
     ctx.textAlign='center';
-    ctx.shadowColor='rgba(0,0,0,0.6)';ctx.shadowBlur=8;
-    ctx.fillText('GOLPEA',px,py+r*1.55);
+    ctx.shadowColor='rgba(0,0,0,0.7)';ctx.shadowBlur=10;
+    ctx.fillText('GOLPEA',px,py+r*1.7);
     ctx.restore();
   }
 }
@@ -943,7 +939,6 @@ function arLoop(){
   updatePearPhysics();
   if(S.sess.mode==='libre')drawPear(c,ctx);
   else{drawTargets(c,ctx);drawDodgeZone(c,ctx);}
-  drawGloves(c,ctx);
   drawEffects(c,ctx);
   requestAnimationFrame(arLoop);
 }
