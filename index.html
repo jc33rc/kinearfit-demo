@@ -327,7 +327,27 @@ function setLvl(l){S.user.level=l;['b','i','a'].forEach((x,i)=>document.getEleme
 
 // ======== TRAIN ========
 function selMode(m){S.mode=m;document.getElementById('mc-libre').classList.toggle('active',m==='libre');document.getElementById('mc-combos').classList.toggle('active',m==='combos');document.getElementById('combos-panel').style.display=m==='combos'?'block':'none';if(m==='combos')rendCombos();}
-function rendCombos(){document.getElementById('combo-list').innerHTML=COMBOS.map((c,i)=>`<div class="combo-item ${i===S.selCombo?'active':''}" onclick="selCombo(${i})"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-size:14px;font-weight:700;color:var(--text)">${c.name}</span><span class="chip ${c.level==='Fácil'?'chip-green':''}" style="${c.level==='Avanzado'?'background:#FFEDEB;color:#FF3B30':c.level==='Intermedio'?'background:#FFF4E6;color:#F77F00':''}">${c.level}</span></div><div style="display:flex;gap:6px;flex-wrap:wrap">${c.seq.map(m=>`<span style="background:${MOVES[m]?.color||'#888'}18;color:${MOVES[m]?.color||'#888'};border:1px solid ${MOVES[m]?.color||'#888'}44;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px">${MOVES[m]?.label||m}</span>`).join('')}</div></div>`).join('');}
+function rendCombos(){
+  var html = '';
+  for(var i=0;i<COMBOS.length;i++){
+    var c=COMBOS[i];
+    var active = i===S.selCombo ? 'active' : '';
+    var lvlStyle = c.level==='Avanzado' ? 'background:#FFEDEB;color:#FF3B30' : c.level==='Intermedio' ? 'background:#FFF4E6;color:#F77F00' : '';
+    var lvlClass = c.level==='Facil' ? 'chip-green' : '';
+    html += '<div class="combo-item '+active+'" onclick="selCombo('+i+')">';
+    html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
+    html += '<span style="font-size:14px;font-weight:700;color:var(--text)">'+c.name+'</span>';
+    html += '<span class="chip '+lvlClass+'" style="'+lvlStyle+'">'+c.level+'</span>';
+    html += '</div><div style="display:flex;gap:6px;flex-wrap:wrap">';
+    for(var j=0;j<c.seq.length;j++){
+      var m=c.seq[j], mv=MOVES[m];
+      var col = mv ? mv.color : '#888';
+      html += '<span style="background:'+col+'18;color:'+col+';border:1px solid '+col+'44;font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px">'+(mv?mv.label:m)+'</span>';
+    }
+    html += '</div></div>';
+  }
+  document.getElementById('combo-list').innerHTML = html;
+}
 function selCombo(i){S.selCombo=i;rendCombos();}
 function selDiff(d){S.diff=d;['easy','medium','hard'].forEach(x=>document.getElementById('d'+x[0]).classList.toggle('active',x===d));const c=DIFF[d];document.getElementById('cfg-d').textContent=c.dur>=60?Math.floor(c.dur/60)+' min':c.dur+' seg';document.getElementById('cfg-r').textContent=c.rest>=60?c.rest/60+' min':c.rest+' seg';document.getElementById('cfg-s').textContent=c.spd;}
 function startFromTrain(){startSession(S.mode,S.diff);}
@@ -909,7 +929,20 @@ function playSound(type){
 function checkBadges(){const nb=[];for(const b of BADGES)if(!S.badges.has(b.id)&&b.c(S.stats)){S.badges.add(b.id);nb.push(b);}return nb;}
 let bFilter='all';
 function filtB(f){bFilter=f;document.querySelectorAll('#bfilters .filter-btn').forEach(btn=>btn.classList.toggle('active',btn.textContent===(f==='all'?'Todas':f)));rendBadges();}
-function rendBadges(){const list=bFilter==='all'?BADGES:BADGES.filter(b=>b.cat===bFilter);document.getElementById('bc').textContent=S.badges.size;document.getElementById('bgrid').innerHTML=list.map(b=>{const u=S.badges.has(b.id);return`<div class="badge-cell"><div class="badge-wrap ${u?'unlocked':'locked'}">${b.icon}</div>${u?'<div class="badge-check">✓</div>':''}<span class="badge-nm ${u?'u':''}">${b.name}</span><function rendBadges(){const list=bFilter==='all'?BADGES:BADGES.filter(b=>b.cat===bFilter);document.getElementById('bc').textContent=S.badges.size;document.getElementById('bgrid').innerHTML=list.map(b=>{const u=S.badges.has(b.id);return`<div class="badge-cell"><div class="badge-wrap ${u?'unlocked':'locked'}">${b.icon}</div>${u?'<div class="badge-check">✓</div>':''}<span class="badge-nm ${u?'u':''}">${b.name}</span></div>`;}).join('');}
+function rendBadges(){
+  var list = bFilter==='all' ? BADGES : BADGES.filter(function(b){return b.cat===bFilter;});
+  document.getElementById('bc').textContent = S.badges.size;
+  document.getElementById('bgrid').innerHTML = list.map(function(b){
+    var u = S.badges.has(b.id);
+    var html = '<div class="badge-cell">';
+    html += '<div class="badge-wrap ' + (u?'unlocked':'locked') + '">' + b.icon + '</div>';
+    if(u) html += '<div class="badge-check">&#10003;</div>';
+    html += '<span class="badge-nm ' + (u?'u':'') + '">' + b.name + '</span>';
+    html += '</div>';
+    return html;
+  }).join('');
+}
+
 
 // ======== POST SESSION ========
 function showPost(s,dur,nb){
