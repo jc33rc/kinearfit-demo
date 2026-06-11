@@ -251,7 +251,7 @@ let MOVES={
   CROSS:{color:'#FF4D00',label:'CROSS', kp:KP.RW, offX: .20,offY:-.14,velThr:38, size:.14,velType:'total'},
   HOOK: {color:'#F77F00',label:'HOOK',  kp:KP.LW, offX: .22,offY:-.08,velThr:14, size:.15,velType:'lateral'},
   HOOK2:{color:'#F77F00',label:'HOOK',  kp:KP.RW, offX:-.22,offY:-.08,velThr:14, size:.15,velType:'lateral'},
-  UPPER:{color:'#FFD60A',label:'UPPER', kp:KP.RW, offX: .04,offY: .06,velThr:32, size:.12,velType:'vertical'},
+  UPPER:{color:'#FFD60A',label:'UPPER', kp:KP.RW, offX: .04,offY: .06,velThr:62, size:.12,velType:'vertical'},
   KICKF:{color:'#7B2D8B',label:'KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total'},
   KICKS:{color:'#E040FB',label:'KICK →',kp:KP.RA, offX: .28,offY: .38,velThr:28, size:.15,velType:'lateral'},
   DOGEL:{color:'#00B87A',label:'DODGE ←',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'},
@@ -801,12 +801,11 @@ function drawTargets(c,ctx){
   }
   ctx.restore();
 
-  // Bright core
-  ctx.shadowBlur=20;ctx.globalAlpha=1;
-  var core=ctx.createRadialGradient(tp.x,tp.y,0,tp.x,tp.y,sz*0.22);
-  core.addColorStop(0,'white');core.addColorStop(0.5,mv.color);core.addColorStop(1,mv.color+'00');
-  ctx.beginPath();ctx.arc(tp.x,tp.y,sz*0.22,0,Math.PI*2);ctx.fillStyle=core;ctx.fill();
-  ctx.shadowBlur=0;ctx.globalAlpha=1;
+  // Center dot only — pure holographic, no filled sphere
+  ctx.shadowBlur=25;ctx.shadowColor=mv.color;ctx.globalAlpha=1;
+  ctx.beginPath();ctx.arc(tp.x,tp.y,sz*0.1,0,Math.PI*2);
+  ctx.fillStyle='white';ctx.fill();
+  ctx.shadowBlur=0;
 
   // Label
   ctx.fillStyle='white';
@@ -969,7 +968,7 @@ function hitPear(mk){
 }
 function drawPear(c,ctx){
   const px=pearPos.x+pearBounce.x, py=pearPos.y+pearBounce.y;
-  const r=c.width*0.13; // Radius of speed bag
+  const r=c.width*0.17; // Radius of speed bag
   const dmg=pearDamage/100;
 
   ctx.save();
