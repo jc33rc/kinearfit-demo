@@ -127,9 +127,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <div id="op3" style="display:none">
       <div class="card" style="margin-bottom:12px"><div style="font-size:32px;margin-bottom:10px">📱</div><div style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:4px">Configuración de cámara</div><div class="muted-text" style="line-height:1.6">Para que KinearFit detecte tus movimientos:</div></div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">1</div><div style="font-size:13px;color:var(--text)">Apoya el teléfono a <strong>2 metros</strong> a la altura del pecho</div></div>
+        <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">1</div><div style="font-size:13px;color:var(--text)">Apoya el teléfono a <strong>1 metro</strong> a la altura de la cadera</div></div>
         <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">2</div><div style="font-size:13px;color:var(--text)"><strong>Buena iluminación</strong> frontal — sin contraluz</div></div>
-        <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">3</div><div style="font-size:13px;color:var(--text)">Tu <strong>cuerpo completo</strong> visible de cabeza a pies</div></div>
+        <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">3</div><div style="font-size:13px;color:var(--text)">Visible de <strong>cabeza hasta las rodillas</strong> — patadas incluidas</div></div>
       </div>
     </div>
     <button class="btn" style="margin-top:24px" id="ob-btn" onclick="obNext()">Continuar →</button>
@@ -244,6 +244,7 @@ let MOVES={
   JAB:  {color:'#1A56FF',label:'JAB',   kp:KP.LW, offX:-.18,offY:-.12,velThr:38, size:.13,velType:'total'},
   CROSS:{color:'#FF4D00',label:'CROSS', kp:KP.RW, offX: .20,offY:-.14,velThr:38, size:.14,velType:'total'},
   HOOK: {color:'#F77F00',label:'HOOK',  kp:KP.LW, offX: .22,offY:-.08,velThr:14, size:.15,velType:'lateral'},
+  HOOK2:{color:'#F77F00',label:'HOOK',  kp:KP.RW, offX:-.22,offY:-.08,velThr:14, size:.15,velType:'lateral'},
   UPPER:{color:'#FFD60A',label:'UPPER', kp:KP.RW, offX: .04,offY: .06,velThr:32, size:.12,velType:'vertical'},
   KICKF:{color:'#7B2D8B',label:'KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total'},
   KICKS:{color:'#E040FB',label:'KICK →',kp:KP.RA, offX: .28,offY: .38,velThr:28, size:.15,velType:'lateral'},
@@ -474,25 +475,25 @@ function processHits(){
   const s=S.sess,now=Date.now();
   const c=document.getElementById('ar-canvas');
   if(s.mode==='libre'){
-    const hitR=c.width*0.14;
-    for(const mk of['JAB','CROSS','HOOK','UPPER','KICKF']){
-      const mv=MOVES[mk];if(mv.kp<0)continue;
-      if((now-(hitCool[mk]||0))<HIT_CD)continue;
-      const vel=calcVel(mv.kp,mv.velType);
-      if(vel<mv.velThr)continue;
-      const kp=currKpts[mv.kp];if(!kp||kp.score<0.35)continue;
-      const kpx={x:kp.x*c.width,y:kp.y*c.height};
-      const dist=Math.hypot(kpx.x-pearPos.x,kpx.y-pearPos.y);
-      if(dist>hitR)continue;
-      // Directional check: only for straight punches, not hook (lateral)
-      if(mk!=='HOOK'&&mk!=='KICKS'&&prevKpts){
-        const pk=prevKpts[mv.kp];
-        if(pk&&pk.score>0.2){
-          const prevDist=Math.hypot(pk.x*c.width-pearPos.x,pk.y*c.height-pearPos.y);
-          if(prevDist<=dist+10)continue; // Not moving toward pear
-        }
-      }
-      hitCool[mk]=now;doHit(mk,kpx);break;
+    // Universal: ANY fast limb movement near pear registers hit
+    var hitR=c.width*0.19;
+    var kpList=[
+      {idx:KP.LW,mk:'JAB'},{idx:KP.RW,mk:'CROSS'},
+      {idx:KP.LK,mk:'KICKF'},{idx:KP.RK,mk:'KICKF'},
+      {idx:KP.LA,mk:'KICKS'},{idx:KP.RA,mk:'KICKS'}
+    ];
+    for(var ki=0;ki<kpList.length;ki++){
+      var ck=kpList[ki];
+      var cKey='L'+ck.idx;
+      if((now-(hitCool[cKey]||0))<HIT_CD)continue;
+      var lkp=currKpts[ck.idx];
+      if(!lkp||lkp.score<0.2)continue;
+      var lvel=calcVel(ck.idx,'total');
+      if(lvel<20)continue;
+      var lkpx={x:lkp.x*c.width,y:lkp.y*c.height};
+      if(Math.hypot(lkpx.x-pearPos.x,lkpx.y-pearPos.y)>hitR)continue;
+      hitCool[cKey]=now;
+      doHit(ck.mk,lkpx);break;
     }
   } else {
     const seq=(COMBOS[s.selCombo]&&COMBOS[s.selCombo].seq)||[];
@@ -577,7 +578,7 @@ function onTouch(e){
   const x=(t.clientX-r.left)*sx,y=(t.clientY-r.top)*sy;
   if(S.sess.mode==='libre'){
     if(Math.hypot(x-pearPos.x,y-pearPos.y)<c.width*0.18){
-      const mks=['JAB','CROSS','HOOK','UPPER'];
+      const mks=['JAB','CROSS','HOOK','HOOK2','UPPER'];
       doHit(mks[S.sess.hits%mks.length],{x,y});
     }
   } else {
@@ -616,7 +617,16 @@ function arLoop(){
   ctx.clearRect(0,0,c.width,c.height);
   // Camera feed (mirrored)
   const v=document.getElementById('cam-video');
-  if(v.readyState>=2){ctx.save();ctx.scale(-1,1);ctx.translate(-c.width,0);ctx.drawImage(v,0,0,c.width,c.height);ctx.restore();}
+  if(v.readyState>=2){
+    ctx.save();ctx.scale(-1,1);ctx.translate(-c.width,0);
+    var vw=v.videoWidth,vh=v.videoHeight,cw=c.width,ch=c.height;
+    var vAR=vw/vh,cAR=cw/ch;
+    var sx=0,sy=0,sw=vw,sh=vh;
+    if(vAR>cAR){sw=Math.round(vh*cAR);sx=Math.round((vw-sw)/2);}
+    else{sh=Math.round(vw/cAR);sy=Math.round((vh-sh)/2);}
+    ctx.drawImage(v,sx,sy,sw,sh,0,0,cw,ch);
+    ctx.restore();
+  }
   else{ctx.fillStyle='#0A0A10';ctx.fillRect(0,0,c.width,c.height);}
   // AR layers
   updatePearPhysics();
@@ -652,7 +662,7 @@ function hitPear(mk){
 }
 function drawPear(c,ctx){
   const px=pearPos.x+pearBounce.x, py=pearPos.y+pearBounce.y;
-  const r=c.width*0.072; // Radius of speed bag
+  const r=c.width*0.13; // Radius of speed bag
   const dmg=pearDamage/100;
 
   ctx.save();
@@ -879,7 +889,7 @@ function onTouch(e){
   const x=(t.clientX-r.left)*sx,y=(t.clientY-r.top)*sy;
   if(S.sess.mode==='libre'){
     if(Math.hypot(x-pearPos.x,y-pearPos.y)<c.width*0.18){
-      const mks=['JAB','CROSS','HOOK','UPPER'];
+      const mks=['JAB','CROSS','HOOK','HOOK2','UPPER'];
       doHit(mks[S.sess.hits%mks.length],{x,y});
     }
   } else {
@@ -918,7 +928,16 @@ function arLoop(){
   ctx.clearRect(0,0,c.width,c.height);
   // Camera feed (mirrored)
   const v=document.getElementById('cam-video');
-  if(v.readyState>=2){ctx.save();ctx.scale(-1,1);ctx.translate(-c.width,0);ctx.drawImage(v,0,0,c.width,c.height);ctx.restore();}
+  if(v.readyState>=2){
+    ctx.save();ctx.scale(-1,1);ctx.translate(-c.width,0);
+    var vw=v.videoWidth,vh=v.videoHeight,cw=c.width,ch=c.height;
+    var vAR=vw/vh,cAR=cw/ch;
+    var sx=0,sy=0,sw=vw,sh=vh;
+    if(vAR>cAR){sw=Math.round(vh*cAR);sx=Math.round((vw-sw)/2);}
+    else{sh=Math.round(vw/cAR);sy=Math.round((vh-sh)/2);}
+    ctx.drawImage(v,sx,sy,sw,sh,0,0,cw,ch);
+    ctx.restore();
+  }
   else{ctx.fillStyle='#0A0A10';ctx.fillRect(0,0,c.width,c.height);}
   // AR layers
   updatePearPhysics();
@@ -954,7 +973,7 @@ function hitPear(mk){
 }
 function drawPear(c,ctx){
   const px=pearPos.x+pearBounce.x, py=pearPos.y+pearBounce.y;
-  const r=c.width*0.072; // Radius of speed bag
+  const r=c.width*0.13; // Radius of speed bag
   const dmg=pearDamage/100;
 
   ctx.save();
@@ -1108,39 +1127,77 @@ function drawTargets(c,ctx){
   });
 }
 
-// ======== DODGE ZONE (recuadro) ========
+// ======== DODGE ARROW ========
 function drawDodgeZone(c,ctx){
   if(!dodgeActive||!dodgeZoneData)return;
-  const dz=dodgeZoneData;
-  const elapsed=(Date.now()-dodgeT)/1000;
-  const urgency=Math.min(1,elapsed/2.2);
-  const pulse=.3+Math.sin(Date.now()/90)*.2*(1+urgency*2);
+  var dz=dodgeZoneData;
+  var elapsed=(Date.now()-dodgeT)/1000;
+  var urgency=Math.min(1,elapsed/2.2);
+  var pulse=0.5+Math.sin(Date.now()/120)*0.3*(1+urgency);
+  var goRight=dz.dir==='left'; // dir=left means danger from left, move RIGHT
+  var arrowX=goRight?c.width*0.62:c.width*0.38;
+  var arrowY=c.height*0.45;
+  var aSize=c.width*0.12;
 
   ctx.save();
-  // Fill
-  ctx.globalAlpha=Math.min(.6,.18+urgency*.45);
+
+  // Dim the danger side
+  ctx.globalAlpha=0.25+urgency*0.2;
   ctx.fillStyle='#FF3B30';
-  ctx.beginPath();(function(){var _a=[dz.cx-dz.w/2,dz.cy-dz.h/2,dz.w,dz.h,14];ctx.moveTo(_a[0]+_a[4],_a[1]);ctx.lineTo(_a[0]+_a[2]-_a[4],_a[1]);ctx.arcTo(_a[0]+_a[2],_a[1],_a[0]+_a[2],_a[1]+_a[4],_a[4]);ctx.lineTo(_a[0]+_a[2],_a[1]+_a[3]-_a[4]);ctx.arcTo(_a[0]+_a[2],_a[1]+_a[3],_a[0]+_a[2]-_a[4],_a[1]+_a[3],_a[4]);ctx.lineTo(_a[0]+_a[4],_a[1]+_a[3]);ctx.arcTo(_a[0],_a[1]+_a[3],_a[0],_a[1]+_a[3]-_a[4],_a[4]);ctx.lineTo(_a[0],_a[1]+_a[4]);ctx.arcTo(_a[0],_a[1],_a[0]+_a[4],_a[1],_a[4]);})(); ctx.closePath();ctx.fill();
-  // Border
-  ctx.globalAlpha=.7+pulse*.3;ctx.strokeStyle='#FF3B30';ctx.lineWidth=3;
-  ctx.setLineDash([8,4]);ctx.stroke();ctx.setLineDash([]);
-  // DODGE text
-  ctx.globalAlpha=.95;ctx.fillStyle='white';
-  ctx.font=`bold ${c.width*.06}px DM Sans,sans-serif`;
-  ctx.textAlign='center';ctx.textBaseline='middle';
-  ctx.shadowColor='#FF3B30';ctx.shadowBlur=12;
-  ctx.fillText('DODGE!',dz.cx,dz.cy-dz.h/2-22);ctx.shadowBlur=0;
-  // Direction arrow
-  const arX=dz.dir==='left'?dz.cx+dz.w/2+28:dz.cx-dz.w/2-28;
-  ctx.font=`bold ${c.width*.07}px sans-serif`;
+  var dangerW=c.width*0.42;
+  ctx.fillRect(goRight?0:c.width-dangerW, 0, dangerW, c.height);
+
+  // Safe side highlight (subtle green)
+  ctx.globalAlpha=0.08;
   ctx.fillStyle='#00B87A';
-  ctx.fillText(dz.dir==='left'?'→':'←',arX,dz.cy);
-  // Countdown bar
-  const barY=dz.cy+dz.h/2+12,barW=dz.w*(1-urgency);
-  ctx.globalAlpha=.8;ctx.fillStyle=urgency<0.6?'#00B87A':'#FF3B30';
-  ctx.beginPath();(function(){var _a=[dz.cx-barW/2,barY,barW,5,3];ctx.moveTo(_a[0]+_a[4],_a[1]);ctx.lineTo(_a[0]+_a[2]-_a[4],_a[1]);ctx.arcTo(_a[0]+_a[2],_a[1],_a[0]+_a[2],_a[1]+_a[4],_a[4]);ctx.lineTo(_a[0]+_a[2],_a[1]+_a[3]-_a[4]);ctx.arcTo(_a[0]+_a[2],_a[1]+_a[3],_a[0]+_a[2]-_a[4],_a[1]+_a[3],_a[4]);ctx.lineTo(_a[0]+_a[4],_a[1]+_a[3]);ctx.arcTo(_a[0],_a[1]+_a[3],_a[0],_a[1]+_a[3]-_a[4],_a[4]);ctx.lineTo(_a[0],_a[1]+_a[4]);ctx.arcTo(_a[0],_a[1],_a[0]+_a[4],_a[1],_a[4]);})(); ctx.closePath();ctx.fill();
+  ctx.fillRect(goRight?c.width-dangerW:0, 0, dangerW, c.height);
+
+  ctx.globalAlpha=1;
+
+  // Big arrow
+  var dir=goRight?1:-1;
+  ctx.strokeStyle='#00B87A';
+  ctx.fillStyle='#00B87A';
+  ctx.lineWidth=aSize*0.22;
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+  ctx.shadowColor='#00B87A';
+  ctx.shadowBlur=20;
+  ctx.globalAlpha=0.7+pulse*0.3;
+
+  // Arrow shaft
+  ctx.beginPath();
+  ctx.moveTo(arrowX-dir*aSize*0.7, arrowY);
+  ctx.lineTo(arrowX+dir*aSize*0.3, arrowY);
+  ctx.stroke();
+
+  // Arrow head (filled triangle)
+  ctx.beginPath();
+  ctx.moveTo(arrowX+dir*aSize*0.9, arrowY);
+  ctx.lineTo(arrowX+dir*aSize*0.2, arrowY-aSize*0.55);
+  ctx.lineTo(arrowX+dir*aSize*0.2, arrowY+aSize*0.55);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.shadowBlur=0;
+
+  // DODGE label above arrow
+  ctx.globalAlpha=0.9;
+  ctx.fillStyle='white';
+  ctx.font='bold '+Math.round(c.width*0.048)+'px DM Sans,sans-serif';
+  ctx.textAlign='center';
+  ctx.textBaseline='middle';
+  ctx.fillText('DODGE',arrowX,arrowY-aSize*1.1);
+
+  // Countdown bar at bottom
+  var barW=c.width*0.5*(1-urgency);
+  ctx.globalAlpha=0.7;
+  ctx.fillStyle=urgency<0.6?'#00B87A':'#FF3B30';
+  ctx.fillRect(c.width/2-barW/2, c.height*0.88, barW, 5);
+
   ctx.restore();
 }
+
 
 // ======== AR GLOVES ========
 function drawGloves(c,ctx){
