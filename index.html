@@ -153,7 +153,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
   <div class="scroll-content" style="padding-top:4px">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px"><div><div style="font-size:13px;color:var(--muted);font-weight:500">Buenos días</div><div class="heading" id="h-greeting" style="margin-top:2px">KinearFit 🥊</div></div><div class="streak-badge"><span style="font-size:20px">🔥</span><div><div style="font-size:18px;font-weight:900;color:var(--accent);line-height:1" id="h-streak">0</div><div style="font-size:9px;color:var(--muted);font-weight:600;letter-spacing:1px">DÍAS</div></div></div></div>
-    <div class="card challenge-card" style="margin-bottom:16px"><span class="chip" style="color:white;background:rgba(255,255,255,.2);margin-bottom:10px;display:inline-block">Desafío de hoy</span><div style="font-size:22px;font-weight:900;color:white;margin-bottom:4px;letter-spacing:-.5px">3 rondas intermedias</div><div style="font-size:13px;color:rgba(255,255,255,.75);margin-bottom:16px">Jab · Cross · Hook · Esquiva</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:rgba(255,255,255,.7)">🕐 ~15 min</span><button class="btn btn-small" style="background:white;color:var(--accent);border:none" onclick="startSession('daily','medium')">Comenzar →</button></div></div>
+    <div class="card challenge-card" style="margin-bottom:16px"><span class="chip" style="color:white;background:rgba(255,255,255,.2);margin-bottom:10px;display:inline-block">Desafío de hoy</span><div style="font-size:22px;font-weight:900;color:white;margin-bottom:4px;letter-spacing:-.5px" id="daily-title">—</div><div style="font-size:13px;color:rgba(255,255,255,.75);margin-bottom:8px" id="daily-sub">—</div><div style="font-size:13px;color:white;font-weight:700;margin-bottom:16px" id="daily-obj">—</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:rgba(255,255,255,.7)" id="daily-time">🕐 ~15 min</span><button class="btn btn-small" style="background:white;color:var(--accent);border:none" onclick="startDailyChallenge()">Comenzar →</button></div></div>
     <div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span style="font-size:13px;font-weight:700;color:var(--text)">Nivel actual</span><span class="chip" id="h-level">Novato</span></div><div class="progress-track" style="height:8px;margin-bottom:8px"><div class="progress-fill" id="h-xp" style="width:0%"></div></div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:var(--muted)" id="h-lf">Novato</span><span style="font-size:11px;color:var(--muted)" id="h-lp">0% → Amateur</span></div></div>
     <div class="card" style="margin-bottom:16px"><div class="label" style="margin-bottom:14px">Última sesión</div><div class="stats-row"><div><div class="stat-value" id="h-lhits">0</div><div class="stat-label">Golpes</div></div><div style="width:1px;height:40px;background:var(--border)"></div><div><div class="stat-value" style="color:var(--green)" id="h-lacc">—</div><div class="stat-label">Precisión</div></div><div style="width:1px;height:40px;background:var(--border)"></div><div><div class="stat-value" id="h-ltime">0:00</div><div class="stat-label">Tiempo</div></div></div></div>
     <div class="card" style="display:flex;align-items:center;gap:14px"><span style="font-size:36px;opacity:.35" id="h-nbicon">🔁</span><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px" id="h-nbname">3 en Raya</div><div style="font-size:12px;color:var(--muted);margin-bottom:8px" id="h-nbdesc">3 días seguidos</div><div class="progress-track" style="height:5px"><div class="progress-fill" id="h-nbp" style="width:33%;background:#FFD60A"></div></div></div></div>
@@ -165,8 +165,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <div class="scroll-content" style="padding-top:4px">
     <div class="heading" style="margin-bottom:20px">Entrenar</div>
     <div class="mode-grid"><div class="mode-card active" id="mc-libre" onclick="selMode('libre')"><div style="font-size:28px;margin-bottom:8px">👊</div><div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px">Modo Libre</div><div style="font-size:12px;color:var(--muted)">Tu ritmo. Tu pera.</div></div><div class="mode-card" id="mc-combos" onclick="selMode('combos')"><div style="font-size:28px;margin-bottom:8px">🎯</div><div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px">Combos Guiados</div><div style="font-size:12px;color:var(--muted)">Sigue la secuencia.</div></div></div>
-    <div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:20px;cursor:pointer" onclick="startSession('daily','medium')"><span style="font-size:32px">📆</span><div><div style="font-size:15px;font-weight:800;color:var(--text)">Desafío del Día</div><div style="font-size:12px;color:var(--muted)">Nuevo reto cada 24 horas</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>
-    <div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:20px;cursor:pointer" onclick="startTutorial()"><span style="font-size:32px">🎓</span><div><div style="font-size:15px;font-weight:800;color:var(--text)">Tutorial / Repaso</div><div style="font-size:12px;color:var(--muted)">Practica cada golpe paso a paso</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>
+    <div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:20px;cursor:pointer" onclick="startDailyChallenge()"><span style="font-size:32px">📆</span><div><div style="font-size:15px;font-weight:800;color:var(--text)">Desafío del Día</div><div style="font-size:12px;color:var(--muted)">Nuevo reto cada 24 horas</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>
+    <div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:20px;cursor:pointer" onclick="openTutorial()"><span style="font-size:32px">🎓</span><div><div style="font-size:15px;font-weight:800;color:var(--text)">Tutorial / Repaso</div><div style="font-size:12px;color:var(--muted)">Practica un golpe a la vez</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>
     <div id="combos-panel" style="display:none;margin-bottom:16px"><div class="label" style="margin-bottom:12px">Selecciona un combo</div><div id="combo-list"></div></div>
     <div class="label" style="margin-bottom:10px">Dificultad</div>
     <div style="display:flex;gap:8px;margin-bottom:16px"><button class="diff-btn easy" id="de" onclick="selDiff('easy')">Fácil</button><button class="diff-btn medium active" id="dm" onclick="selDiff('medium')">Intermedio</button><button class="diff-btn hard" id="dh" onclick="selDiff('hard')">Avanzado</button></div>
@@ -193,6 +193,15 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   </div>
   <div id="ri-countdown" style="display:none;font-size:140px;font-weight:900;color:var(--accent);text-shadow:0 0 50px var(--accent)"></div>
 </div>
+<!-- TUTORIAL SELECT -->
+<div class="screen" id="screen-tutorial-select">
+  <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
+  <div class="scroll-content" style="padding-top:4px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px"><button onclick="goTo('train')" style="background:none;border:none;color:var(--accent);font-size:22px;cursor:pointer;padding:0">‹</button><div class="heading" style="margin:0">Tutorial</div></div>
+    <div class="muted-text" style="margin-bottom:20px">Elige un golpe y practícalo solo, a tu ritmo.</div>
+    <div id="tut-move-list"></div>
+  </div>
+</div>
 <!-- SESSION AR -->
 <div class="screen" id="screen-session">
   <video id="cam-video" autoplay playsinline muted></video>
@@ -208,6 +217,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <div class="combo-badge-hud" id="combo-hud"><span style="font-family:var(--font);color:#FFD60A;font-size:14px;font-weight:900" id="combo-txt">⚡ ×2</span></div>
   <div id="center-overlay" style="position:absolute;inset:0;z-index:6;display:none;align-items:center;justify-content:center;pointer-events:none;text-align:center"></div>
   <div id="tutorial-banner" style="position:absolute;top:0;left:0;right:0;z-index:6;display:none;padding:60px 20px 16px;text-align:center;background:linear-gradient(180deg,rgba(0,0,0,.75) 0%,transparent 100%);pointer-events:none"></div>
+  <button id="tut-exit" onclick="exitTutorial()" style="position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:7;display:none;background:rgba(0,0,0,.6);border:1.5px solid rgba(255,255,255,.3);color:white;font-family:var(--font);font-weight:800;font-size:14px;padding:12px 32px;border-radius:30px;cursor:pointer;backdrop-filter:blur(8px)">Salir</button>
   <div id="hud">
     <div class="hud-top">
       <div><div class="hud-lbl">Ronda</div><div class="hud-val" id="hud-rnd">1/3</div></div>
@@ -285,15 +295,17 @@ let MOVES={
   DOGEL:{color:'#00B87A',label:'DODGE ←',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'},
   DOGER:{color:'#00B87A',label:'DODGE →',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'}
 };
-const TUTORIAL_STEPS=[
-  {mk:'JAB',     title:'JAB',          desc:'Extiende el brazo adelantado en línea recta hacia el frente.',     reps:5},
-  {mk:'CROSS',   title:'CROSS',        desc:'Gira la cadera y lanza el brazo trasero en línea recta.',          reps:5},
-  {mk:'HOOK_L',  altMk:'HOOK_R', title:'HOOK',desc:'Gira el codo en arco horizontal hacia el centro — con la izquierda o la derecha.',reps:4},
-  {mk:'HOOK_BODY_L',altMk:'HOOK_BODY_R',title:'HOOK AL CUERPO',desc:'Mismo gancho pero apuntando al costado/hígado, agacha un poco.',reps:4},
-  {mk:'UPPER',   title:'UPPER',        desc:'Sube el puño desde abajo hacia arriba, en línea vertical.',        reps:4},
-  {mk:'KICKF',   title:'PATADA FRONTAL',desc:'Levanta la rodilla y extiende la pierna hacia adelante.',         reps:3},
-  {mk:'KICKS',   title:'PATADA LATERAL',desc:'Gira la cadera y extiende la pierna hacia el costado.',           reps:3},
-  {mk:'DOGEL',   title:'ESQUIVA DIAGONAL',desc:'Inclina el tronco en diagonal hacia la esquina segura indicada.',reps:2}
+const TUTORIAL_MOVES=[
+  {mk:'JAB',        title:'JAB',            desc:'Puño recto con la mano izquierda.'},
+  {mk:'CROSS',      title:'CROSS',          desc:'Puño recto con la mano derecha.'},
+  {mk:'HOOK_L',     title:'HOOK IZQUIERDO', desc:'Gancho en arco con la mano izquierda.'},
+  {mk:'HOOK_R',     title:'HOOK DERECHO',   desc:'Gancho en arco con la mano derecha.'},
+  {mk:'HOOK_BODY_L',title:'HOOK CUERPO IZQ',desc:'Gancho al costado/hígado con la izquierda, agáchate un poco.'},
+  {mk:'HOOK_BODY_R',title:'HOOK CUERPO DER',desc:'Gancho al costado/hígado con la derecha, agáchate un poco.'},
+  {mk:'UPPER',      title:'UPPER',          desc:'Puño de abajo hacia arriba con la mano derecha.'},
+  {mk:'KICKF',      title:'PATADA FRONTAL', desc:'Levanta la rodilla y patea hacia adelante.'},
+  {mk:'KICKS',      title:'PATADA LATERAL', desc:'Patea hacia el costado con la pierna derecha.'},
+  {mk:'DOGEL',      title:'ESQUIVA',        desc:'Inclina el tronco en diagonal hacia la esquina segura.'}
 ];
 const RUTINAS=[
   // ===== FÁCIL (4) =====
@@ -334,6 +346,69 @@ const RUTINAS=[
 ];
 // Legacy alias (selCombo index references RUTINAS now)
 const COMBOS=RUTINAS;
+
+// ======== DAILY CHALLENGE (deterministic by date, no backend) ========
+// Same date -> same challenge for everyone; changes automatically every day.
+function dateSeed(d){
+  // d = Date; build YYYYMMDD integer then hash to a stable pseudo-random seed
+  const y=d.getFullYear(),m=d.getMonth()+1,day=d.getDate();
+  let n=y*10000+m*100+day;
+  // xorshift-ish scramble for better spread
+  n=(n^61)^(n>>>16);n=n+(n<<3);n=n^(n>>>4);n=n*0x27d4eb2d;n=n^(n>>>15);
+  return Math.abs(n);
+}
+function mulberry32(a){
+  return function(){
+    a|=0;a=a+0x6D2B79F5|0;
+    let t=Math.imul(a^a>>>15,1|a);
+    t=t+Math.imul(t^t>>>7,61|t)^t;
+    return ((t^t>>>14)>>>0)/4294967296;
+  };
+}
+function getDailyChallenge(){
+  const today=new Date();
+  const rng=mulberry32(dateSeed(today));
+  // Pick a routine
+  const routineIdx=Math.floor(rng()*RUTINAS.length);
+  const routine=RUTINAS[routineIdx];
+  // Difficulty derived from the routine's own level (keeps it coherent)
+  const diffKey=routine.level==='Fácil'?'easy':routine.level==='Avanzado'?'hard':'medium';
+  // Extra objective of the day
+  const objectives=[
+    {id:'combo3',label:'Logra un combo ×3',check:s=>s.comboMax>=3},
+    {id:'combo4',label:'Logra un combo ×4',check:s=>s.comboMax>=4},
+    {id:'hits100',label:'Conecta 100 golpes',check:s=>s.hits>=100},
+    {id:'hits150',label:'Conecta 150 golpes',check:s=>s.hits>=150},
+    {id:'rounds',label:'Completa las 3 rondas',check:s=>s.round>=3},
+    {id:'nodrop',label:'Mantén tu guardia arriba',check:s=>true}
+  ];
+  const objIdx=Math.floor(rng()*objectives.length);
+  const objective=objectives[objIdx];
+  const dur=DIFF[diffKey].dur;
+  const estMin=Math.round((dur*3+DIFF[diffKey].rest*2)/60);
+  return {routineIdx,routine,diffKey,objective,estMin};
+}
+let DAILY=null;
+function renderDailyChallenge(){
+  DAILY=getDailyChallenge();
+  const r=DAILY.routine;
+  const seqLabels=r.seq.map(m=>MOVES[m]?MOVES[m].label.replace(/ .*/,''):m);
+  const uniqueLabels=[...new Set(seqLabels)].join(' · ');
+  const titleEl=document.getElementById('daily-title');
+  const subEl=document.getElementById('daily-sub');
+  const objEl=document.getElementById('daily-obj');
+  const timeEl=document.getElementById('daily-time');
+  if(titleEl)titleEl.textContent=r.name+' · '+r.level;
+  if(subEl)subEl.textContent=uniqueLabels;
+  if(objEl)objEl.textContent='🎯 '+DAILY.objective.label;
+  if(timeEl)timeEl.textContent='🕐 ~'+DAILY.estMin+' min';
+}
+function startDailyChallenge(){
+  if(!DAILY)DAILY=getDailyChallenge();
+  S.selCombo=DAILY.routineIdx;
+  selDiff(DAILY.diffKey);
+  startSession('combos',DAILY.diffKey);
+}
 const BADGES=[
   {id:'fk', icon:'',name:'Primera Patada',cat:'Golpes',desc:'Tu primera patada',         c:s=>s.totalKicks>=1},
   {id:'fd', icon:'',name:'Primer Día',    cat:'Racha', desc:'Tu primera sesión',         c:s=>s.totalSessions>=1},
@@ -378,7 +453,7 @@ let S={
         timeLeft:180,score:0,hits:0,comboStr:0,comboMax:0,
         kicks:0,dodges:0,combos:0,combIdx:0,selCombo:0,startTime:0},
   mode:'libre',diff:'medium',selCombo:0,obStep:1,
-  tutorial:{stepIdx:0,reps:0}
+  tutorial:{mk:null,count:0}
 };
 
 // ======== STORAGE ========
@@ -403,7 +478,7 @@ function goTo(id){
 function obNext(){
   if(S.obStep===1){const n=document.getElementById('in-name').value.trim();if(!n){alert('Por favor ingresa tu nombre');return;}S.user.name=n;S.user.age=parseInt(document.getElementById('in-age').value)||25;S.user.wt=parseFloat(document.getElementById('in-wt').value)||70;S.user.ht=parseInt(document.getElementById('in-ht').value)||170;document.getElementById('op1').style.display='none';document.getElementById('op2').style.display='block';document.getElementById('od2').style.background='var(--accent)';document.getElementById('ob-step-lbl').textContent='Paso 2 de 3';S.obStep=2;}
   else if(S.obStep===2){document.getElementById('op2').style.display='none';document.getElementById('op3').style.display='block';document.getElementById('od3').style.background='var(--accent)';document.getElementById('ob-step-lbl').textContent='Paso 3 de 3';document.getElementById('ob-btn').textContent='¡Comenzar! 🥊';S.obStep=3;}
-  else{save();S.user.tutorialDone=false;save();startTutorial();}
+  else{save();goTo('home');document.getElementById('bottom-nav').style.display='flex';}
 }
 function setDom(d){S.user.dom=d;document.getElementById('br').classList.toggle('active',d==='right');document.getElementById('bl').classList.toggle('active',d==='left');applyDom(d);}
 function applyDom(d){
@@ -481,66 +556,82 @@ function beginCountdown(){
   },800);
 }
 
-// ======== TUTORIAL ========
-function startTutorial(){
-  S.tutorial={stepIdx:0,reps:0};
+// ======== TUTORIAL (single-move practice) ========
+function openTutorial(){
+  goTo('tutorial-select');
+  rendTutorialMoves();
+}
+function rendTutorialMoves(){
+  const host=document.getElementById('tut-move-list');
+  host.innerHTML=TUTORIAL_MOVES.map(function(m){
+    const mv=MOVES[m.mk];const col=mv?mv.color:'#888';
+    return '<div class="card" onclick="startTutorial(\''+m.mk+'\')" style="display:flex;align-items:center;gap:12px;margin-bottom:10px;cursor:pointer">'+
+        '<span style="width:14px;height:14px;border-radius:50%;background:'+col+';box-shadow:0 0 10px '+col+';flex-shrink:0"></span>'+
+        '<div style="flex:1"><div style="font-size:14px;font-weight:800;color:var(--text)">'+m.title+'</div>'+
+        '<div style="font-size:11px;color:var(--muted)">'+m.desc+'</div></div>'+
+        '<span style="color:var(--muted);font-size:18px">›</span>'+
+    '</div>';
+  }).join('');
+}
+function startTutorial(mk){
+  const move=TUTORIAL_MOVES.find(m=>m.mk===mk);
+  if(!move)return;
+  S.tutorial={mk:mk,count:0};
   startSession('tutorial','easy');
 }
 function initTutorial(){
-  S.tutorial={stepIdx:0,reps:0};
-  const ov=document.getElementById('center-overlay');
-  ov.innerHTML='<div><div class="co-big" style="font-size:48px;color:#00D4FF">TUTORIAL</div><div class="co-sub" style="font-size:14px;text-transform:none;letter-spacing:.3px;max-width:280px">Vamos a practicar cada golpe, uno por uno.</div></div>';
-  ov.style.display='flex';
-  setTimeout(()=>{ov.style.display='none';showTutorialStep();},1800);
-}
-function tutorialStep(){return TUTORIAL_STEPS[S.tutorial.stepIdx];}
-function showTutorialStep(){
-  const step=tutorialStep();
+  const move=TUTORIAL_MOVES.find(m=>m.mk===S.tutorial.mk);
   const banner=document.getElementById('tutorial-banner');
-  const mv=MOVES[step.mk];
+  const mv=MOVES[S.tutorial.mk];
   const col=mv?mv.color:'#00D4FF';
-  banner.innerHTML='<div style="font-family:var(--font);font-weight:900;font-size:28px;color:'+col+';text-shadow:0 0 16px '+col+'">'+step.title+'</div>'+
-    '<div style="font-family:var(--font);font-weight:600;color:rgba(255,255,255,.75);font-size:13px;margin-top:4px;max-width:300px;margin-left:auto;margin-right:auto;line-height:1.4">'+step.desc+'</div>'+
-    '<div style="font-family:var(--font);font-weight:900;font-size:20px;color:white;margin-top:8px" id="tut-progress">0 / '+step.reps+'</div>';
+  banner.innerHTML='<div style="font-family:var(--font);font-weight:900;font-size:26px;color:'+col+';text-shadow:0 0 16px '+col+'">'+move.title+'</div>'+
+    '<div style="font-family:var(--font);font-weight:600;color:rgba(255,255,255,.8);font-size:14px;margin-top:4px;max-width:300px;margin-left:auto;margin-right:auto;line-height:1.4">'+move.desc+'</div>'+
+    '<div style="font-family:var(--font);font-weight:900;font-size:22px;color:white;margin-top:10px"><span id="tut-count">0</span> <span style="font-size:13px;color:rgba(255,255,255,.6);font-weight:700">aciertos</span></div>';
   banner.style.display='block';
+  document.getElementById('tut-exit').style.display='block';
 }
 function tutorialProcess(){
-  const step=tutorialStep();if(!step)return;
+  const mk=S.tutorial.mk;if(!mk)return;
   const now=Date.now();
-  if(step.mk==='DOGEL'){
-    if(!dodgeActive&&S.tutorial.reps<step.reps){activateDodge('DOGEL',now);}
+  if(mk==='DOGEL'){
+    if(!dodgeActive)activateDodge('DOGEL',now);
     return;
   }
-  const mv=MOVES[step.mk];if(!mv||mv.kp<0)return;
-  // Check primary move, and alternate (e.g. HOOK_L/HOOK_R) if defined
-  const candidates=[step.mk];
-  if(step.altMk)candidates.push(step.altMk);
-  for(const cand of candidates){
-    const cmv=MOVES[cand];if(!cmv)continue;
-    const cKey='tut_'+cand;
-    if((now-(hitCool[cKey]||0))<getHitCD())continue;
-    const vel=calcVel(cmv.kp,cmv.velType);
-    if(vel<cmv.velThr)continue;
-    hitCool[cKey]=now;
-    S.tutorial.reps++;
-    playSound(cand.toLowerCase());
-    const tp=getTargetPos(cand);
-    addEffect({x:tp.x,y:tp.y},cmv.color,'¡BIEN!');
-    const pe=document.getElementById('tut-progress');
-    if(pe)pe.textContent=S.tutorial.reps+' / '+step.reps;
-    if(S.tutorial.reps>=step.reps)setTimeout(advanceTutorial,500);
-    break;
+  const mv=MOVES[mk];if(!mv||mv.kp<0)return;
+  const cKey='tut_'+mk;
+  if((now-(hitCool[cKey]||0))<getHitCD())return;
+  const vel=calcVel(mv.kp,mv.velType);
+  if(vel<mv.velThr)return;
+  // Same landing logic as guided training: require wrist/ankle near its target
+  const kp=currKpts[mv.kp];if(!kp||kp.score<0.3)return;
+  const c=document.getElementById('ar-canvas');
+  const kpx={x:kp.x*c.width,y:kp.y*c.height};
+  const tp=getTargetPos(mk);
+  let landed=false;
+  if(mv.velType==='lateral'){
+    const radius=mv.size*c.width*1.8;
+    const closeNow=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<radius;
+    let crossed=false;
+    const pv=prevKpts&&prevKpts[mv.kp];
+    if(pv&&pv.score>0.25){
+      const pvx={x:pv.x*c.width,y:pv.y*c.height};
+      const verticalOk=Math.abs(kpx.y-tp.y)<radius*1.3;
+      crossed=verticalOk&&((pvx.x-tp.x)*(kpx.x-tp.x)<=0);
+    }
+    landed=closeNow||crossed;
+  } else {
+    landed=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<mv.size*c.width;
   }
+  if(!landed)return;
+  hitCool[cKey]=now;
+  S.tutorial.count++;
+  playSound(mk.toLowerCase());
+  addEffect({x:tp.x,y:tp.y},mv.color,'¡BIEN!');
+  const ce=document.getElementById('tut-count');
+  if(ce)ce.textContent=S.tutorial.count;
 }
-function advanceTutorial(){
-  S.tutorial.stepIdx++;S.tutorial.reps=0;
-  if(S.tutorial.stepIdx>=TUTORIAL_STEPS.length){finishTutorial();return;}
-  showTutorialStep();
-}
-function finishTutorial(){
-  document.getElementById('tutorial-banner').style.display='none';
-  hideCenterOverlay();
-  S.user.tutorialDone=true;save();
+function exitTutorial(){
+  document.getElementById('tutorial-banner').style.display='none';document.getElementById('tut-exit').style.display='none';
   endSession(true);
 }
 
@@ -770,10 +861,9 @@ function checkDodgeSuccess(){
     addEffect(pos,'#00B87A','DODGE!');playSound('dodge');
     updateHUD();
     if(isTutorial){
-      S.tutorial.reps++;
-      const pe=document.getElementById('tut-progress');
-      if(pe)pe.textContent=S.tutorial.reps+' / '+tutorialStep().reps;
-      if(S.tutorial.reps>=tutorialStep().reps)setTimeout(advanceTutorial,500);
+      S.tutorial.count++;
+      const ce=document.getElementById('tut-count');
+      if(ce)ce.textContent=S.tutorial.count;
     } else {
       advCombo((COMBOS[S.sess.selCombo]&&COMBOS[S.sess.selCombo].seq)||[]);
     }
@@ -1128,11 +1218,11 @@ function drawTargets(c,ctx){
 
 // ======== TUTORIAL TARGET ========
 function drawTutorialTarget(c,ctx){
-  const step=tutorialStep();if(!step)return;
-  const mv=MOVES[step.mk];if(!mv||mv.kp<0)return;
+  const mk=S.tutorial.mk;if(!mk)return;
+  const mv=MOVES[mk];if(!mv||mv.kp<0)return;
   const t=Date.now()/1000;
   const pulse=1+Math.sin(t*2.8)*.07;
-  const tp=getTargetPos(step.mk);
+  const tp=getTargetPos(mk);
   const sz=mv.size*c.width;
   ctx.save();
   drawSphere3D(ctx,tp.x,tp.y,sz*pulse,mv.color);
@@ -1142,22 +1232,6 @@ function drawTutorialTarget(c,ctx){
   ctx.shadowColor=mv.color;ctx.shadowBlur=14;
   ctx.fillText(mv.label,tp.x,tp.y+sz*1.85);ctx.shadowBlur=0;
   ctx.restore();
-  // If this step has an alternate (e.g. HOOK left/right), draw second target
-  if(step.altMk){
-    const amv=MOVES[step.altMk];
-    if(amv&&amv.kp>=0){
-      const atp=getTargetPos(step.altMk);
-      const asz=amv.size*c.width;
-      ctx.save();
-      drawSphere3D(ctx,atp.x,atp.y,asz*pulse,amv.color);
-      ctx.fillStyle='white';
-      ctx.font=`bold ${c.width*.052}px DM Sans,sans-serif`;
-      ctx.textAlign='center';ctx.textBaseline='middle';
-      ctx.shadowColor=amv.color;ctx.shadowBlur=14;
-      ctx.fillText(amv.label,atp.x,atp.y+asz*1.85);ctx.shadowBlur=0;
-      ctx.restore();
-    }
-  }
 }
 
 // ======== DODGE ARROW ========
@@ -1331,9 +1405,9 @@ function endSession(fromTutorial){
   if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
   detector=null;currKpts=null;prevKpts=null;dodgeActive=false;
   guardLowSince=null;lastBodyX=null;staticSince=null;activeNotice=null;noticeCooldownUntil=0;
-  document.getElementById('tutorial-banner').style.display='none';
+  document.getElementById('tutorial-banner').style.display='none';document.getElementById('tut-exit').style.display='none';
   if(fromTutorial||S.sess.mode==='tutorial'){
-    goTo('home');document.getElementById('bottom-nav').style.display='flex';
+    goTo('tutorial-select');rendTutorialMoves();document.getElementById('bottom-nav').style.display='flex';
     return;
   }
   const s=S.sess,dur=Math.floor((Date.now()-s.startTime)/1000);
@@ -1459,6 +1533,7 @@ function shareSession(){
 
 // ======== HOME / PROFILE ========
 function refHome(){
+  renderDailyChallenge();
   const n=S.user.name||'Entrenador';
   document.getElementById('h-greeting').textContent=n+' 🥊';
   document.getElementById('h-streak').textContent=S.stats.streak;
