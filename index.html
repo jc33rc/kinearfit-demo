@@ -1348,22 +1348,44 @@ function drawGlove(ctx,x,y,sz,isLeft){
 function addEffect(pos,color,label){hitEffects.push({x:pos.x,y:pos.y,color,label,t:Date.now()});}
 function drawEffects(c,ctx){
   const now=Date.now();
-  hitEffects=hitEffects.filter(e=>now-e.t<550);
+  hitEffects=hitEffects.filter(e=>now-e.t<650);
   for(const e of hitEffects){
-    const p=(now-e.t)/550;
-    ctx.save();ctx.globalAlpha=1-p;
-    ctx.beginPath();ctx.arc(e.x,e.y,p*90,0,Math.PI*2);ctx.strokeStyle=e.color;ctx.lineWidth=2.5;ctx.stroke();
+    const p=(now-e.t)/650;
+    ctx.save();
+
+    // --- Big expanding glow pulse (visible from a distance) ---
+    const R=c.width*0.34;            // large reach
+    const pr=p*R;
+    // Soft filled glow that fades fast
+    const ga=(1-p)*0.45;
+    const gaHex=Math.round(ga*255).toString(16).padStart(2,'0');
+    const grad=ctx.createRadialGradient(e.x,e.y,pr*0.15,e.x,e.y,Math.max(1,pr));
+    grad.addColorStop(0,e.color+gaHex);
+    grad.addColorStop(1,'transparent');
+    ctx.globalAlpha=1;
+    ctx.fillStyle=grad;
+    ctx.beginPath();ctx.arc(e.x,e.y,Math.max(1,pr),0,Math.PI*2);ctx.fill();
+    // Bright expanding ring
+    ctx.globalAlpha=(1-p)*0.9;
+    ctx.beginPath();ctx.arc(e.x,e.y,pr*0.85,0,Math.PI*2);
+    ctx.strokeStyle=e.color;ctx.lineWidth=Math.max(2,c.width*0.012*(1-p));
+    ctx.shadowColor=e.color;ctx.shadowBlur=24*(1-p);
+    ctx.stroke();ctx.shadowBlur=0;
+
+    // --- Original close-range detail (sparks) ---
+    ctx.globalAlpha=1-p;
     for(let i=0;i<8;i++){
       const a=i/8*Math.PI*2+p*2;const d=p*70;
-      ctx.beginPath();ctx.arc(e.x+Math.cos(a)*d,e.y+Math.sin(a)*d,3*(1-p),0,Math.PI*2);
+      ctx.beginPath();ctx.arc(e.x+Math.cos(a)*d,e.y+Math.sin(a)*d,3.5*(1-p),0,Math.PI*2);
       ctx.fillStyle='rgba(255,255,255,.9)';ctx.fill();
     }
-    ctx.fillStyle=e.color;ctx.font=`bold ${c.width*.042}px DM Sans,sans-serif`;
+    // Score text
+    ctx.fillStyle=e.color;ctx.font=`bold ${c.width*.05}px DM Sans,sans-serif`;
     ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.shadowColor=e.color;ctx.shadowBlur=14;
+    ctx.shadowColor=e.color;ctx.shadowBlur=16;
     const mult=getMultiplier();
     const pts=e.label.includes('DODGE')?30:(e.label.startsWith('KICK')?25:15);
-    ctx.fillText('+'+pts*(mult>1?mult:1),e.x,e.y-p*55);
+    ctx.fillText('+'+pts*(mult>1?mult:1),e.x,e.y-p*60);
     ctx.shadowBlur=0;ctx.restore();
   }
 }
@@ -1431,13 +1453,16 @@ function playSound(type){
     const curve=new Float32Array(256);for(let i=0;i<256;i++){const x=(i*2)/256-1;curve[i]=(3+30)*x*30*(Math.PI/180)/(Math.PI+30*Math.abs(x));}
     dist.curve=curve;osc.connect(dist);dist.connect(g);g.connect(audioCtx.destination);
     const cfgs={
-      jab:   {f:220,d:.07,t:'sawtooth',vol:.22}, // Seco, rápido
-      cross: {f:160,d:.11,t:'sawtooth',vol:.28}, // Potente
-      hook:  {f:120,d:.16,t:'square',  vol:.32}, // Grave, lateral
-      upper: {f:200,d:.09,t:'sawtooth',vol:.25}, // Ascendente
-      kickf: {f:90, d:.22,t:'sine',    vol:.38}, // Grave profundo
-      kicks: {f:100,d:.2, t:'sine',    vol:.35}, // Lateral profundo
-      dodge: {f:320,d:.06,t:'sine',    vol:.18}, // Ligero
+      jab:        {f:220,d:.07,t:'sawtooth',vol:.34}, // Seco, rápido
+      cross:      {f:160,d:.11,t:'sawtooth',vol:.42}, // Potente
+      hook_l:     {f:120,d:.16,t:'square',  vol:.48}, // Grave, lateral
+      hook_r:     {f:120,d:.16,t:'square',  vol:.48},
+      hook_body_l:{f:105,d:.17,t:'square',  vol:.50}, // Más grave (al cuerpo)
+      hook_body_r:{f:105,d:.17,t:'square',  vol:.50},
+      upper:      {f:200,d:.09,t:'sawtooth',vol:.38}, // Ascendente
+      kickf:      {f:90, d:.22,t:'sine',    vol:.55}, // Grave profundo
+      kicks:      {f:100,d:.2, t:'sine',    vol:.52}, // Lateral profundo
+      dodge:      {f:320,d:.06,t:'sine',    vol:.26}, // Ligero
     };
     const c=cfgs[type]||cfgs.jab,now=audioCtx.currentTime;
     osc.frequency.setValueAtTime(c.f,now);osc.frequency.exponentialRampToValueAtTime(28,now+c.d);
