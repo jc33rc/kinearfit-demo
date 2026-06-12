@@ -207,6 +207,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <div class="tracking-badge" id="track-badge"><div class="t-dot" id="t-dot" style="background:#888"></div><span class="t-txt" id="t-txt">Cargando...</span></div>
   <div class="combo-badge-hud" id="combo-hud"><span style="font-family:var(--font);color:#FFD60A;font-size:14px;font-weight:900" id="combo-txt">⚡ ×2</span></div>
   <div id="center-overlay" style="position:absolute;inset:0;z-index:6;display:none;align-items:center;justify-content:center;pointer-events:none;text-align:center"></div>
+  <div id="tutorial-banner" style="position:absolute;top:0;left:0;right:0;z-index:6;display:none;padding:60px 20px 16px;text-align:center;background:linear-gradient(180deg,rgba(0,0,0,.75) 0%,transparent 100%);pointer-events:none"></div>
   <div id="hud">
     <div class="hud-top">
       <div><div class="hud-lbl">Ronda</div><div class="hud-val" id="hud-rnd">1/3</div></div>
@@ -282,22 +283,17 @@ let MOVES={
   KICKF:{color:'#7B2D8B',label:'KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total'},
   KICKS:{color:'#E040FB',label:'KICK →',kp:KP.RA, offX: .28,offY: .38,velThr:28, size:.15,velType:'lateral'},
   DOGEL:{color:'#00B87A',label:'DODGE ←',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'},
-  DOGER:{color:'#00B87A',label:'DODGE →',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'},
-  GUARD:{color:'#00D4FF',label:'GUARD UP',kp:-2,offX:0,offY:0,velThr:0,size:0,velType:'total',dur:2.0},
-  MOVE: {color:'#FFD60A',label:'MOVE',    kp:-2,offX:0,offY:0,velThr:0,size:0,velType:'total',dur:2.0}
+  DOGER:{color:'#00B87A',label:'DODGE →',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'}
 };
 const TUTORIAL_STEPS=[
   {mk:'JAB',     title:'JAB',          desc:'Extiende el brazo adelantado en línea recta hacia el frente.',     reps:5},
   {mk:'CROSS',   title:'CROSS',        desc:'Gira la cadera y lanza el brazo trasero en línea recta.',          reps:5},
-  {mk:'HOOK_L',  title:'HOOK IZQUIERDO',desc:'Gira el codo izquierdo en arco horizontal, codo a 90°.',          reps:4},
-  {mk:'HOOK_R',  title:'HOOK DERECHO', desc:'Gira el codo derecho en arco horizontal, codo a 90°.',             reps:4},
-  {mk:'HOOK_BODY_L',title:'HOOK AL CUERPO',desc:'Mismo gancho pero apuntando al costado/hígado, agacha un poco.',reps:4},
+  {mk:'HOOK_L',  altMk:'HOOK_R', title:'HOOK',desc:'Gira el codo en arco horizontal hacia el centro — con la izquierda o la derecha.',reps:4},
+  {mk:'HOOK_BODY_L',altMk:'HOOK_BODY_R',title:'HOOK AL CUERPO',desc:'Mismo gancho pero apuntando al costado/hígado, agacha un poco.',reps:4},
   {mk:'UPPER',   title:'UPPER',        desc:'Sube el puño desde abajo hacia arriba, en línea vertical.',        reps:4},
   {mk:'KICKF',   title:'PATADA FRONTAL',desc:'Levanta la rodilla y extiende la pierna hacia adelante.',         reps:3},
   {mk:'KICKS',   title:'PATADA LATERAL',desc:'Gira la cadera y extiende la pierna hacia el costado.',           reps:3},
-  {mk:'DOGEL',   title:'ESQUIVA DIAGONAL',desc:'Inclina el tronco en diagonal hacia la esquina segura indicada.',reps:2},
-  {mk:'GUARD',   title:'GUARD UP',     desc:'Sube ambos puños a la altura de la cara y mantenlos ahí.',         reps:1},
-  {mk:'MOVE',    title:'MOVE',         desc:'Desplázate lateralmente — footwork activo.',                       reps:1}
+  {mk:'DOGEL',   title:'ESQUIVA DIAGONAL',desc:'Inclina el tronco en diagonal hacia la esquina segura indicada.',reps:2}
 ];
 const RUTINAS=[
   // ===== FÁCIL (4) =====
@@ -493,43 +489,48 @@ function startTutorial(){
 function initTutorial(){
   S.tutorial={stepIdx:0,reps:0};
   const ov=document.getElementById('center-overlay');
-  ov.innerHTML='<div><div class="co-big" style="font-size:48px;color:#00D4FF">TUTORIAL</div><div class="co-sub" style="font-size:14px;text-transform:none;letter-spacing:.3px;max-width:280px">Vamos a practicar cada golpe y movimiento, uno por uno.</div></div>';
+  ov.innerHTML='<div><div class="co-big" style="font-size:48px;color:#00D4FF">TUTORIAL</div><div class="co-sub" style="font-size:14px;text-transform:none;letter-spacing:.3px;max-width:280px">Vamos a practicar cada golpe, uno por uno.</div></div>';
   ov.style.display='flex';
-  setTimeout(showTutorialStep,1800);
+  setTimeout(()=>{ov.style.display='none';showTutorialStep();},1800);
 }
 function tutorialStep(){return TUTORIAL_STEPS[S.tutorial.stepIdx];}
 function showTutorialStep(){
   const step=tutorialStep();
-  const ov=document.getElementById('center-overlay');
+  const banner=document.getElementById('tutorial-banner');
   const mv=MOVES[step.mk];
   const col=mv?mv.color:'#00D4FF';
-  ov.innerHTML='<div><div class="co-big" style="font-size:54px;color:'+col+'">'+step.title+'</div>'+
-    '<div class="co-sub" style="font-size:14px;max-width:280px;line-height:1.5;text-transform:none;letter-spacing:.3px">'+step.desc+'</div>'+
-    '<div class="co-sub" style="margin-top:14px;font-size:22px;color:white" id="tut-progress">0 / '+step.reps+'</div></div>';
-  ov.style.display='flex';
+  banner.innerHTML='<div style="font-family:var(--font);font-weight:900;font-size:28px;color:'+col+';text-shadow:0 0 16px '+col+'">'+step.title+'</div>'+
+    '<div style="font-family:var(--font);font-weight:600;color:rgba(255,255,255,.75);font-size:13px;margin-top:4px;max-width:300px;margin-left:auto;margin-right:auto;line-height:1.4">'+step.desc+'</div>'+
+    '<div style="font-family:var(--font);font-weight:900;font-size:20px;color:white;margin-top:8px" id="tut-progress">0 / '+step.reps+'</div>';
+  banner.style.display='block';
 }
 function tutorialProcess(){
   const step=tutorialStep();if(!step)return;
   const now=Date.now();
-  if(step.mk==='GUARD'||step.mk==='MOVE'){
-    if(!holdActive&&S.tutorial.reps<step.reps){activateHold(step.mk,now);}
-    return;
-  }
   if(step.mk==='DOGEL'){
     if(!dodgeActive&&S.tutorial.reps<step.reps){activateDodge('DOGEL',now);}
     return;
   }
   const mv=MOVES[step.mk];if(!mv||mv.kp<0)return;
-  const cKey='tut_'+step.mk;
-  if((now-(hitCool[cKey]||0))<getHitCD())return;
-  const vel=calcVel(mv.kp,mv.velType);
-  if(vel<mv.velThr)return;
-  hitCool[cKey]=now;
-  S.tutorial.reps++;
-  playSound(step.mk.toLowerCase());
-  const pe=document.getElementById('tut-progress');
-  if(pe)pe.textContent=S.tutorial.reps+' / '+step.reps;
-  if(S.tutorial.reps>=step.reps)setTimeout(advanceTutorial,500);
+  // Check primary move, and alternate (e.g. HOOK_L/HOOK_R) if defined
+  const candidates=[step.mk];
+  if(step.altMk)candidates.push(step.altMk);
+  for(const cand of candidates){
+    const cmv=MOVES[cand];if(!cmv)continue;
+    const cKey='tut_'+cand;
+    if((now-(hitCool[cKey]||0))<getHitCD())continue;
+    const vel=calcVel(cmv.kp,cmv.velType);
+    if(vel<cmv.velThr)continue;
+    hitCool[cKey]=now;
+    S.tutorial.reps++;
+    playSound(cand.toLowerCase());
+    const tp=getTargetPos(cand);
+    addEffect({x:tp.x,y:tp.y},cmv.color,'¡BIEN!');
+    const pe=document.getElementById('tut-progress');
+    if(pe)pe.textContent=S.tutorial.reps+' / '+step.reps;
+    if(S.tutorial.reps>=step.reps)setTimeout(advanceTutorial,500);
+    break;
+  }
 }
 function advanceTutorial(){
   S.tutorial.stepIdx++;S.tutorial.reps=0;
@@ -537,6 +538,7 @@ function advanceTutorial(){
   showTutorialStep();
 }
 function finishTutorial(){
+  document.getElementById('tutorial-banner').style.display='none';
   hideCenterOverlay();
   S.user.tutorialDone=true;save();
   endSession(true);
@@ -620,7 +622,7 @@ async function detectLoop(){
           else processHits();
         }
         if(dodgeActive)checkDodgeSuccess();
-        if(holdActive)checkHoldSuccess();
+        if(S.sess.active&&S.sess.mode!=='tutorial')checkPassiveGuardMove();
         // Update pear position to follow head
         const nose=kpts[0];
         if(nose&&nose.score>0.3&&S.sess.mode==='libre'){
@@ -703,14 +705,31 @@ function processHits(){
     const mv=MOVES[cmk];
     if(!mv){return;}
     if(mv.kp===-1){activateDodge(cmk,now);return;}
-    if(mv.kp===-2){activateHold(cmk,now);return;}
     if((now-(hitCool[cmk]||0))<getHitCD())return;
     const vel=calcVel(mv.kp,mv.velType);
     if(vel<mv.velThr)return;
     const kp=currKpts[mv.kp];if(!kp||kp.score<0.3)return;
     const kpx={x:kp.x*c.width,y:kp.y*c.height};
     const tp=getTargetPos(cmk);
-    if(Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<mv.size*c.width){
+    let landed=false;
+    if(mv.velType==='lateral'){
+      // Hooks/lateral kicks: wider radius, plus trajectory-crossing check
+      // (wrist crossed the target's horizontal center between prev and current frame, within vertical band)
+      const radius=mv.size*c.width*1.8;
+      const closeNow=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<radius;
+      let crossed=false;
+      const pv=prevKpts&&prevKpts[mv.kp];
+      if(pv&&pv.score>0.25){
+        const pvx={x:pv.x*c.width,y:pv.y*c.height};
+        const verticalOk=Math.abs(kpx.y-tp.y)<radius*1.3;
+        const crossedX=(pvx.x-tp.x)*(kpx.x-tp.x)<=0; // sign change = crossed center
+        crossed=verticalOk&&crossedX;
+      }
+      landed=closeNow||crossed;
+    } else {
+      landed=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<mv.size*c.width;
+    }
+    if(landed){
       hitCool[cmk]=now;doHit(cmk,kpx);advCombo(seq);
     }
   }
@@ -743,57 +762,82 @@ function checkDodgeSuccess(){
   const movedRight=dx>dxThr,movedLeft=dx<-dxThr,movedDown=dy>dyThr;
   const diagonalOk=(wantRight?movedRight:movedLeft)&&(wantDown?movedDown:true);
   const elapsed=(Date.now()-dodgeT)/1000;
+  const isTutorial=S.sess.mode==='tutorial';
   if(diagonalOk){
     dodgeActive=false;const pos={x:dz.cx+dx,y:dz.cy+dy};dodgeZoneData=null;
     S.sess.dodges++;S.sess.score+=30;
     S.sess.comboStr++;S.sess.comboMax=Math.max(S.sess.comboMax,S.sess.comboStr);
     addEffect(pos,'#00B87A','DODGE!');playSound('dodge');
-    updateHUD();advCombo((COMBOS[S.sess.selCombo]&&COMBOS[S.sess.selCombo].seq)||[]);
+    updateHUD();
+    if(isTutorial){
+      S.tutorial.reps++;
+      const pe=document.getElementById('tut-progress');
+      if(pe)pe.textContent=S.tutorial.reps+' / '+tutorialStep().reps;
+      if(S.tutorial.reps>=tutorialStep().reps)setTimeout(advanceTutorial,500);
+    } else {
+      advCombo((COMBOS[S.sess.selCombo]&&COMBOS[S.sess.selCombo].seq)||[]);
+    }
   } else if(elapsed>2.2){
     dodgeActive=false;dodgeZoneData=null;
     S.sess.score=Math.max(0,S.sess.score-8);S.sess.comboStr=0;updateHUD();
-    advCombo((COMBOS[S.sess.selCombo]&&COMBOS[S.sess.selCombo].seq)||[]);
+    if(!isTutorial)advCombo((COMBOS[S.sess.selCombo]&&COMBOS[S.sess.selCombo].seq)||[]);
   }
 }
 
-// ======== GUARD / MOVE (timed holds) ========
-let holdActive=false,holdData=null,holdT=0;
-function activateHold(mk,now){
-  if(holdActive)return;
-  holdActive=true;holdT=now;
-  const mv=MOVES[mk];
-  holdData={mk,dur:mv.dur||2.0,startBody:getBodyCenter()};
-  showCenterOverlay(mk);
+// ======== GUARD / MOVE (passive monitor — runs throughout session) ========
+let guardLowSince=null,lastBodyX=null,staticSince=null;
+let activeNotice=null,noticeUntil=0,noticeCooldownUntil=0;
+const GUARD_LOW_THR=2.5;   // seconds hands must be low to trigger
+const STATIC_THR=9.0;      // seconds without lateral movement to trigger MOVE
+const NOTICE_DUR=2.2;      // seconds the overlay stays visible
+const NOTICE_COOLDOWN=6.0; // seconds before another notice can show
+function checkPassiveGuardMove(){
+  if(!currKpts)return;
+  const now=Date.now();
+  // If a notice is active, check if it should hide
+  if(activeNotice){
+    if(now>=noticeUntil){
+      hideCenterOverlay();
+      activeNotice=null;
+      noticeCooldownUntil=now+NOTICE_COOLDOWN*1000;
+    }
+    return; // don't evaluate new triggers while one is showing
+  }
+  if(now<noticeCooldownUntil)return;
+
+  // --- GUARD check: are both wrists below face level? ---
+  const lw=currKpts[KP.LW],rw=currKpts[KP.RW],nose=currKpts[KP.NOSE];
+  let guardLow=false;
+  if(lw&&rw&&nose&&lw.score>0.25&&rw.score>0.25&&nose.score>0.25){
+    guardLow=(lw.y>nose.y+0.18)&&(rw.y>nose.y+0.18);
+  }
+  if(guardLow){
+    if(guardLowSince===null)guardLowSince=now;
+    if((now-guardLowSince)/1000>=GUARD_LOW_THR){
+      triggerNotice('GUARD');
+      guardLowSince=null;staticSince=null;lastBodyX=null;
+      return;
+    }
+  } else {
+    guardLowSince=null;
+  }
+
+  // --- MOVE check: has body center stayed static while landing hits? ---
+  const body=getBodyCenter();
+  if(body){
+    if(lastBodyX===null){lastBodyX=body.x;staticSince=now;}
+    const moved=Math.abs(body.x-lastBodyX)>0.04;
+    if(moved){lastBodyX=body.x;staticSince=now;}
+    else if(staticSince!==null&&(now-staticSince)/1000>=STATIC_THR){
+      triggerNotice('MOVE');
+      staticSince=null;lastBodyX=body.x;guardLowSince=null;
+    }
+  }
 }
-function checkHoldSuccess(){
-  if(!holdData||!currKpts)return;
-  const elapsed=(Date.now()-holdT)/1000;
-  const mk=holdData.mk;
-  let success=false;
-  if(mk==='GUARD'){
-    const lw=currKpts[KP.LW],rw=currKpts[KP.RW],nose=currKpts[KP.NOSE];
-    if(lw&&rw&&nose&&lw.score>0.25&&rw.score>0.25&&nose.score>0.25){
-      success=(lw.y<nose.y+0.10)&&(rw.y<nose.y+0.10);
-    }
-  } else if(mk==='MOVE'){
-    const body=getBodyCenter();
-    if(body&&holdData.startBody){
-      success=Math.abs(body.x-holdData.startBody.x)>0.05;
-    }
-  }
-  if(elapsed>=holdData.dur){
-    holdActive=false;
-    hideCenterOverlay();
-    if(success){
-      S.sess.score+=20;S.sess.comboStr++;S.sess.comboMax=Math.max(S.sess.comboMax,S.sess.comboStr);
-      addEffect({x:innerWidth/2,y:innerHeight*0.5},MOVES[mk].color,MOVES[mk].label+'!');playSound('dodge');
-    } else {
-      S.sess.score=Math.max(0,S.sess.score-5);S.sess.comboStr=0;
-    }
-    updateHUD();
-    holdData=null;
-    advCombo((COMBOS[S.sess.selCombo]&&COMBOS[S.sess.selCombo].seq)||[]);
-  }
+function triggerNotice(mk){
+  activeNotice=mk;
+  noticeUntil=Date.now()+NOTICE_DUR*1000;
+  showCenterOverlay(mk);
 }
 function showCenterOverlay(mk){
   const ov=document.getElementById('center-overlay');
@@ -801,7 +845,7 @@ function showCenterOverlay(mk){
   if(mk==='GUARD'){
     html='<div><div class="co-big co-guard">🛡️ GUARD UP</div><div class="co-sub">Sube la guardia</div></div>';
   } else if(mk==='MOVE'){
-    html='<div><div class="co-big co-move">👣 MOVE</div><div class="co-sub">Muévete lateralmente</div></div>';
+    html='<div><div class="co-big co-move">👣 MOVE</div><div class="co-sub">Muévete — no te quedes quieto</div></div>';
   } else if(mk==='REST'){
     html='<div><div class="co-big co-rest">⏸ DESCANSO</div><div class="co-sub" id="co-rest-time">Recupera el aliento</div></div>';
   }
@@ -896,7 +940,8 @@ function arLoop(){
   else{ctx.fillStyle='#0A0A10';ctx.fillRect(0,0,c.width,c.height);}
   // AR layers
   updatePearPhysics();
-  if(S.sess.mode==='libre')drawPear(c,ctx);
+  if(S.sess.mode==='tutorial'){drawTutorialTarget(c,ctx);drawDodgeZone(c,ctx);}
+  else if(S.sess.mode==='libre')drawPear(c,ctx);
   else{drawTargets(c,ctx);drawDodgeZone(c,ctx);}
   drawEffects(c,ctx);
   requestAnimationFrame(arLoop);
@@ -1081,6 +1126,40 @@ function drawTargets(c,ctx){
   });
 }
 
+// ======== TUTORIAL TARGET ========
+function drawTutorialTarget(c,ctx){
+  const step=tutorialStep();if(!step)return;
+  const mv=MOVES[step.mk];if(!mv||mv.kp<0)return;
+  const t=Date.now()/1000;
+  const pulse=1+Math.sin(t*2.8)*.07;
+  const tp=getTargetPos(step.mk);
+  const sz=mv.size*c.width;
+  ctx.save();
+  drawSphere3D(ctx,tp.x,tp.y,sz*pulse,mv.color);
+  ctx.fillStyle='white';
+  ctx.font=`bold ${c.width*.052}px DM Sans,sans-serif`;
+  ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.shadowColor=mv.color;ctx.shadowBlur=14;
+  ctx.fillText(mv.label,tp.x,tp.y+sz*1.85);ctx.shadowBlur=0;
+  ctx.restore();
+  // If this step has an alternate (e.g. HOOK left/right), draw second target
+  if(step.altMk){
+    const amv=MOVES[step.altMk];
+    if(amv&&amv.kp>=0){
+      const atp=getTargetPos(step.altMk);
+      const asz=amv.size*c.width;
+      ctx.save();
+      drawSphere3D(ctx,atp.x,atp.y,asz*pulse,amv.color);
+      ctx.fillStyle='white';
+      ctx.font=`bold ${c.width*.052}px DM Sans,sans-serif`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
+      ctx.shadowColor=amv.color;ctx.shadowBlur=14;
+      ctx.fillText(amv.label,atp.x,atp.y+asz*1.85);ctx.shadowBlur=0;
+      ctx.restore();
+    }
+  }
+}
+
 // ======== DODGE ARROW ========
 function drawDodgeZone(c,ctx){
   if(!dodgeActive||!dodgeZoneData)return;
@@ -1250,7 +1329,9 @@ function endSession(fromTutorial){
   clearInterval(sessTimer);clearInterval(breakTimer);
   S.sess.active=false;arRunning=false;
   if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
-  detector=null;currKpts=null;prevKpts=null;dodgeActive=false;holdActive=false;holdData=null;
+  detector=null;currKpts=null;prevKpts=null;dodgeActive=false;
+  guardLowSince=null;lastBodyX=null;staticSince=null;activeNotice=null;noticeCooldownUntil=0;
+  document.getElementById('tutorial-banner').style.display='none';
   if(fromTutorial||S.sess.mode==='tutorial'){
     goTo('home');document.getElementById('bottom-nav').style.display='flex';
     return;
