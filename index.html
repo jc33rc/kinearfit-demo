@@ -164,7 +164,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
   <div class="scroll-content" style="padding-top:4px">
     <div class="heading" style="margin-bottom:20px">Entrenar</div>
-    <div class="mode-grid"><div class="mode-card active" id="mc-libre" onclick="selMode('libre')"><div style="font-size:28px;margin-bottom:8px">👊</div><div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px">Modo Libre</div><div style="font-size:12px;color:var(--muted)">Tu ritmo. Tu pera.</div></div><div class="mode-card" id="mc-combos" onclick="selMode('combos')"><div style="font-size:28px;margin-bottom:8px">🎯</div><div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px">Combos Guiados</div><div style="font-size:12px;color:var(--muted)">Sigue la secuencia.</div></div></div>
+    <div class="mode-grid"><div class="mode-card active" id="mc-combos" onclick="selMode('combos')" style="position:relative"><div style="position:absolute;top:8px;right:8px;background:var(--accent);color:white;font-size:9px;font-weight:800;padding:2px 8px;border-radius:8px;letter-spacing:.3px">RECOMENDADO</div><div style="font-size:28px;margin-bottom:8px">🎯</div><div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px">Combos Guiados</div><div style="font-size:12px;color:var(--muted)">Sigue la secuencia.</div></div><div class="mode-card" id="mc-libre" onclick="selMode('libre')"><div style="font-size:28px;margin-bottom:8px">👊</div><div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px">Modo Libre</div><div style="font-size:12px;color:var(--muted)">Tu ritmo. Tu pera.</div></div></div>
     <div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:20px;cursor:pointer" onclick="startDailyChallenge()"><span style="font-size:32px">📆</span><div><div style="font-size:15px;font-weight:800;color:var(--text)">Desafío del Día</div><div style="font-size:12px;color:var(--muted)">Nuevo reto cada 24 horas</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>
     <div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:20px;cursor:pointer" onclick="openTutorial()"><span style="font-size:32px">🎓</span><div><div style="font-size:15px;font-weight:800;color:var(--text)">Tutorial / Repaso</div><div style="font-size:12px;color:var(--muted)">Practica un golpe a la vez</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>
     <div id="combos-panel" style="display:none;margin-bottom:16px"><div class="label" style="margin-bottom:12px">Selecciona un combo</div><div id="combo-list"></div></div>
@@ -452,7 +452,7 @@ let S={
   sess:{active:false,mode:'libre',diff:'medium',round:1,totalRounds:3,
         timeLeft:180,score:0,hits:0,comboStr:0,comboMax:0,
         kicks:0,dodges:0,combos:0,combIdx:0,selCombo:0,startTime:0},
-  mode:'libre',diff:'medium',selCombo:0,obStep:1,
+  mode:'combos',diff:'medium',selCombo:0,obStep:1,
   tutorial:{mk:null,count:0}
 };
 
@@ -471,7 +471,7 @@ function goTo(id){
   const nav=['home','train','badges','profile'].includes(id);
   document.getElementById('bottom-nav').style.display=nav?'flex':'none';
   ['home','train','badges','profile'].forEach(n=>{const el=document.getElementById('nav-'+n);if(el)el.classList.toggle('active',n===id);});
-  if(id==='home')refHome();if(id==='badges')rendBadges();if(id==='profile')refProfile();
+  if(id==='home')refHome();if(id==='badges')rendBadges();if(id==='profile')refProfile();if(id==='train')selMode(S.mode);
 }
 
 // ======== ONBOARDING ========
