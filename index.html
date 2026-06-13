@@ -224,6 +224,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
       <div class="hud-timer" id="hud-tmr">3:00</div>
       <div style="text-align:right"><div class="hud-lbl">Score</div><div class="hud-val" id="hud-sc">0</div></div>
     </div>
+    <div style="display:flex;justify-content:center;margin-top:6px"><div style="background:rgba(0,184,122,.14);border:1px solid rgba(0,184,122,.4);border-radius:20px;padding:4px 14px;display:flex;align-items:center;gap:5px"><span style="font-size:13px">🔥</span><span style="font-size:14px;font-weight:800;color:#00B87A" id="hud-cal2">0</span><span style="font-size:11px;color:rgba(255,255,255,.55)">kcal</span></div></div>
     <div class="hud-bottom">
       <div id="hb-libre" style="display:none;gap:8px;align-items:center"><div style="background:rgba(255,255,255,.08);border-radius:12px;padding:6px 14px"><span style="font-size:13px;font-weight:700;color:white" id="hud-hits">0</span><span style="font-size:11px;color:rgba(255,255,255,.5)"> golpes</span></div><div style="background:rgba(255,255,255,.08);border-radius:12px;padding:6px 14px"><span style="font-size:13px;font-weight:700;color:#00B87A" id="hud-cal">0</span><span style="font-size:11px;color:rgba(255,255,255,.5)"> cal</span></div></div>
       <div id="hb-combo" style="display:none;align-items:center;gap:6px;flex:1"><span style="font-size:11px;color:rgba(255,255,255,.4)">SIG:</span><div id="nxt-moves" style="display:flex;gap:6px"></div></div>
@@ -237,7 +238,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <div class="scroll-content" style="padding-top:0">
     <div style="text-align:center;padding:28px 0 20px"><span style="font-size:52px">🏁</span><div class="heading" style="margin-top:8px">¡Sesión Completada!</div><div class="muted-text" style="margin-top:4px">Excelente trabajo</div></div>
     <div class="card card-accent" style="text-align:center;margin-bottom:16px"><div class="label" style="margin-bottom:4px">Score Total</div><div style="font-size:44px;font-weight:900;color:var(--accent);letter-spacing:-2px" id="ps-score">0</div></div>
-    <div class="stats-grid"><div class="stat-card"><div class="stat-big" id="ps-hits">0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Golpes</div></div><div class="stat-card"><div class="stat-big" style="color:var(--green)" id="ps-acc">—</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Precisión</div></div><div class="stat-card"><div class="stat-big" id="ps-time">0:00</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Duración</div></div><div class="stat-card"><div class="stat-big" style="color:#FFD60A" id="ps-combo">×0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Mejor Combo</div></div></div>
+    <div class="stats-grid"><div class="stat-card"><div class="stat-big" id="ps-hits">0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Golpes</div></div><div class="stat-card"><div class="stat-big" style="color:var(--green)" id="ps-acc">—</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Precisión</div></div><div class="stat-card"><div class="stat-big" id="ps-time">0:00</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Duración</div></div><div class="stat-card"><div class="stat-big" style="color:#FFD60A" id="ps-combo">×0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Mejor Combo</div></div><div class="stat-card"><div class="stat-big" style="color:#00B87A" id="ps-cal">0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">🔥 Calorías</div></div></div>
     <div class="card card-accent" id="ps-badge" style="display:none;align-items:center;gap:14px;margin-bottom:16px"><span style="font-size:44px" id="ps-bicon">🎯</span><div><span class="chip" style="margin-bottom:6px;display:inline-block">¡Nueva insignia!</span><div style="font-size:16px;font-weight:800;color:var(--text);margin:6px 0 2px" id="ps-bname"></div><div style="font-size:12px;color:var(--muted)" id="ps-bdesc"></div></div></div>
     <div class="card" style="margin-bottom:20px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span class="muted-text">Progreso nivel</span><span style="font-size:13px;font-weight:700;color:var(--text)" id="ps-xpp">0%</span></div><div class="progress-track" style="height:8px"><div class="progress-fill" id="ps-xpb" style="width:0%"></div></div></div>
     <div style="display:flex;gap:10px;margin-bottom:20px"><button class="btn btn-secondary" style="flex:1" onclick="shareSession()">📤 Compartir</button><button class="btn" style="flex:1" onclick="goTo('home')">Continuar →</button></div>
@@ -276,7 +277,23 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 
 <script>
 // ======== CONSTANTS ========
-const DIFF={easy:{dur:60,rest:60,spd:'Lenta',mult:0.8,level:'Fácil'},medium:{dur:180,rest:45,spd:'Media',mult:1.0,level:'Intermedio'},hard:{dur:300,rest:30,spd:'Rápida',mult:1.25,level:'Avanzado'}};
+const DIFF={easy:{dur:60,rest:60,spd:'Lenta',mult:0.8,level:'Fácil',met:5.5},medium:{dur:180,rest:45,spd:'Media',mult:1.0,level:'Intermedio',met:7.8},hard:{dur:300,rest:30,spd:'Rápida',mult:1.25,level:'Avanzado',met:9.8}};
+// Calorie estimate (ACSM / Compendium of Physical Activities): kcal/min = MET × 3.5 × kg ÷ 200
+function calcCalories(diffKey,activeSeconds){
+  const met=(DIFF[diffKey]&&DIFF[diffKey].met)||7.0;
+  const kg=S.user.wt||70;
+  const minutes=activeSeconds/60;
+  return (met*3.5*kg/200)*minutes;
+}
+function weeklyCalories(){
+  if(!S.stats.calLog)return 0;
+  let sum=0;
+  for(let i=0;i<7;i++){
+    const d=new Date(Date.now()-i*86400000).toISOString().slice(0,10);
+    sum+=S.stats.calLog[d]||0;
+  }
+  return Math.round(sum);
+}
 const LEVELS=['Novato','Amateur','Pro','Campeón','Élite'];
 const LEVEL_XP=[0,500,1500,3500,7000];
 const KP={NOSE:0,LE:1,RE:2,LEAR:3,REAR:4,LS:5,RS:6,LELB:7,RELB:8,LW:9,RW:10,LH:11,RH:12,LK:13,RK:14,LA:15,RA:16};
@@ -447,7 +464,8 @@ let S={
   user:{name:'',age:25,wt:70,ht:170,dom:'right',level:'beginner'},
   stats:{totalHits:0,totalKicks:0,totalDodges:0,totalCombos:0,eliteCombos:0,
          totalSessions:0,totalRounds:0,hardRounds:0,totalTime:0,streak:0,
-         modesUsed:0,modesSet:new Set(),lastSession:{hits:0,dur:0,score:0,comboMax:0},xp:0},
+         totalCalories:0,calLog:{},
+         modesUsed:0,modesSet:new Set(),lastSession:{hits:0,dur:0,score:0,comboMax:0,calories:0},xp:0},
   badges:new Set(),
   sess:{active:false,mode:'libre',diff:'medium',round:1,totalRounds:3,
         timeLeft:180,score:0,hits:0,comboStr:0,comboMax:0,
@@ -647,7 +665,7 @@ let sessTimer=null,breakTimer=null,audioCtx=null;
 const hitCool={};function getHitCD(){const m=(DIFF[S.sess.diff]&&DIFF[S.sess.diff].mult)||1;return Math.round(380/m);}
 
 async function startSession(mode,diff){
-  S.sess={active:false,mode,diff,round:1,totalRounds:3,timeLeft:DIFF[diff].dur,score:0,hits:0,comboStr:0,comboMax:0,kicks:0,dodges:0,combos:0,combIdx:0,selCombo:S.selCombo,startTime:Date.now()};
+  S.sess={active:false,mode,diff,round:1,totalRounds:3,timeLeft:DIFF[diff].dur,score:0,hits:0,comboStr:0,comboMax:0,kicks:0,dodges:0,combos:0,combIdx:0,selCombo:S.selCombo,startTime:Date.now(),activeSeconds:0};
   S.stats.modesSet.add(mode);S.stats.modesUsed=S.stats.modesSet.size;
   pearDamage=0;pearFlash=0;pearBounce={x:0,y:0,vx:0,vy:0};
   dodgeActive=false;dodgeZoneData=null;
@@ -1411,7 +1429,7 @@ function drawEffects(c,ctx){
 // ======== SESSION TIMER ========
 function startRoundTimer(){
   clearInterval(sessTimer);
-  sessTimer=setInterval(()=>{if(!S.sess.active)return;S.sess.timeLeft--;updateHUD();if(S.sess.timeLeft<=0){clearInterval(sessTimer);if(S.sess.round<S.sess.totalRounds)startBreak();else endSession();}},1000);
+  sessTimer=setInterval(()=>{if(!S.sess.active)return;S.sess.timeLeft--;S.sess.activeSeconds=(S.sess.activeSeconds||0)+1;updateHUD();if(S.sess.timeLeft<=0){clearInterval(sessTimer);if(S.sess.round<S.sess.totalRounds)startBreak();else endSession();}},1000);
 }
 function startBreak(){
   S.sess.active=false;let bt=DIFF[S.sess.diff].rest;
@@ -1427,7 +1445,9 @@ function updateHUD(){
   document.getElementById('hud-tmr').textContent=fmtT(s.timeLeft);
   document.getElementById('hud-sc').textContent=s.score.toLocaleString();
   document.getElementById('hud-hits').textContent=s.hits;
-  document.getElementById('hud-cal').textContent=Math.round(s.hits*(S.user.wt*.006));
+  const kcal=Math.round(calcCalories(s.diff,s.activeSeconds||0));
+  document.getElementById('hud-cal').textContent=kcal;
+  const cal2=document.getElementById('hud-cal2');if(cal2)cal2.textContent=kcal;
   const ch=document.getElementById('combo-hud');
   if(s.comboStr>=2){ch.style.display='block';document.getElementById('combo-txt').textContent=`⚡ ×${s.comboStr}${mult>1?' (x'+mult+'!)':''}`;}
   else ch.style.display='none';
@@ -1451,11 +1471,16 @@ function endSession(fromTutorial){
     return;
   }
   const s=S.sess,dur=Math.floor((Date.now()-s.startTime)/1000);
+  const sessionCal=Math.round(calcCalories(s.diff,s.activeSeconds||0));
   S.stats.totalHits+=s.hits;S.stats.totalKicks+=s.kicks;S.stats.totalDodges+=s.dodges;
   S.stats.totalCombos+=s.combos;S.stats.totalSessions+=1;
   S.stats.totalRounds+=s.round-1;if(s.diff==='hard')S.stats.hardRounds+=s.round-1;
   S.stats.totalTime+=dur;S.stats.xp+=s.score;
-  S.stats.lastSession={hits:s.hits,dur,score:s.score,comboMax:s.comboMax};
+  S.stats.totalCalories=(S.stats.totalCalories||0)+sessionCal;
+  if(!S.stats.calLog)S.stats.calLog={};
+  const dayKey=new Date().toISOString().slice(0,10);
+  S.stats.calLog[dayKey]=(S.stats.calLog[dayKey]||0)+sessionCal;
+  S.stats.lastSession={hits:s.hits,dur,score:s.score,comboMax:s.comboMax,calories:sessionCal};
   const today=new Date().toDateString(),lastDay=localStorage.getItem('kf3_last'),yesterday=new Date(Date.now()-86400000).toDateString();
   if(lastDay===yesterday)S.stats.streak++;else if(lastDay!==today)S.stats.streak=1;
   localStorage.setItem('kf3_last',today);
@@ -1559,6 +1584,7 @@ function showPost(s,dur,nb){
   document.getElementById('ps-hits').textContent=s.hits;
   document.getElementById('ps-time').textContent=fmtT(dur);
   document.getElementById('ps-combo').textContent='×'+s.comboMax;
+  const psCal=document.getElementById('ps-cal');if(psCal)psCal.textContent=(S.stats.lastSession&&S.stats.lastSession.calories)||0;
   document.getElementById('ps-acc').textContent=s.hits>0?Math.min(98,Math.round(66+Math.random()*24))+'%':'—';
   const xp=S.stats.xp,li=LEVELS.findIndex((_,i)=>xp<(LEVEL_XP[i+1]||Infinity));
   const pct=li<LEVEL_XP.length-1?Math.round((xp-LEVEL_XP[li])/(LEVEL_XP[li+1]-LEVEL_XP[li])*100):100;
@@ -1616,7 +1642,7 @@ function refProfile(){
   document.getElementById('pf-level').textContent=LEVELS[Math.min(li,LEVELS.length-1)];
   document.getElementById('pf-streak').textContent='🔥 '+S.stats.streak+' dias';
   const totalSeries=BADGE_SERIES.reduce((a,s)=>a+s.thresholds.length,0);
-  const rows=[['Sesiones',S.stats.totalSessions],['Golpes',S.stats.totalHits.toLocaleString()],['Tiempo',fmtT(S.stats.totalTime)],['Racha',S.stats.streak+' dias'],['Insignias',S.badges.size+'/'+(BADGES.length+totalSeries)]];
+  const rows=[['Sesiones',S.stats.totalSessions],['Golpes',S.stats.totalHits.toLocaleString()],['Tiempo',fmtT(S.stats.totalTime)],['🔥 Cal. semana',weeklyCalories().toLocaleString()],['🔥 Cal. total',(S.stats.totalCalories||0).toLocaleString()],['Racha',S.stats.streak+' dias'],['Insignias',S.badges.size+'/'+(BADGES.length+totalSeries)]];
   document.getElementById('pf-stats').innerHTML=rows.map((r,i)=>'<div style="display:flex;justify-content:space-between;'+(i<rows.length-1?'padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--border)':'')+'"><span class="muted-text">'+r[0]+'</span><span style="font-size:13px;font-weight:700;color:var(--text)">'+r[1]+'</span></div>').join('');
 }
 
