@@ -745,9 +745,27 @@ function calcVel(kpIdx,type){
   }
   if(type==='vertical')return Math.abs(dy)/dt*1.4;
   if(type==='upward'){
-    // UPPER: requires upward motion (dy negative = Y decreases = rises). Downward motion returns 0.
+    // UPPER: must move UP (dy<0) AND inward toward the body's midline.
+    // The hook's recovery to guard also rises, but travels OUTWARD — reject it.
     if(dy>=0)return 0;
-    return Math.abs(dy)/dt*1.4;
+    const upVel=Math.abs(dy)/dt;
+    const horizVel=Math.abs(dx)/dt;
+    const ls=currKpts[KP.LS],rs=currKpts[KP.RS];
+    if(ls&&rs&&ls.score>0.25&&rs.score>0.25){
+      const midX=(ls.x+rs.x)/2;
+      const towardMid=(midX-pv.x); // + means midline is to the right of the (previous) wrist position
+      const moveX=(cu.x-pv.x);     // actual horizontal movement this frame
+      const movingInward=(moveX*towardMid)>0; // same sign = moving toward midline
+      const alreadyAtMid=Math.abs(cu.x-midX)<0.06; // very close to centerline (mostly-vertical uppercut)
+      // Require inward motion OR already centered. Pure outward rise = hook recovery -> reject.
+      if(!movingInward&&!alreadyAtMid)return 0;
+      // Rise should be a real component (avoid near-horizontal swipes counting as uppercut).
+      if(upVel<horizVel*0.55)return 0;
+    } else {
+      // No shoulder reference: require a clearly vertical-dominant rise to avoid false hits.
+      if(upVel<horizVel*1.0)return 0;
+    }
+    return upVel*1.4;
   }
   return Math.sqrt(dx*dx+dy*dy)/dt;
 }
