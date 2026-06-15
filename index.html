@@ -683,16 +683,19 @@ function validateTravel(mv,c){
   const dx=(end.x-start.x)*c.width;
   const dy=(end.y-start.y)*c.height;
   const dist=Math.hypot(dx,dy);
-  // Minimum travel: ~1/3 of the screen-relative reach of a real punch (~9% of width)
+  // Kicks: the leg pivots from the hip in an arc (ankle travels up AND sideways),
+  // so we only require meaningful total travel — direction is not strictly enforced.
+  if(mv.kp===KP.RK||mv.kp===KP.LK||mv.kp===KP.RA||mv.kp===KP.LA){
+    return dist > c.width*0.07; // any real extension of the leg counts
+  }
+  // Punches: require travel mostly in the attack direction.
   const minTravel=c.width*0.09;
   if(dist<minTravel)return false;
-  // Direction must match the attack direction (with tolerance).
-  // y grows downward in canvas coords, so "up" means dy<0.
   switch(mv.atkDir){
-    case 'up':    return dy < -minTravel*0.5;           // moved up by a real amount
+    case 'up':    return dy < -minTravel*0.5;
     case 'down':  return dy >  minTravel*0.5;
-    case 'left':  return dx < -minTravel*0.5;           // moved left (screen)
-    case 'right': return dx >  minTravel*0.5;           // moved right (screen)
+    case 'left':  return dx < -minTravel*0.5;
+    case 'right': return dx >  minTravel*0.5;
     default:      return true;
   }
 }
