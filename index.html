@@ -594,7 +594,7 @@ function rendTutorialMoves(){
 function startTutorial(mk){
   const move=TUTORIAL_MOVES.find(m=>m.mk===mk);
   if(!move)return;
-  S.tutorial={mk:mk,count:0};
+  S.tutorial={mk:mk,count:0,lastHit:0};
   startSession('tutorial','easy');
 }
 function initTutorial(){
@@ -643,6 +643,7 @@ function tutorialProcess(){
   if(!landed)return;
   hitCool[cKey]=now;
   S.tutorial.count++;
+  S.tutorial.lastHit=now;
   playSound(mk.toLowerCase());
   addEffect({x:tp.x,y:tp.y},mv.color,'¡BIEN!');
   const ce=document.getElementById('tut-count');
@@ -1309,9 +1310,31 @@ function drawTutorialTarget(c,ctx){
   const t=Date.now()/1000;
   const pulse=1+Math.sin(t*2.8)*.07;
   const tp=getTargetPos(mk);
-  const sz=mv.size*c.width;
+  let sz=mv.size*c.width;
+  // Impact flash: when a hit just landed, the sphere briefly swells and glows brighter,
+  // so the feedback reads clearly even though the target stays on screen (and over music).
+  const sinceHit=S.tutorial.lastHit?(Date.now()-S.tutorial.lastHit):9999;
+  let flash=0;
+  if(sinceHit<260){
+    flash=1-(sinceHit/260);          // 1 -> 0 over 260ms
+    sz*=(1+flash*0.5);               // swell up to +50%
+  }
   ctx.save();
+  if(flash>0){
+    // Bright outer burst ring
+    ctx.globalAlpha=flash*0.9;
+    ctx.beginPath();ctx.arc(tp.x,tp.y,sz*(1.1+flash*0.6),0,Math.PI*2);
+    ctx.strokeStyle='#ffffff';ctx.lineWidth=Math.max(2,c.width*0.012*flash);
+    ctx.shadowColor=mv.color;ctx.shadowBlur=30*flash;ctx.stroke();ctx.shadowBlur=0;
+    ctx.globalAlpha=1;
+  }
   drawSphere3D(ctx,tp.x,tp.y,sz*pulse,mv.color);
+  if(flash>0){
+    // White overlay glow on the sphere itself
+    ctx.globalAlpha=flash*0.55;
+    ctx.beginPath();ctx.arc(tp.x,tp.y,sz*pulse,0,Math.PI*2);
+    ctx.fillStyle='#ffffff';ctx.fill();ctx.globalAlpha=1;
+  }
   ctx.fillStyle='white';
   ctx.font=`bold ${c.width*.052}px DM Sans,sans-serif`;
   ctx.textAlign='center';ctx.textBaseline='middle';
