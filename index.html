@@ -300,15 +300,15 @@ const KP={NOSE:0,LE:1,RE:2,LEAR:3,REAR:4,LS:5,RS:6,LELB:7,RELB:8,LW:9,RW:10,LH:1
 
 // HOOK uses lateral velocity (velType:'x'), others use total velocity
 let MOVES={
-  JAB:  {color:'#1A56FF',label:'JAB',   kp:KP.LW, offX:-.18,offY:-.12,velThr:38, size:.13,velType:'total'},
-  CROSS:{color:'#FF4D00',label:'CROSS', kp:KP.RW, offX: .20,offY:-.14,velThr:38, size:.14,velType:'total'},
-  HOOK_L:{color:'#F77F00',label:'HOOK IZQ', kp:KP.LW, offX: .22,offY:-.08,velThr:14, size:.15,velType:'lateral'},
-  HOOK_R:{color:'#F77F00',label:'HOOK DER', kp:KP.RW, offX:-.22,offY:-.08,velThr:14, size:.15,velType:'lateral'},
-  HOOK_BODY_L:{color:'#FF9E2C',label:'HOOK CUERPO', kp:KP.LW, offX: .22,offY: .18,velThr:14, size:.15,velType:'lateral'},
-  HOOK_BODY_R:{color:'#FF9E2C',label:'HOOK CUERPO', kp:KP.RW, offX:-.22,offY: .18,velThr:14, size:.15,velType:'lateral'},
-  UPPER:{color:'#FFD60A',label:'UPPER', kp:KP.RW, offX: .04,offY: .06,velThr:62, size:.12,velType:'upward'},
-  KICKF:{color:'#7B2D8B',label:'KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total'},
-  KICKS:{color:'#E040FB',label:'KICK →',kp:KP.RA, offX: .28,offY: .38,velThr:28, size:.15,velType:'lateral'},
+  JAB:  {color:'#1A56FF',label:'JAB',   kp:KP.LW, offX:-.18,offY:-.12,velThr:38, size:.13,velType:'total', atkDir:'up'},
+  CROSS:{color:'#FF4D00',label:'CROSS', kp:KP.RW, offX: .20,offY:-.14,velThr:38, size:.14,velType:'total', atkDir:'up'},
+  HOOK_L:{color:'#F77F00',label:'HOOK IZQ', kp:KP.LW, offX: .22,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'right'},
+  HOOK_R:{color:'#F77F00',label:'HOOK DER', kp:KP.RW, offX:-.22,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
+  HOOK_BODY_L:{color:'#FF9E2C',label:'HOOK CUERPO', kp:KP.LW, offX: .22,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'right'},
+  HOOK_BODY_R:{color:'#FF9E2C',label:'HOOK CUERPO', kp:KP.RW, offX:-.22,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
+  UPPER:{color:'#FFD60A',label:'UPPER', kp:KP.RW, offX: .04,offY: .06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
+  KICKF:{color:'#7B2D8B',label:'KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total', atkDir:'up'},
+  KICKS:{color:'#E040FB',label:'KICK →',kp:KP.RA, offX: .28,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
   DOGEL:{color:'#00B87A',label:'DODGE ←',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'},
   DOGER:{color:'#00B87A',label:'DODGE →',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'}
 };
@@ -658,6 +658,44 @@ function exitTutorial(){
 // ======== SESSION ========
 let detector=null,camStream=null,arRunning=false;
 let currKpts=null,prevKpts=null,prevKptT=0;
+// Rolling history of recent keypoint positions (normalized 0-1) for travel/direction validation
+const KPT_HISTORY_LEN=6;
+let kptHistory=[]; // array of frames; each frame = array of {x,y,score}
+function pushKptHistory(kpts){
+  kptHistory.push(kpts.map(k=>({x:k.x,y:k.y,score:k.score})));
+  if(kptHistory.length>KPT_HISTORY_LEN)kptHistory.shift();
+}
+// Validate that a strike actually TRAVELED in its attack direction (not a small guard wobble).
+// Returns true only if: (1) the limb moved a minimum pixel distance, AND (2) that travel was
+// predominantly in the move's attack direction (atkDir). No effect on contact radius.
+function validateTravel(mv,c){
+  if(!mv.atkDir)return true; // moves without a defined direction skip this check
+  if(kptHistory.length<3)return false; // need some history
+  const idx=mv.kp;
+  // Find the furthest-back frame in history that has a confident reading for this keypoint
+  let start=null;
+  for(let i=0;i<kptHistory.length-1;i++){
+    const k=kptHistory[i][idx];
+    if(k&&k.score>0.2){start=k;break;}
+  }
+  const end=kptHistory[kptHistory.length-1][idx];
+  if(!start||!end||end.score<0.2)return false;
+  const dx=(end.x-start.x)*c.width;
+  const dy=(end.y-start.y)*c.height;
+  const dist=Math.hypot(dx,dy);
+  // Minimum travel: ~1/3 of the screen-relative reach of a real punch (~9% of width)
+  const minTravel=c.width*0.09;
+  if(dist<minTravel)return false;
+  // Direction must match the attack direction (with tolerance).
+  // y grows downward in canvas coords, so "up" means dy<0.
+  switch(mv.atkDir){
+    case 'up':    return dy < -minTravel*0.5;           // moved up by a real amount
+    case 'down':  return dy >  minTravel*0.5;
+    case 'left':  return dx < -minTravel*0.5;           // moved left (screen)
+    case 'right': return dx >  minTravel*0.5;           // moved right (screen)
+    default:      return true;
+  }
+}
 let hitEffects=[],pearDamage=0,pearFlash=0,pearTargetX=0,pearTargetY=0;
 let pearBounce={x:0,y:0,vx:0,vy:0},pearPos={x:0,y:0};
 let dodgeActive=false,dodgeZoneData=null,dodgeT=0;
@@ -722,6 +760,7 @@ async function detectLoop(){
         const vw=v.videoWidth||480,vh=v.videoHeight||640;
         const kpts=poses[0].keypoints.map(k=>({x:1-(k.x/vw),y:k.y/vh,score:k.score||0}));
         prevKpts=currKpts;prevKptT=Date.now();currKpts=kpts;
+        pushKptHistory(kpts);
         var avg=((kpts[KP.LS]&&kpts[KP.LS].score||0)+(kpts[KP.RS]&&kpts[KP.RS].score||0)+(kpts[KP.LW]&&kpts[KP.LW].score||0)+(kpts[KP.RW]&&kpts[KP.RW].score||0))/4;
         if(avg>0.55)setTrkBadge(2,'Tracking ✓');
         else if(avg>0.25)setTrkBadge(1,'Parcial');
@@ -835,56 +874,29 @@ function processHits(){
     if((now-(hitCool[cmk]||0))<getHitCD())return;
     const vel=calcVel(mv.kp,mv.velType);
     if(vel<mv.velThr)return;
-    const minScore=(cmk==='UPPER')?0.45:0.3; // UPPER stricter to avoid elbow/wrist confusion
-    const kp=currKpts[mv.kp];if(!kp||kp.score<minScore)return;
+    // NEW: require real travel in the correct attack direction (rejects guard wobble,
+    // recovery motions, and anything that didn't actually swing toward the target).
+    if(!validateTravel(mv,c))return;
+    const kp=currKpts[mv.kp];if(!kp||kp.score<0.3)return;
     const kpx={x:kp.x*c.width,y:kp.y*c.height};
     const tp=getTargetPos(cmk);
-    const pv=prevKpts&&prevKpts[mv.kp];
-
-    // --- Trajectory validation: the wrist/ankle must be moving TOWARD the target ---
-    // This rejects the recovery-to-guard motion (which moves AWAY) and lets us
-    // widen the contact radius so fast punches register even without a pixel-exact touch.
-    let movingToward=true; // default true if no previous frame (be permissive)
-    if(pv&&pv.score>0.25){
-      const pvx={x:pv.x*c.width,y:pv.y*c.height};
-      const moveX=kpx.x-pvx.x, moveY=kpx.y-pvx.y;          // movement vector this frame
-      const toTgtX=tp.x-pvx.x,  toTgtY=tp.y-pvx.y;          // vector from wrist toward target
-      const dot=moveX*toTgtX+moveY*toTgtY;                  // >0 = moving toward target
-      // Also accept if the wrist passed THROUGH the target (crossed it) this frame
-      const dPrev=Math.hypot(pvx.x-tp.x,pvx.y-tp.y);
-      const dNow=Math.hypot(kpx.x-tp.x,kpx.y-tp.y);
-      const gettingCloser=dNow<dPrev;
-      movingToward=(dot>0)||gettingCloser;
-    }
-    if(!movingToward)return; // recovery motion -> reject
-
-    // --- Contact: widened radius, because direction already validated the intent ---
     let landed=false;
-    if(cmk==='UPPER'){
-      // UPPER is error-prone (elbow flexion / other punches' recovery look similar).
-      // Stricter: tighter radius AND the wrist must come from clearly BELOW the target.
-      const radius=mv.size*c.width*1.25;
-      const closeNow=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<radius;
-      let cameFromBelow=true;
-      if(pv&&pv.score>0.25){
-        const pvy=pv.y*c.height;
-        cameFromBelow=(pvy>tp.y); // previous wrist position was below the target
-      }
-      landed=closeNow&&cameFromBelow;
-    } else if(mv.velType==='lateral'){
-      const radius=mv.size*c.width*1.5; // hooks
+    if(mv.velType==='lateral'){
+      // Hooks/lateral kicks: wider radius, plus trajectory-crossing check
+      // (wrist crossed the target's horizontal center between prev and current frame, within vertical band)
+      const radius=mv.size*c.width*1.8;
       const closeNow=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<radius;
       let crossed=false;
+      const pv=prevKpts&&prevKpts[mv.kp];
       if(pv&&pv.score>0.25){
         const pvx={x:pv.x*c.width,y:pv.y*c.height};
-        const verticalOk=Math.abs(kpx.y-tp.y)<radius*1.2;
-        const crossedX=(pvx.x-tp.x)*(kpx.x-tp.x)<=0;
+        const verticalOk=Math.abs(kpx.y-tp.y)<radius*1.3;
+        const crossedX=(pvx.x-tp.x)*(kpx.x-tp.x)<=0; // sign change = crossed center
         crossed=verticalOk&&crossedX;
       }
       landed=closeNow||crossed;
     } else {
-      // Straight punches/kicks
-      landed=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<mv.size*c.width*1.3;
+      landed=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<mv.size*c.width;
     }
     if(landed){
       hitCool[cmk]=now;doHit(cmk,kpx);advCombo(seq);
@@ -1073,7 +1085,7 @@ function initCanvas(){
   const c=document.getElementById('ar-canvas');
   c.width=window.innerWidth;c.height=window.innerHeight;
   pearPos={x:c.width*0.5,y:c.height*0.42};
-  arRunning=true;hitEffects=[];initCanvasTouch();
+  arRunning=true;hitEffects=[];kptHistory=[];initCanvasTouch();
   requestAnimationFrame(arLoop);
 }
 function arLoop(){
