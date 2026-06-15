@@ -706,6 +706,9 @@ let sessTimer=null,breakTimer=null,audioCtx=null;
 const hitCool={};function getHitCD(){const m=(DIFF[S.sess.diff]&&DIFF[S.sess.diff].mult)||1;return Math.round(380/m);}
 
 async function startSession(mode,diff){
+  // Clear any leftover timers/overlay from a previous session that was exited mid-way
+  clearInterval(sessTimer);clearInterval(breakTimer);sessTimer=null;breakTimer=null;
+  hideCenterOverlay();
   S.sess={active:false,mode,diff,round:1,totalRounds:3,timeLeft:DIFF[diff].dur,score:0,hits:0,comboStr:0,comboMax:0,kicks:0,dodges:0,combos:0,combIdx:0,selCombo:S.selCombo,startTime:Date.now(),activeSeconds:0};
   S.stats.modesSet.add(mode);S.stats.modesUsed=S.stats.modesSet.size;
   pearDamage=0;pearFlash=0;pearBounce={x:0,y:0,vx:0,vy:0};
@@ -1533,7 +1536,8 @@ function rendNextMoves(){
 
 // ======== END SESSION ========
 function endSession(fromTutorial){
-  clearInterval(sessTimer);clearInterval(breakTimer);
+  clearInterval(sessTimer);clearInterval(breakTimer);sessTimer=null;breakTimer=null;
+  hideCenterOverlay();
   S.sess.active=false;arRunning=false;
   if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
   detector=null;currKpts=null;prevKpts=null;dodgeActive=false;
