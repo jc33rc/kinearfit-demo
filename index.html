@@ -672,14 +672,16 @@ function validateTravel(mv,c){
   if(!mv.atkDir)return true; // moves without a defined direction skip this check
   if(kptHistory.length<3)return false; // need some history
   const idx=mv.kp;
+  const isLeg=(idx===KP.RK||idx===KP.LK||idx===KP.RA||idx===KP.LA);
+  const sMin=isLeg?0.12:0.2;
   // Find the furthest-back frame in history that has a confident reading for this keypoint
   let start=null;
   for(let i=0;i<kptHistory.length-1;i++){
     const k=kptHistory[i][idx];
-    if(k&&k.score>0.2){start=k;break;}
+    if(k&&k.score>sMin){start=k;break;}
   }
   const end=kptHistory[kptHistory.length-1][idx];
-  if(!start||!end||end.score<0.2)return false;
+  if(!start||!end||end.score<sMin)return false;
   const dx=(end.x-start.x)*c.width;
   const dy=(end.y-start.y)*c.height;
   const dist=Math.hypot(dx,dy);
@@ -792,7 +794,8 @@ function calcVel(kpIdx,type){
   type=type||'total';
   if(!currKpts||!prevKpts)return 0;
   const cu=currKpts[kpIdx],pv=prevKpts[kpIdx];
-  const minScore=type==='lateral'?0.18:0.28;
+  const isLeg=(kpIdx===KP.RK||kpIdx===KP.LK||kpIdx===KP.RA||kpIdx===KP.LA);
+  const minScore=isLeg?0.12:(type==='lateral'?0.18:0.28);
   if(!cu||!pv||cu.score<minScore)return 0;
   const c=document.getElementById('ar-canvas');
   const dt=Math.max(16,Date.now()-prevKptT)/1000;
@@ -875,12 +878,17 @@ function processHits(){
     if(!mv){return;}
     if(mv.kp===-1){activateDodge(cmk,now);return;}
     if((now-(hitCool[cmk]||0))<getHitCD())return;
+    // Legs (knees/ankles) are harder for the pose model to detect and move slower than fists,
+    // so kicks use lower velocity + confidence thresholds than punches.
+    const isKickMove=(mv.kp===KP.RK||mv.kp===KP.LK||mv.kp===KP.RA||mv.kp===KP.LA);
+    const velNeeded=isKickMove?Math.min(mv.velThr,18):mv.velThr;
+    const scoreNeeded=isKickMove?0.15:0.3;
     const vel=calcVel(mv.kp,mv.velType);
-    if(vel<mv.velThr)return;
+    if(vel<velNeeded)return;
     // NEW: require real travel in the correct attack direction (rejects guard wobble,
     // recovery motions, and anything that didn't actually swing toward the target).
     if(!validateTravel(mv,c))return;
-    const kp=currKpts[mv.kp];if(!kp||kp.score<0.3)return;
+    const kp=currKpts[mv.kp];if(!kp||kp.score<scoreNeeded)return;
     const kpx={x:kp.x*c.width,y:kp.y*c.height};
     const tp=getTargetPos(cmk);
     let landed=false;
