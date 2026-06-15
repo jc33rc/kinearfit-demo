@@ -670,10 +670,12 @@ function pushKptHistory(kpts){
 // predominantly in the move's attack direction (atkDir). No effect on contact radius.
 function validateTravel(mv,c){
   if(!mv.atkDir)return true; // moves without a defined direction skip this check
+  // Kicks bypass travel validation entirely (ankle keypoint too unstable; velocity+contact
+  // already gate them, and they never had the in-guard false-positive problem).
+  if(mv.kp===KP.RK||mv.kp===KP.LK||mv.kp===KP.RA||mv.kp===KP.LA)return true;
   if(kptHistory.length<3)return false; // need some history
   const idx=mv.kp;
-  const isLeg=(idx===KP.RK||idx===KP.LK||idx===KP.RA||idx===KP.LA);
-  const sMin=isLeg?0.12:0.2;
+  const sMin=0.2;
   // Find the furthest-back frame in history that has a confident reading for this keypoint
   let start=null;
   for(let i=0;i<kptHistory.length-1;i++){
@@ -685,11 +687,6 @@ function validateTravel(mv,c){
   const dx=(end.x-start.x)*c.width;
   const dy=(end.y-start.y)*c.height;
   const dist=Math.hypot(dx,dy);
-  // Kicks: the leg pivots from the hip in an arc (ankle travels up AND sideways),
-  // so we only require meaningful total travel — direction is not strictly enforced.
-  if(mv.kp===KP.RK||mv.kp===KP.LK||mv.kp===KP.RA||mv.kp===KP.LA){
-    return dist > c.width*0.07; // any real extension of the leg counts
-  }
   // Punches: require travel mostly in the attack direction.
   const minTravel=c.width*0.09;
   if(dist<minTravel)return false;
