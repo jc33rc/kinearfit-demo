@@ -709,6 +709,7 @@ async function startSession(mode,diff){
   // Clear any leftover timers/overlay from a previous session that was exited mid-way
   clearInterval(sessTimer);clearInterval(breakTimer);sessTimer=null;breakTimer=null;
   hideCenterOverlay();
+  posState='ok';posCandidate='ok';posSince=0;
   S.sess={active:false,mode,diff,round:1,totalRounds:3,timeLeft:DIFF[diff].dur,score:0,hits:0,comboStr:0,comboMax:0,kicks:0,dodges:0,combos:0,combIdx:0,selCombo:S.selCombo,startTime:Date.now(),activeSeconds:0};
   S.stats.modesSet.add(mode);S.stats.modesUsed=S.stats.modesSet.size;
   pearDamage=0;pearFlash=0;pearBounce={x:0,y:0,vx:0,vy:0};
@@ -756,6 +757,45 @@ async function loadMoveNet(){
 }
 function setTrkBadge(lvl,txt){document.getElementById('t-dot').style.background=['#FF3B30','#F77F00','#00B87A'][lvl];document.getElementById('t-txt').textContent=txt;}
 
+// ======== POSITION GUIDANCE (non-blocking, non-spammy) ========
+// Ideal framing: head + knees visible. Too close = knees not seen. Too far = body too small.
+let posState='ok', posCandidate='ok', posSince=0;
+const POS_HOLD_MS=1500; // a state must persist this long before the badge changes (anti-spam)
+function evaluatePosition(kpts,avg){
+  // If we can barely see the person at all, that's the priority message.
+  if(avg<0.25){ commitPos('lost'); return; }
+  const nose=kpts[KP.NOSE], ls=kpts[KP.LS], rs=kpts[KP.RS];
+  const lk=kpts[KP.LK], rk=kpts[KP.RK];
+  const headVisible = nose && nose.score>0.3;
+  const kneesVisible = (lk&&lk.score>0.3) || (rk&&rk.score>0.3);
+  // Body size proxy: vertical span from head to shoulders relative to frame height.
+  let tooFar=false;
+  if(headVisible && ls && rs && ls.score>0.3 && rs.score>0.3){
+    const shoulderY=(ls.y+rs.y)/2;
+    const headToShoulder=Math.abs(shoulderY-nose.y); // normalized 0-1
+    // If head and shoulders occupy a very small vertical slice, the user is far away.
+    if(headToShoulder<0.07) tooFar=true;
+  }
+  let state='ok';
+  if(!kneesVisible) state='close';     // knees not seen -> user is too close
+  else if(tooFar)   state='far';       // body too small -> too far
+  commitPos(state);
+}
+function commitPos(state){
+  const now=Date.now();
+  if(state!==posCandidate){ posCandidate=state; posSince=now; return; }
+  // Candidate must hold steady before we actually switch the displayed state
+  if(state!==posState && (now-posSince)>=POS_HOLD_MS){
+    posState=state;
+    switch(state){
+      case 'ok':    setTrkBadge(2,'Posición ✓'); break;
+      case 'close': setTrkBadge(1,'Aléjate un poco'); break;
+      case 'far':   setTrkBadge(1,'Acércate un poco'); break;
+      case 'lost':  setTrkBadge(0,'Ajusta posición'); break;
+    }
+  }
+}
+
 async function detectLoop(){
   if(!arRunning)return;
   try{
@@ -768,9 +808,7 @@ async function detectLoop(){
         prevKpts=currKpts;prevKptT=Date.now();currKpts=kpts;
         pushKptHistory(kpts);
         var avg=((kpts[KP.LS]&&kpts[KP.LS].score||0)+(kpts[KP.RS]&&kpts[KP.RS].score||0)+(kpts[KP.LW]&&kpts[KP.LW].score||0)+(kpts[KP.RW]&&kpts[KP.RW].score||0))/4;
-        if(avg>0.55)setTrkBadge(2,'Tracking ✓');
-        else if(avg>0.25)setTrkBadge(1,'Parcial');
-        else setTrkBadge(0,'Ajusta posición');
+        evaluatePosition(kpts,avg);
         if(S.sess.active&&prevKpts){
           if(S.sess.mode==='tutorial')tutorialProcess();
           else processHits();
