@@ -308,7 +308,7 @@ let MOVES={
   HOOK_BODY_R:{color:'#FF9E2C',label:'HOOK CUERPO', kp:KP.RW, offX:-.22,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
   UPPER:{color:'#FFD60A',label:'UPPER', kp:KP.RW, offX: .04,offY: .06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
   KICKF:{color:'#7B2D8B',label:'KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total', atkDir:'up'},
-  KICKS:{color:'#E040FB',label:'KICK →',kp:KP.RA, offX: .28,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
+  KICKS:{color:'#E040FB',label:'KICK →',kp:KP.RA, offX: .22,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
   DOGEL:{color:'#00B87A',label:'DODGE ←',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'},
   DOGER:{color:'#00B87A',label:'DODGE →',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'}
 };
@@ -319,7 +319,7 @@ const TUTORIAL_MOVES=[
   {mk:'HOOK_R',     title:'HOOK DERECHO',   desc:'Gancho en arco con la mano derecha.'},
   {mk:'HOOK_BODY_L',title:'HOOK CUERPO IZQ',desc:'Gancho al costado/hígado con la izquierda, agáchate un poco.'},
   {mk:'HOOK_BODY_R',title:'HOOK CUERPO DER',desc:'Gancho al costado/hígado con la derecha, agáchate un poco.'},
-  {mk:'UPPER',      title:'UPPER',          desc:'Puño de abajo hacia arriba con la mano derecha.'},
+  {mk:'UPPER',      title:'UPPER',          desc:'Puño de abajo hacia arriba con la mano derecha. Golpe corto y seco: frena en el target, no sigas de largo.'},
   {mk:'KICKF',      title:'PATADA FRONTAL', desc:'Levanta la rodilla y patea hacia adelante.'},
   {mk:'KICKS',      title:'PATADA LATERAL', desc:'Patea hacia el costado con la pierna derecha.'},
   {mk:'DOGEL',      title:'ESQUIVA',        desc:'Inclina el tronco en diagonal hacia la esquina segura.'}
@@ -710,6 +710,7 @@ async function startSession(mode,diff){
   clearInterval(sessTimer);clearInterval(breakTimer);sessTimer=null;breakTimer=null;
   hideCenterOverlay();
   posState='ok';posCandidate='ok';posSince=0;
+  lastPower=0;lastPowerAt=0;bestPower=0;powerSmooth=0;
   S.sess={active:false,mode,diff,round:1,totalRounds:3,timeLeft:DIFF[diff].dur,score:0,hits:0,comboStr:0,comboMax:0,kicks:0,dodges:0,combos:0,combIdx:0,selCombo:S.selCombo,startTime:Date.now(),activeSeconds:0};
   S.stats.modesSet.add(mode);S.stats.modesUsed=S.stats.modesSet.size;
   pearDamage=0;pearFlash=0;pearBounce={x:0,y:0,vx:0,vy:0};
@@ -872,6 +873,44 @@ function calcVel(kpIdx,type){
   return Math.sqrt(dx*dx+dy*dy)/dt;
 }
 
+// ======== POWER INDEX (free mode) ========
+// Arcade-style 0-999 score derived from hand speed, normalized by the person's on-screen
+// size so it's comparable across distances and body sizes. NOT a physical force measurement.
+let lastPower=0, lastPowerAt=0, bestPower=0, powerSmooth=0;
+function bodyScale(c){
+  // Vertical span shoulders->hips as a proxy for how large the user appears on screen.
+  if(!currKpts)return null;
+  const ls=currKpts[KP.LS],rs=currKpts[KP.RS],lh=currKpts[KP.LH],rh=currKpts[KP.RH];
+  if(!ls||!rs||ls.score<0.25||rs.score<0.25)return null;
+  const shY=(ls.y+rs.y)/2;
+  let torso=null;
+  if(lh&&rh&&lh.score>0.2&&rh.score>0.2){
+    torso=Math.abs(((lh.y+rh.y)/2)-shY);
+  }
+  if(!torso||torso<0.05){
+    // Fallback: shoulder width if hips aren't reliable
+    torso=Math.abs(rs.x-ls.x)*0.9;
+  }
+  return Math.max(0.06,torso)*c.height;
+}
+function computePower(rawVel,c){
+  const scale=bodyScale(c);
+  // Normalize: speed relative to body size (bigger on screen = pixels travel further)
+  const norm=scale?(rawVel/scale)*100:(rawVel/ (c.width*0.35))*100;
+  // Map to 0-999 with a soft ceiling so 999 stays rare (like a real arcade machine)
+  let p=Math.round(Math.pow(Math.min(norm/62,1),1.15)*999);
+  p=Math.max(0,Math.min(999,p));
+  // Light smoothing to avoid jitter between identical punches
+  powerSmooth=powerSmooth?Math.round(powerSmooth*0.25+p*0.75):p;
+  return powerSmooth;
+}
+function powerColor(p){
+  if(p<300)return '#00B87A';   // soft
+  if(p<600)return '#FFD60A';   // solid
+  if(p<820)return '#FF6A1F';   // strong
+  return '#FF3B30';            // explosive
+}
+
 // ======== HIT DETECTION ========
 function getBodyCenter(){
   if(!currKpts)return null;
@@ -908,6 +947,9 @@ function processHits(){
       var lkpx={x:lkp.x*c.width,y:lkp.y*c.height};
       if(Math.hypot(lkpx.x-pearPos.x,lkpx.y-pearPos.y)>hitR)continue;
       hitCool[cKey]=now;
+      const pw=computePower(lvel,c);
+      lastPower=pw;lastPowerAt=now;
+      if(pw>bestPower)bestPower=pw;
       doHit(ck.mk,lkpx);break;
     }
   } else {
@@ -1159,7 +1201,7 @@ function arLoop(){
   // AR layers
   updatePearPhysics();
   if(S.sess.mode==='tutorial'){drawTutorialTarget(c,ctx);drawDodgeZone(c,ctx);}
-  else if(S.sess.mode==='libre')drawPear(c,ctx);
+  else if(S.sess.mode==='libre'){drawPear(c,ctx);drawPower(c,ctx);}
   else{drawTargets(c,ctx);drawDodgeZone(c,ctx);}
   drawEffects(c,ctx);
   requestAnimationFrame(arLoop);
@@ -1283,6 +1325,51 @@ function drawPear(c,ctx){
     ctx.textAlign='center';
     ctx.shadowColor='rgba(0,0,0,0.6)';ctx.shadowBlur=8;
     ctx.fillText('GOLPEA',px,py+r*1.55);
+    ctx.restore();
+  }
+}
+
+// ======== POWER DISPLAY (free mode only) ========
+function drawPower(c,ctx){
+  const now=Date.now();
+  // --- Fixed readout: last punch, colored by power ---
+  if(lastPower>0){
+    const col=powerColor(lastPower);
+    ctx.save();
+    const boxY=c.height*0.145;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    // Label
+    ctx.font=`800 ${Math.round(c.width*0.032)}px DM Sans,sans-serif`;
+    ctx.fillStyle='rgba(255,255,255,0.55)';
+    ctx.fillText('POWER',c.width*0.5,boxY-c.width*0.045);
+    // Number
+    ctx.font=`900 ${Math.round(c.width*0.115)}px DM Sans,sans-serif`;
+    ctx.fillStyle=col;
+    ctx.shadowColor=col;ctx.shadowBlur=22;
+    ctx.fillText(String(lastPower),c.width*0.5,boxY);
+    ctx.shadowBlur=0;
+    // Best of session
+    if(bestPower>0){
+      ctx.font=`800 ${Math.round(c.width*0.03)}px DM Sans,sans-serif`;
+      ctx.fillStyle='rgba(255,255,255,0.5)';
+      ctx.fillText('MEJOR '+bestPower,c.width*0.5,boxY+c.width*0.062);
+    }
+    ctx.restore();
+  }
+  // --- Ephemeral number at the impact point ---
+  const since=now-lastPowerAt;
+  if(lastPowerAt&&since<700){
+    const p=since/700;
+    const col=powerColor(lastPower);
+    const px=pearPos.x+pearBounce.x, py=pearPos.y+pearBounce.y;
+    ctx.save();
+    ctx.globalAlpha=1-p;
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.font=`900 ${Math.round(c.width*0.09*(1+p*0.25))}px DM Sans,sans-serif`;
+    ctx.fillStyle=col;
+    ctx.shadowColor=col;ctx.shadowBlur=26*(1-p);
+    ctx.fillText(String(lastPower),px,py-c.width*0.22-p*c.height*0.06);
+    ctx.shadowBlur=0;
     ctx.restore();
   }
 }
