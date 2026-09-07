@@ -167,7 +167,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <div class="mode-grid"><div class="mode-card active" id="mc-combos" onclick="selMode('combos')" style="position:relative"><div style="position:absolute;top:8px;right:8px;background:var(--accent);color:white;font-size:9px;font-weight:800;padding:2px 8px;border-radius:8px;letter-spacing:.3px">RECOMENDADO</div><div style="font-size:28px;margin-bottom:8px">🎯</div><div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px">Combos Guiados</div><div style="font-size:12px;color:var(--muted)">Sigue la secuencia.</div></div><div class="mode-card" id="mc-libre" onclick="selMode('libre')"><div style="font-size:28px;margin-bottom:8px">👊</div><div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:4px">Modo Libre</div><div style="font-size:12px;color:var(--muted)">Tu ritmo. Tu pera.</div></div></div>
     <div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:20px;cursor:pointer" onclick="startDailyChallenge()"><span style="font-size:32px">📆</span><div><div style="font-size:15px;font-weight:800;color:var(--text)">Desafío del Día</div><div style="font-size:12px;color:var(--muted)">Nuevo reto cada 24 horas</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>
     <div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:20px;cursor:pointer" onclick="openTutorial()"><span style="font-size:32px">🎓</span><div><div style="font-size:15px;font-weight:800;color:var(--text)">Tutorial / Repaso</div><div style="font-size:12px;color:var(--muted)">Practica un golpe a la vez</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>
-    <div id="combos-panel" style="display:none;margin-bottom:16px"><div class="label" style="margin-bottom:12px">Selecciona un combo</div><div id="combo-list"></div></div>
+    <div id="combos-panel" style="display:none;margin-bottom:16px"><div class="label" style="margin-bottom:12px">Selecciona un combo</div><div id="combo-list" style="max-height:44vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:4px"></div></div>
     <div class="label" style="margin-bottom:10px">Dificultad</div>
     <div style="display:flex;gap:8px;margin-bottom:16px"><button class="diff-btn easy" id="de" onclick="selDiff('easy')">Fácil</button><button class="diff-btn medium active" id="dm" onclick="selDiff('medium')">Intermedio</button><button class="diff-btn hard" id="dh" onclick="selDiff('hard')">Avanzado</button></div>
     <div class="card" style="margin-bottom:20px">
@@ -224,7 +224,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
       <div class="hud-timer" id="hud-tmr">3:00</div>
       <div style="text-align:right"><div class="hud-lbl">Score</div><div class="hud-val" id="hud-sc">0</div></div>
     </div>
-    <div style="display:flex;justify-content:center;margin-top:6px"><div style="background:rgba(0,184,122,.14);border:1px solid rgba(0,184,122,.4);border-radius:20px;padding:4px 14px;display:flex;align-items:center;gap:5px"><span style="font-size:13px">🔥</span><span style="font-size:14px;font-weight:800;color:#00B87A" id="hud-cal2">0</span><span style="font-size:11px;color:rgba(255,255,255,.55)">kcal</span></div></div>
+    <div style="display:flex;justify-content:center;margin-top:8px"><div style="background:rgba(0,184,122,.16);border:1.5px solid rgba(0,184,122,.5);border-radius:24px;padding:7px 20px;display:flex;align-items:center;gap:7px"><span style="font-size:18px">🔥</span><span style="font-size:22px;font-weight:900;color:#00B87A" id="hud-cal2">0</span><span style="font-size:14px;font-weight:700;color:rgba(255,255,255,.65)">kcal</span></div></div>
     <div class="hud-bottom">
       <div id="hb-libre" style="display:none;gap:8px;align-items:center"><div style="background:rgba(255,255,255,.08);border-radius:12px;padding:6px 14px"><span style="font-size:13px;font-weight:700;color:white" id="hud-hits">0</span><span style="font-size:11px;color:rgba(255,255,255,.5)"> golpes</span></div><div style="background:rgba(255,255,255,.08);border-radius:12px;padding:6px 14px"><span style="font-size:13px;font-weight:700;color:#00B87A" id="hud-cal">0</span><span style="font-size:11px;color:rgba(255,255,255,.5)"> cal</span></div></div>
       <div id="hb-combo" style="display:none;align-items:center;gap:6px;flex:1"><span style="font-size:11px;color:rgba(255,255,255,.4)">SIG:</span><div id="nxt-moves" style="display:flex;gap:6px"></div></div>
@@ -1387,7 +1387,7 @@ function drawPower(c,ctx){
   if(lastPower>0){
     const col=powerColor(lastPower);
     ctx.save();
-    const boxY=c.height*0.80;
+    const boxY=c.height*0.74;
     ctx.textAlign='center';ctx.textBaseline='middle';
     // Label
     ctx.font=`800 ${Math.round(c.width*0.030)}px DM Sans,sans-serif`;
