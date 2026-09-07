@@ -306,7 +306,7 @@ let MOVES={
   HOOK_R:{color:'#F77F00',label:'HOOK DER', kp:KP.RW, offX:-.22,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
   HOOK_BODY_L:{color:'#FF9E2C',label:'HOOK CUERPO', kp:KP.LW, offX: .22,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'right'},
   HOOK_BODY_R:{color:'#FF9E2C',label:'HOOK CUERPO', kp:KP.RW, offX:-.22,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
-  UPPER:{color:'#FFD60A',label:'UPPER', kp:KP.RW, offX: .04,offY: .06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
+  UPPER:{color:'#FFD60A',label:'UPPER', kp:KP.RW, offX: .04,offY:-.06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
   KICKF:{color:'#7B2D8B',label:'KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total', atkDir:'up'},
   KICKS:{color:'#E040FB',label:'KICK →',kp:KP.RA, offX: .22,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
   DOGEL:{color:'#00B87A',label:'DODGE ←',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'},
@@ -319,7 +319,7 @@ const TUTORIAL_MOVES=[
   {mk:'HOOK_R',     title:'HOOK DERECHO',   desc:'Gancho en arco con la mano derecha.'},
   {mk:'HOOK_BODY_L',title:'HOOK CUERPO IZQ',desc:'Gancho al costado/hígado con la izquierda, agáchate un poco.'},
   {mk:'HOOK_BODY_R',title:'HOOK CUERPO DER',desc:'Gancho al costado/hígado con la derecha, agáchate un poco.'},
-  {mk:'UPPER',      title:'UPPER',          desc:'Puño de abajo hacia arriba con la mano derecha. Golpe corto y seco: frena en el target, no sigas de largo.'},
+  {mk:'UPPER',      title:'UPPER',          desc:'Puño de abajo hacia arriba, al mentón, con la mano derecha. Golpe corto y seco: frena en el target, no sigas de largo.'},
   {mk:'KICKF',      title:'PATADA FRONTAL', desc:'Levanta la rodilla y patea hacia adelante.'},
   {mk:'KICKS',      title:'PATADA LATERAL', desc:'Patea hacia el costado con la pierna derecha.'},
   {mk:'DOGEL',      title:'ESQUIVA',        desc:'Inclina el tronco en diagonal hacia la esquina segura.'}
@@ -897,8 +897,10 @@ function computePower(rawVel,c){
   const scale=bodyScale(c);
   // Normalize: speed relative to body size (bigger on screen = pixels travel further)
   const norm=scale?(rawVel/scale)*100:(rawVel/ (c.width*0.35))*100;
-  // Map to 0-999 with a soft ceiling so 999 stays rare (like a real arcade machine)
-  let p=Math.round(Math.pow(Math.min(norm/62,1),1.15)*999);
+  // Map to 0-999 with a soft ceiling so 999 stays rare (like a real arcade machine).
+  // Divisor calibrated against the actual free-mode velocity range (which is amplified
+  // by calcVel's lateral boost x1.8 and the x1.2 in the free-mode hit loop).
+  let p=Math.round(Math.pow(Math.min(norm/4000,1),1.15)*999);
   p=Math.max(0,Math.min(999,p));
   // Light smoothing to avoid jitter between identical punches
   powerSmooth=powerSmooth?Math.round(powerSmooth*0.25+p*0.75):p;
@@ -1204,7 +1206,56 @@ function arLoop(){
   else if(S.sess.mode==='libre'){drawPear(c,ctx);drawPower(c,ctx);}
   else{drawTargets(c,ctx);drawDodgeZone(c,ctx);}
   drawEffects(c,ctx);
+  drawTimeRing(c,ctx);
   requestAnimationFrame(arLoop);
+}
+
+// ======== PERIMETER TIME RING ========
+// Fills progressively around the screen edge as the round elapses, closing the
+// perimeter when time runs out. Complements (does not replace) the numeric timer.
+function drawTimeRing(c,ctx){
+  if(S.sess.mode==='tutorial')return;          // tutorial has no round timer
+  const total=(DIFF[S.sess.diff]&&DIFF[S.sess.diff].dur)||0;
+  if(!total)return;
+  const left=Math.max(0,Math.min(total,S.sess.timeLeft));
+  const progress=1-(left/total);               // 0 -> 1 as the round elapses
+  if(progress<=0)return;
+
+  const w=c.width,h=c.height;
+  const inset=Math.max(3,w*0.010);             // distance from the very edge
+  const lw=Math.max(4,w*0.016);                // ring thickness
+  const x0=inset,y0=inset,x1=w-inset,y1=h-inset;
+  const sideW=x1-x0, sideH=y1-y0;
+  const perim=2*(sideW+sideH);
+  let remain=perim*progress;                   // length of ring to draw
+
+  ctx.save();
+  ctx.strokeStyle='#FF4500';                   // app accent
+  ctx.lineWidth=lw;
+  ctx.lineCap='butt';
+  ctx.shadowColor='#FF4500';
+  ctx.shadowBlur=Math.max(6,w*0.02);
+  ctx.globalAlpha=0.95;
+
+  // Draw clockwise starting at top-center, so it visually "closes" the frame.
+  const startX=x0+sideW/2;
+  const seg=(fromX,fromY,toX,toY)=>{
+    if(remain<=0)return;
+    const len=Math.hypot(toX-fromX,toY-fromY);
+    const use=Math.min(remain,len);
+    const t=use/len;
+    ctx.beginPath();
+    ctx.moveTo(fromX,fromY);
+    ctx.lineTo(fromX+(toX-fromX)*t, fromY+(toY-fromY)*t);
+    ctx.stroke();
+    remain-=use;
+  };
+  seg(startX,y0, x1,y0);      // top-center -> top-right
+  seg(x1,y0,     x1,y1);      // right side down
+  seg(x1,y1,     x0,y1);      // bottom right -> left
+  seg(x0,y1,     x0,y0);      // left side up
+  seg(x0,y0,     startX,y0);  // top-left -> top-center (closes)
+  ctx.restore();
 }
 
 // ======== PEAR (Pera de boxeo) ========
@@ -1332,27 +1383,27 @@ function drawPear(c,ctx){
 // ======== POWER DISPLAY (free mode only) ========
 function drawPower(c,ctx){
   const now=Date.now();
-  // --- Fixed readout: last punch, colored by power ---
+  // --- Fixed readout: last punch, colored by power (bottom, above the Terminar button) ---
   if(lastPower>0){
     const col=powerColor(lastPower);
     ctx.save();
-    const boxY=c.height*0.145;
+    const boxY=c.height*0.80;
     ctx.textAlign='center';ctx.textBaseline='middle';
     // Label
-    ctx.font=`800 ${Math.round(c.width*0.032)}px DM Sans,sans-serif`;
+    ctx.font=`800 ${Math.round(c.width*0.030)}px DM Sans,sans-serif`;
     ctx.fillStyle='rgba(255,255,255,0.55)';
-    ctx.fillText('POWER',c.width*0.5,boxY-c.width*0.045);
+    ctx.fillText('POWER',c.width*0.5,boxY-c.width*0.048);
     // Number
-    ctx.font=`900 ${Math.round(c.width*0.115)}px DM Sans,sans-serif`;
+    ctx.font=`900 ${Math.round(c.width*0.105)}px DM Sans,sans-serif`;
     ctx.fillStyle=col;
     ctx.shadowColor=col;ctx.shadowBlur=22;
     ctx.fillText(String(lastPower),c.width*0.5,boxY);
     ctx.shadowBlur=0;
     // Best of session
     if(bestPower>0){
-      ctx.font=`800 ${Math.round(c.width*0.03)}px DM Sans,sans-serif`;
+      ctx.font=`800 ${Math.round(c.width*0.028)}px DM Sans,sans-serif`;
       ctx.fillStyle='rgba(255,255,255,0.5)';
-      ctx.fillText('MEJOR '+bestPower,c.width*0.5,boxY+c.width*0.062);
+      ctx.fillText('MEJOR '+bestPower,c.width*0.5,boxY+c.width*0.058);
     }
     ctx.restore();
   }
