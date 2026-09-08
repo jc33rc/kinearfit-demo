@@ -302,8 +302,8 @@ const KP={NOSE:0,LE:1,RE:2,LEAR:3,REAR:4,LS:5,RS:6,LELB:7,RELB:8,LW:9,RW:10,LH:1
 let MOVES={
   JAB:  {color:'#1A56FF',label:'JAB',   kp:KP.LW, offX:-.18,offY:-.12,velThr:38, size:.13,velType:'total', atkDir:'up'},
   CROSS:{color:'#FF4D00',label:'CROSS', kp:KP.RW, offX: .20,offY:-.14,velThr:38, size:.14,velType:'total', atkDir:'up'},
-  HOOK_L:{color:'#F77F00',label:'HOOK IZQ', kp:KP.LW, offX: .22,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'right'},
-  HOOK_R:{color:'#F77F00',label:'HOOK DER', kp:KP.RW, offX:-.22,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
+  HOOK_L:{color:'#F77F00',label:'HOOK', kp:KP.LW, offX: .22,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'right'},
+  HOOK_R:{color:'#F77F00',label:'HOOK', kp:KP.RW, offX:-.22,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
   HOOK_BODY_L:{color:'#FF9E2C',label:'HOOK CUERPO', kp:KP.LW, offX: .22,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'right'},
   HOOK_BODY_R:{color:'#FF9E2C',label:'HOOK CUERPO', kp:KP.RW, offX:-.22,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
   UPPER:{color:'#FFD60A',label:'UPPER', kp:KP.RW, offX: .04,offY:-.06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
@@ -312,18 +312,24 @@ let MOVES={
   DOGEL:{color:'#00B87A',label:'DODGE ←',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'},
   DOGER:{color:'#00B87A',label:'DODGE →',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'}
 };
+// Textos del tutorial adaptados a la lateralidad del usuario.
+// Para diestro: mano adelantada = izquierda, mano de poder = derecha. Para zurdo, al revés.
+function lead(){return S.user.dom==='left'?'derecha':'izquierda';}   // mano adelantada
+function power(){return S.user.dom==='left'?'izquierda':'derecha';}  // mano de poder
+function leadLeg(){return S.user.dom==='left'?'izquierda':'derecha';}// pierna de patada
 const TUTORIAL_MOVES=[
-  {mk:'JAB',        title:'JAB',            desc:'Puño recto con la mano izquierda.'},
-  {mk:'CROSS',      title:'CROSS',          desc:'Puño recto con la mano derecha.'},
-  {mk:'HOOK_L',     title:'HOOK IZQUIERDO', desc:'Gancho en arco con la mano izquierda.'},
-  {mk:'HOOK_R',     title:'HOOK DERECHO',   desc:'Gancho en arco con la mano derecha.'},
-  {mk:'HOOK_BODY_L',title:'HOOK CUERPO IZQ',desc:'Gancho al costado/hígado con la izquierda, agáchate un poco.'},
-  {mk:'HOOK_BODY_R',title:'HOOK CUERPO DER',desc:'Gancho al costado/hígado con la derecha, agáchate un poco.'},
-  {mk:'UPPER',      title:'UPPER',          desc:'Puño de abajo hacia arriba, al mentón, con la mano derecha. Golpe corto y seco: frena en el target, no sigas de largo.'},
-  {mk:'KICKF',      title:'PATADA FRONTAL', desc:'Levanta la rodilla y patea hacia adelante.'},
-  {mk:'KICKS',      title:'PATADA LATERAL', desc:'Patea hacia el costado con la pierna derecha.'},
-  {mk:'DOGEL',      title:'ESQUIVA',        desc:'Inclina el tronco en diagonal hacia la esquina segura.'}
+  {mk:'JAB',        title:'JAB',            desc:()=>'Puño recto con la mano '+lead()+'.'},
+  {mk:'CROSS',      title:'CROSS',          desc:()=>'Puño recto con la mano '+power()+'.'},
+  {mk:'HOOK_L',     title:'HOOK ADELANTADO',desc:()=>'Gancho en arco con la mano '+lead()+'.'},
+  {mk:'HOOK_R',     title:'HOOK DE PODER',  desc:()=>'Gancho en arco con la mano '+power()+'.'},
+  {mk:'HOOK_BODY_L',title:'HOOK CUERPO ADEL.',desc:()=>'Gancho al costado/hígado con la '+lead()+', agáchate un poco.'},
+  {mk:'HOOK_BODY_R',title:'HOOK CUERPO PODER',desc:()=>'Gancho al costado/hígado con la '+power()+', agáchate un poco.'},
+  {mk:'UPPER',      title:'UPPER',          desc:()=>'Puño de abajo hacia arriba, al mentón, con la mano '+power()+'. Golpe corto y seco: frena en el target, no sigas de largo.'},
+  {mk:'KICKF',      title:'PATADA FRONTAL', desc:()=>'Levanta la rodilla y patea hacia adelante.'},
+  {mk:'KICKS',      title:'PATADA LATERAL', desc:()=>'Patea hacia el costado con la pierna '+leadLeg()+'.'},
+  {mk:'DOGEL',      title:'ESQUIVA',        desc:()=>'Inclina el tronco en diagonal hacia la esquina segura.'}
 ];
+function moveDesc(m){return typeof m.desc==='function'?m.desc():m.desc;}
 const RUTINAS=[
   // ===== FÁCIL (4) =====
   {id:'jab_simple', name:'Jab Simple', seq:['JAB'], level:'Fácil',
@@ -500,8 +506,15 @@ function obNext(){
 }
 function setDom(d){S.user.dom=d;document.getElementById('br').classList.toggle('active',d==='right');document.getElementById('bl').classList.toggle('active',d==='left');applyDom(d);}
 function applyDom(d){
-  if(d==='left'){MOVES.JAB.kp=KP.RW;MOVES.JAB.offX=.18;MOVES.CROSS.kp=KP.LW;MOVES.CROSS.offX=-.20;MOVES.HOOK_L.kp=KP.RW;MOVES.HOOK_L.offX=-.28;MOVES.HOOK_R.kp=KP.LW;MOVES.HOOK_R.offX=.28;MOVES.HOOK_BODY_L.kp=KP.RW;MOVES.HOOK_BODY_L.offX=-.28;MOVES.HOOK_BODY_R.kp=KP.LW;MOVES.HOOK_BODY_R.offX=.28;MOVES.UPPER.kp=KP.LW;MOVES.UPPER.offX=-.04;MOVES.KICKF.kp=KP.LK;MOVES.KICKS.kp=KP.LA;MOVES.KICKS.offX=-.28;}
-  else{MOVES.JAB.kp=KP.LW;MOVES.JAB.offX=-.18;MOVES.CROSS.kp=KP.RW;MOVES.CROSS.offX=.20;MOVES.HOOK_L.kp=KP.LW;MOVES.HOOK_L.offX=.28;MOVES.HOOK_R.kp=KP.RW;MOVES.HOOK_R.offX=-.28;MOVES.HOOK_BODY_L.kp=KP.LW;MOVES.HOOK_BODY_L.offX=.28;MOVES.HOOK_BODY_R.kp=KP.RW;MOVES.HOOK_BODY_R.offX=-.28;MOVES.UPPER.kp=KP.RW;MOVES.UPPER.offX=.04;MOVES.KICKF.kp=KP.RK;MOVES.KICKS.kp=KP.RA;MOVES.KICKS.offX=.28;}
+  if(d==='left'){MOVES.JAB.kp=KP.RW;MOVES.JAB.offX=.18;MOVES.CROSS.kp=KP.LW;MOVES.CROSS.offX=-.20;MOVES.HOOK_L.kp=KP.RW;MOVES.HOOK_L.offX=-.28;MOVES.HOOK_R.kp=KP.LW;MOVES.HOOK_R.offX=.28;MOVES.HOOK_BODY_L.kp=KP.RW;MOVES.HOOK_BODY_L.offX=-.28;MOVES.HOOK_BODY_R.kp=KP.LW;MOVES.HOOK_BODY_R.offX=.28;MOVES.UPPER.kp=KP.LW;MOVES.UPPER.offX=-.04;MOVES.KICKF.kp=KP.LK;MOVES.KICKS.kp=KP.LA;MOVES.KICKS.offX=-.22;
+    // Mirror the attack directions too, otherwise travel validation fails for lefties
+    MOVES.HOOK_L.atkDir='left';MOVES.HOOK_R.atkDir='right';
+    MOVES.HOOK_BODY_L.atkDir='left';MOVES.HOOK_BODY_R.atkDir='right';
+    MOVES.KICKS.atkDir='left';}
+  else{MOVES.JAB.kp=KP.LW;MOVES.JAB.offX=-.18;MOVES.CROSS.kp=KP.RW;MOVES.CROSS.offX=.20;MOVES.HOOK_L.kp=KP.LW;MOVES.HOOK_L.offX=.28;MOVES.HOOK_R.kp=KP.RW;MOVES.HOOK_R.offX=-.28;MOVES.HOOK_BODY_L.kp=KP.LW;MOVES.HOOK_BODY_L.offX=.28;MOVES.HOOK_BODY_R.kp=KP.RW;MOVES.HOOK_BODY_R.offX=-.28;MOVES.UPPER.kp=KP.RW;MOVES.UPPER.offX=.04;MOVES.KICKF.kp=KP.RK;MOVES.KICKS.kp=KP.RA;MOVES.KICKS.offX=.22;
+    MOVES.HOOK_L.atkDir='right';MOVES.HOOK_R.atkDir='left';
+    MOVES.HOOK_BODY_L.atkDir='right';MOVES.HOOK_BODY_R.atkDir='left';
+    MOVES.KICKS.atkDir='right';}
 }
 function setLvl(l){S.user.level=l;['b','i','a'].forEach((x,i)=>document.getElementById('lv-'+x).classList.toggle('active',['beginner','intermediate','advanced'][i]===l));}
 
@@ -586,7 +599,7 @@ function rendTutorialMoves(){
     return '<div class="card" onclick="startTutorial(\''+m.mk+'\')" style="display:flex;align-items:center;gap:12px;margin-bottom:10px;cursor:pointer">'+
         '<span style="width:14px;height:14px;border-radius:50%;background:'+col+';box-shadow:0 0 10px '+col+';flex-shrink:0"></span>'+
         '<div style="flex:1"><div style="font-size:14px;font-weight:800;color:var(--text)">'+m.title+'</div>'+
-        '<div style="font-size:11px;color:var(--muted)">'+m.desc+'</div></div>'+
+        '<div style="font-size:11px;color:var(--muted)">'+moveDesc(m)+'</div></div>'+
         '<span style="color:var(--muted);font-size:18px">›</span>'+
     '</div>';
   }).join('');
@@ -603,7 +616,7 @@ function initTutorial(){
   const mv=MOVES[S.tutorial.mk];
   const col=mv?mv.color:'#00D4FF';
   banner.innerHTML='<div style="font-family:var(--font);font-weight:900;font-size:26px;color:'+col+';text-shadow:0 0 16px '+col+'">'+move.title+'</div>'+
-    '<div style="font-family:var(--font);font-weight:600;color:rgba(255,255,255,.8);font-size:14px;margin-top:4px;max-width:300px;margin-left:auto;margin-right:auto;line-height:1.4">'+move.desc+'</div>'+
+    '<div style="font-family:var(--font);font-weight:600;color:rgba(255,255,255,.8);font-size:14px;margin-top:4px;max-width:300px;margin-left:auto;margin-right:auto;line-height:1.4">'+moveDesc(move)+'</div>'+
     '<div style="font-family:var(--font);font-weight:900;font-size:22px;color:white;margin-top:10px"><span id="tut-count">0</span> <span style="font-size:13px;color:rgba(255,255,255,.6);font-weight:700">aciertos</span></div>';
   banner.style.display='block';
   document.getElementById('tut-exit').style.display='block';
@@ -711,6 +724,8 @@ async function startSession(mode,diff){
   hideCenterOverlay();
   posState='ok';posCandidate='ok';posSince=0;
   lastPower=0;lastPowerAt=0;bestPower=0;powerSmooth=0;
+  for(const k in hitCool)delete hitCool[k];  // clear stale cooldowns from previous sessions
+  kptHistory=[];dodgeZoneData=null;dodgeT=0;
   S.sess={active:false,mode,diff,round:1,totalRounds:3,timeLeft:DIFF[diff].dur,score:0,hits:0,comboStr:0,comboMax:0,kicks:0,dodges:0,combos:0,combIdx:0,selCombo:S.selCombo,startTime:Date.now(),activeSeconds:0};
   S.stats.modesSet.add(mode);S.stats.modesUsed=S.stats.modesSet.size;
   pearDamage=0;pearFlash=0;pearBounce={x:0,y:0,vx:0,vy:0};
@@ -1716,7 +1731,7 @@ function endSession(fromTutorial){
   hideCenterOverlay();
   S.sess.active=false;arRunning=false;
   if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
-  detector=null;currKpts=null;prevKpts=null;dodgeActive=false;
+  detector=null;currKpts=null;prevKpts=null;dodgeActive=false;dodgeZoneData=null;kptHistory=[];
   guardLowSince=null;lastBodyX=null;staticSince=null;activeNotice=null;noticeCooldownUntil=0;
   document.getElementById('tutorial-banner').style.display='none';document.getElementById('tut-exit').style.display='none';
   if(fromTutorial||S.sess.mode==='tutorial'){
