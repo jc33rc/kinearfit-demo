@@ -309,6 +309,11 @@ let MOVES={
   UPPER:{color:'#FFD60A',label:'UPPER', kp:KP.RW, offX: .04,offY:-.06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
   KICKF:{color:'#7B2D8B',label:'KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total', atkDir:'up'},
   KICKS:{color:'#E040FB',label:'KICK →',kp:KP.RA, offX: .22,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
+  // ---- Movimientos LIBRES (kpAlt): se ejecutan con cualquiera de los dos lados. ----
+  // Target centrado, asi que la posicion en pantalla no puede indicar lateralidad:
+  // por eso aceptan ambos lados en vez de exigir el dominante.
+  ELBOW:{color:'#A855F7',label:'ELBOW', kp:KP.RELB, kpAlt:KP.LELB, offX: 0, offY:-.16,velThr:9, size:.13,velType:'lateral', atkDir:'lateral', needFolded:true},
+  KNEE: {color:'#FF1744',label:'KNEE',  kp:KP.RK,   kpAlt:KP.LK,   offX: 0, offY: .12,velThr:20, size:.15,velType:'rise',    atkDir:'up',      forceTravel:true},
   DOGEL:{color:'#00B87A',label:'DODGE ←',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'},
   DOGER:{color:'#00B87A',label:'DODGE →',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'}
 };
@@ -325,8 +330,10 @@ const TUTORIAL_MOVES=[
   {mk:'HOOK_BODY_L',title:'HOOK CUERPO ADEL.',desc:()=>'Gancho al costado/hígado con la '+lead()+', agáchate un poco.'},
   {mk:'HOOK_BODY_R',title:'HOOK CUERPO PODER',desc:()=>'Gancho al costado/hígado con la '+power()+', agáchate un poco.'},
   {mk:'UPPER',      title:'UPPER',          desc:()=>'Puño de abajo hacia arriba, al mentón, con la mano '+power()+'. Golpe corto y seco: frena en el target, no sigas de largo.'},
-  {mk:'KICKF',      title:'PATADA FRONTAL', desc:()=>'Levanta la rodilla y patea hacia adelante.'},
+  {mk:'KICKF',      title:'PATADA FRONTAL', desc:()=>'Levanta la rodilla y patea hacia adelante con la pierna '+leadLeg()+'.'},
   {mk:'KICKS',      title:'PATADA LATERAL', desc:()=>'Patea hacia el costado con la pierna '+leadLeg()+'.'},
+  {mk:'ELBOW',      title:'CODAZO',         desc:()=>'Codazo en arco al menton, con el brazo cerrado y el puno pegado a la cabeza. Con cualquiera de los dos brazos.'},
+  {mk:'KNEE',       title:'RODILLAZO',      desc:()=>'Sube la rodilla al plexo, de golpe y por el centro. Con cualquiera de las dos piernas.'},
   {mk:'DOGEL',      title:'ESQUIVA',        desc:()=>'Inclina el tronco en diagonal hacia la esquina segura.'}
 ];
 function moveDesc(m){return typeof m.desc==='function'?m.desc():m.desc;}
@@ -365,7 +372,22 @@ const RUTINAS=[
   {id:'doble_patada', name:'Doble Patada', seq:['CROSS','KICKF','JAB','KICKS'], level:'Avanzado',
    fact:'Encadenar dos tipos de patada distintos exige recuperar el equilibrio rápidamente entre cada una.'},
   {id:'combate_total', name:'Combate Total', seq:['JAB','CROSS','DOGER','HOOK_L','UPPER','KICKS','CROSS','KICKF'], level:'Avanzado',
-   fact:'Esta rutina integra ataque, defensa y patadas — el equivalente a un asalto completo de combate.'}
+   fact:'Esta rutina integra ataque, defensa y patadas — el equivalente a un asalto completo de combate.'},
+  // ===== CORTA DISTANCIA: CODOS Y RODILLAS (6) =====
+  // Regla de diseno: el codazo nunca va despues de un gancho (misma trayectoria en arco),
+  // y el rodillazo nunca despues de una patada (la pierna que baja activaria el siguiente).
+  {id:'rodilla_simple', name:'Rodilla Simple', seq:['JAB','KNEE'], level:'Fácil',
+   fact:'En Muay Thai la rodilla es el arma del clinch: se lanza de cerca, donde los punos pierden potencia.'},
+  {id:'codo_simple', name:'Codo Simple', seq:['JAB','ELBOW'], level:'Fácil',
+   fact:'El codo es una de las superficies mas duras del cuerpo y recorre menos distancia que un puno.'},
+  {id:'clinch_basico', name:'Clinch Básico', seq:['JAB','CROSS','KNEE'], level:'Intermedio',
+   fact:'Los rodillazos puntuan alto en Muay Thai porque exigen controlar al oponente antes de lanzarlos.'},
+  {id:'codo_cerca', name:'Codo de Cerca', seq:['JAB','CROSS','ELBOW'], level:'Intermedio',
+   fact:'El codo llega mas rapido que el puno aunque el brazo se mueva mas lento: recorre menos camino.'},
+  {id:'clinch_completo', name:'Clinch Completo', seq:['JAB','CROSS','KNEE','ELBOW','CROSS'], level:'Avanzado',
+   fact:'El clinch decide muchos combates de Muay Thai: es la fase de rodillas y codos a distancia corta.'},
+  {id:'ocho_extremidades', name:'Ocho Extremidades', seq:['JAB','ELBOW','KNEE','CROSS','KICKS'], level:'Avanzado',
+   fact:'Al Muay Thai se le llama el arte de las ocho extremidades: dos punos, dos codos, dos rodillas y dos piernas.'}
 ];
 // Legacy alias (selCombo index references RUTINAS now)
 const COMBOS=RUTINAS;
@@ -631,27 +653,31 @@ function tutorialProcess(){
   const mv=MOVES[mk];if(!mv||mv.kp<0)return;
   const cKey='tut_'+mk;
   if((now-(hitCool[cKey]||0))<getHitCD())return;
-  const vel=calcVel(mv.kp,mv.velType);
-  if(vel<mv.velThr)return;
-  // Same landing logic as guided training: require wrist/ankle near its target
-  const kp=currKpts[mv.kp];if(!kp||kp.score<0.3)return;
   const c=document.getElementById('ar-canvas');
-  const kpx={x:kp.x*c.width,y:kp.y*c.height};
   const tp=getTargetPos(mk);
+  // Movimientos libres: se prueba cada keypoint candidato; basta con que uno acierte.
   let landed=false;
-  if(mv.velType==='lateral'){
-    const radius=mv.size*c.width*1.8;
-    const closeNow=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<radius;
-    let crossed=false;
-    const pv=prevKpts&&prevKpts[mv.kp];
-    if(pv&&pv.score>0.25){
-      const pvx={x:pv.x*c.width,y:pv.y*c.height};
-      const verticalOk=Math.abs(kpx.y-tp.y)<radius*1.3;
-      crossed=verticalOk&&((pvx.x-tp.x)*(kpx.x-tp.x)<=0);
+  for(const idx of kpCandidates(mv)){
+    const isLeg=(idx===KP.RK||idx===KP.LK||idx===KP.RA||idx===KP.LA);
+    if(calcVel(idx,mv.velType)<mv.velThr)continue;
+    if(!strikeGate(mv,idx))continue;
+    const kp=currKpts[idx];if(!kp||kp.score<(isLeg?0.15:0.3))continue;
+    const kpx={x:kp.x*c.width,y:kp.y*c.height};
+    if(mv.velType==='lateral'){
+      const radius=mv.size*c.width*1.8;
+      const closeNow=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<radius;
+      let crossed=false;
+      const pv=prevKpts&&prevKpts[idx];
+      if(pv&&pv.score>0.25){
+        const pvx={x:pv.x*c.width,y:pv.y*c.height};
+        const verticalOk=Math.abs(kpx.y-tp.y)<radius*1.3;
+        crossed=verticalOk&&((pvx.x-tp.x)*(kpx.x-tp.x)<=0);
+      }
+      landed=closeNow||crossed;
+    } else {
+      landed=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<mv.size*c.width;
     }
-    landed=closeNow||crossed;
-  } else {
-    landed=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<mv.size*c.width;
+    if(landed)break;
   }
   if(!landed)return;
   hitCool[cKey]=now;
@@ -682,13 +708,36 @@ function pushKptHistory(kpts){
 // Validate that a strike actually TRAVELED in its attack direction (not a small guard wobble).
 // Returns true only if: (1) the limb moved a minimum pixel distance, AND (2) that travel was
 // predominantly in the move's attack direction (atkDir). No effect on contact radius.
-function validateTravel(mv,c){
+// Movimientos libres: devuelve los keypoints que pueden ejecutar el golpe, en orden de prueba.
+function kpCandidates(mv){
+  return (mv.kpAlt!=null&&mv.kpAlt>=0)?[mv.kp,mv.kpAlt]:[mv.kp];
+}
+// Condiciones extra propias de un movimiento, ademas de velocidad/trayectoria/contacto.
+// ELBOW: exige brazo cerrado (muneca cerca del hombro). Un hook desplaza el codo lateralmente
+// igual que un codazo, pero con el brazo extendido: esta condicion los separa.
+function strikeGate(mv,idx){
+  if(!mv.needFolded)return true;
+  if(!currKpts)return false;
+  const isLeft=(idx===KP.LELB);
+  const sh=currKpts[isLeft?KP.LS:KP.RS];
+  const wr=currKpts[isLeft?KP.LW:KP.RW];
+  const el=currKpts[idx];
+  if(!sh||!el||sh.score<0.25||el.score<0.25)return false;
+  if(!wr||wr.score<0.2)return true; // muneca no visible: no penalizar, los demas filtros deciden
+  const upper=Math.hypot(el.x-sh.x,el.y-sh.y);
+  if(upper<=0.001)return true;
+  const reach=Math.hypot(wr.x-sh.x,wr.y-sh.y);
+  return reach<upper*1.2; // brazo cerrado
+}
+function validateTravel(mv,c,idx){
   if(!mv.atkDir)return true; // moves without a defined direction skip this check
   // Kicks bypass travel validation entirely (ankle keypoint too unstable; velocity+contact
   // already gate them, and they never had the in-guard false-positive problem).
-  if(mv.kp===KP.RK||mv.kp===KP.LK||mv.kp===KP.RA||mv.kp===KP.LA)return true;
+  idx=(idx==null?mv.kp:idx);
+  // La exencion es por keypoint (tobillo/rodilla inestables), pero un movimiento puede
+  // reclamarla de vuelta con forceTravel: el rodillazo SI necesita validar trayectoria.
+  if(!mv.forceTravel&&(idx===KP.RK||idx===KP.LK||idx===KP.RA||idx===KP.LA))return true;
   if(kptHistory.length<3)return false; // need some history
-  const idx=mv.kp;
   const sMin=0.2;
   // Find the furthest-back frame in history that has a confident reading for this keypoint
   let start=null;
@@ -709,6 +758,7 @@ function validateTravel(mv,c){
     case 'down':  return dy >  minTravel*0.5;
     case 'left':  return dx < -minTravel*0.5;
     case 'right': return dx >  minTravel*0.5;
+    case 'lateral': return Math.abs(dx) > minTravel*0.5; // codazo libre: vale cualquier lado
     default:      return true;
   }
 }
@@ -862,6 +912,12 @@ function calcVel(kpIdx,type){
     return Math.max(lateralVel*1.8, totalVel*0.9);
   }
   if(type==='vertical')return Math.abs(dy)/dt*1.4;
+  if(type==='rise'){
+    // RODILLAZO: subida vertical pura. A diferencia de 'upward' (uppercut) no exige acercarse
+    // a la linea media, porque la rodilla ya sube por el centro del cuerpo.
+    if(dy>=0)return 0;
+    return Math.abs(dy)/dt*1.3;
+  }
   if(type==='upward'){
     // UPPER: must move UP (dy<0) AND inward toward the body's midline.
     // The hook's recovery to guard also rises, but travels OUTWARD — reject it.
@@ -978,37 +1034,42 @@ function processHits(){
     if((now-(hitCool[cmk]||0))<getHitCD())return;
     // Legs (knees/ankles) are harder for the pose model to detect and move slower than fists,
     // so kicks use lower velocity + confidence thresholds than punches.
-    const isKickMove=(mv.kp===KP.RK||mv.kp===KP.LK||mv.kp===KP.RA||mv.kp===KP.LA);
-    const velNeeded=isKickMove?Math.min(mv.velThr,18):mv.velThr;
-    const scoreNeeded=isKickMove?0.15:0.3;
-    const vel=calcVel(mv.kp,mv.velType);
-    if(vel<velNeeded)return;
-    // NEW: require real travel in the correct attack direction (rejects guard wobble,
-    // recovery motions, and anything that didn't actually swing toward the target).
-    if(!validateTravel(mv,c))return;
-    const kp=currKpts[mv.kp];if(!kp||kp.score<scoreNeeded)return;
-    const kpx={x:kp.x*c.width,y:kp.y*c.height};
     const tp=getTargetPos(cmk);
-    let landed=false;
-    if(mv.velType==='lateral'){
-      // Hooks/lateral kicks: wider radius, plus trajectory-crossing check
-      // (wrist crossed the target's horizontal center between prev and current frame, within vertical band)
-      const radius=mv.size*c.width*1.8;
-      const closeNow=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<radius;
-      let crossed=false;
-      const pv=prevKpts&&prevKpts[mv.kp];
-      if(pv&&pv.score>0.25){
-        const pvx={x:pv.x*c.width,y:pv.y*c.height};
-        const verticalOk=Math.abs(kpx.y-tp.y)<radius*1.3;
-        const crossedX=(pvx.x-tp.x)*(kpx.x-tp.x)<=0; // sign change = crossed center
-        crossed=verticalOk&&crossedX;
+    // Movimientos libres: se prueba cada keypoint candidato; el primero que acierte cuenta.
+    let landed=false,hitKpx=null;
+    for(const idx of kpCandidates(mv)){
+      // Piernas (rodilla/tobillo): el modelo las detecta peor y se mueven mas lento que los
+      // punos, asi que usan umbrales de velocidad y confianza mas bajos.
+      const isKickMove=(idx===KP.RK||idx===KP.LK||idx===KP.RA||idx===KP.LA);
+      const velNeeded=isKickMove?Math.min(mv.velThr,18):mv.velThr;
+      const scoreNeeded=isKickMove?0.15:0.3;
+      if(calcVel(idx,mv.velType)<velNeeded)continue;
+      // Exige recorrido real en la direccion de ataque (rechaza temblor de guardia,
+      // movimientos de retorno y cualquier cosa que no haya ido hacia el target).
+      if(!validateTravel(mv,c,idx))continue;
+      if(!strikeGate(mv,idx))continue;
+      const kp=currKpts[idx];if(!kp||kp.score<scoreNeeded)continue;
+      const kpx={x:kp.x*c.width,y:kp.y*c.height};
+      if(mv.velType==='lateral'){
+        // Hooks/patadas laterales/codazos: radio mas amplio y chequeo de cruce de trayectoria.
+        const radius=mv.size*c.width*1.8;
+        const closeNow=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<radius;
+        let crossed=false;
+        const pv=prevKpts&&prevKpts[idx];
+        if(pv&&pv.score>0.25){
+          const pvx={x:pv.x*c.width,y:pv.y*c.height};
+          const verticalOk=Math.abs(kpx.y-tp.y)<radius*1.3;
+          const crossedX=(pvx.x-tp.x)*(kpx.x-tp.x)<=0; // cambio de signo = cruzo el centro
+          crossed=verticalOk&&crossedX;
+        }
+        landed=closeNow||crossed;
+      } else {
+        landed=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<mv.size*c.width;
       }
-      landed=closeNow||crossed;
-    } else {
-      landed=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<mv.size*c.width;
+      if(landed){hitKpx=kpx;break;}
     }
-    if(landed){
-      hitCool[cmk]=now;doHit(cmk,kpx);advCombo(seq);
+    if(landed&&hitKpx){
+      hitCool[cmk]=now;doHit(cmk,hitKpx);advCombo(seq);
     }
   }
 }
@@ -1773,6 +1834,8 @@ function playSound(type){
       upper:      {f:200,d:.09,t:'sawtooth',vol:.38}, // Ascendente
       kickf:      {f:90, d:.22,t:'sine',    vol:.55}, // Grave profundo
       kicks:      {f:100,d:.2, t:'sine',    vol:.52}, // Lateral profundo
+      elbow:      {f:145,d:.13,t:'square',  vol:.50}, // Seco y corto
+      knee:       {f:95, d:.19,t:'sine',    vol:.54}, // Grave, impacto de cuerpo
       dodge:      {f:320,d:.06,t:'sine',    vol:.26}, // Ligero
     };
     const c=cfgs[type]||cfgs.jab,now=audioCtx.currentTime;
