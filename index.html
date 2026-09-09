@@ -252,6 +252,39 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <div style="display:flex;gap:10px;margin-bottom:20px"><button class="btn btn-secondary" style="flex:1" onclick="shareSession()">📤 Compartir</button><button class="btn btn-secondary" style="flex:0 0 56px;padding:0" onclick="openPhotoBooth()" aria-label="Tomar foto">📸</button><button class="btn" style="flex:1" onclick="goTo('home')">Continuar →</button></div>
   </div>
 </div>
+<!-- EDITAR PERFIL -->
+<div id="edit-profile" style="display:none;position:fixed;inset:0;z-index:300;background:var(--bg);flex-direction:column;padding:20px 18px;overflow-y:auto">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px">
+    <span style="font-size:20px;font-weight:900;color:var(--text)">Editar perfil</span>
+    <button onclick="closeEditProfile()" aria-label="Cerrar" style="width:36px;height:36px;border-radius:18px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:17px;line-height:1;cursor:pointer">&times;</button>
+  </div>
+  <div class="form-group"><label class="form-label">NOMBRE</label><input class="form-input" id="ed-name" type="text"></div>
+  <div style="display:flex;gap:10px">
+    <div class="form-group" style="flex:1"><label class="form-label">PESO (kg)</label><input class="form-input" id="ed-wt" type="number" inputmode="decimal"></div>
+    <div class="form-group" style="flex:1"><label class="form-label">ALTURA (cm)</label><input class="form-input" id="ed-ht" type="number" inputmode="numeric"></div>
+  </div>
+  <div class="form-group"><label class="form-label">EDAD</label><input class="form-input" id="ed-age" type="number" inputmode="numeric"></div>
+  <div class="form-group">
+    <label class="form-label">LATERALIDAD</label>
+    <div style="display:flex;gap:10px">
+      <button class="toggle-btn" id="ed-br" style="flex:1" onclick="edSetDom('right')">\U0001F91C Diestro</button>
+      <button class="toggle-btn" id="ed-bl" style="flex:1" onclick="edSetDom('left')">\U0001F91B Zurdo</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">Cambia de que lado aparecen los ganchos y la patada lateral.</div>
+  </div>
+  <div class="form-group">
+    <label class="form-label">NIVEL</label>
+    <div style="display:flex;gap:8px">
+      <button class="toggle-btn" id="ed-lv-beginner" style="flex:1;font-size:12px" onclick="edSetLevel('beginner')">Principiante</button>
+      <button class="toggle-btn" id="ed-lv-intermediate" style="flex:1;font-size:12px" onclick="edSetLevel('intermediate')">Intermedio</button>
+      <button class="toggle-btn" id="ed-lv-advanced" style="flex:1;font-size:12px" onclick="edSetLevel('advanced')">Avanzado</button>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">Define que rutinas puede darte el desafio diario.</div>
+  </div>
+  <div id="ed-msg" style="font-size:12px;color:var(--muted);min-height:16px;margin-bottom:10px"></div>
+  <button class="btn" onclick="saveProfileEdits()">Guardar cambios</button>
+</div>
+
 <!-- CABINA DE FOTOS -->
 <div id="photo-booth" style="display:none;position:fixed;inset:0;z-index:300;background:#080A12;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:12px">
   <button onclick="closePhotoBooth()" aria-label="Cerrar" style="position:absolute;top:16px;right:18px;z-index:2;width:40px;height:40px;border-radius:20px;border:1px solid var(--border);background:rgba(13,16,32,.85);color:var(--text);font-size:18px;line-height:1;cursor:pointer">&times;</button>
@@ -286,10 +319,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 <div class="screen" id="screen-profile">
   <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
   <div class="scroll-content" style="padding-top:4px">
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px"><div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#FF8C00);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 20px rgba(255,77,0,.35)">🥊</div><div><div style="font-size:22px;font-weight:900;color:var(--text);letter-spacing:-.5px" id="pf-name">Entrenador</div><div style="display:flex;gap:8px;align-items:center;margin-top:4px"><span class="chip" id="pf-level">Novato</span><span class="muted-text" style="font-size:12px" id="pf-streak">🔥 0 días</span></div></div></div>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px"><div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#FF8C00);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 20px rgba(255,77,0,.35)">🥊</div><div><div style="font-size:22px;font-weight:900;color:var(--text);letter-spacing:-.5px" id="pf-name">Entrenador</div><div style="display:flex;gap:8px;align-items:center;margin-top:4px"><span class="chip" id="pf-level">Novato</span><span class="muted-text" style="font-size:12px" id="pf-streak">🔥 0 días</span></div></div><button onclick="openEditProfile()" aria-label="Editar perfil" style="margin-left:auto;flex-shrink:0;width:38px;height:38px;border-radius:19px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:15px;line-height:1;cursor:pointer">✎</button></div>
     <div class="card" style="margin-bottom:16px"><div class="label" style="margin-bottom:14px">Estadísticas</div><div id="pf-stats"></div></div>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:16px"><div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)"><span style="font-size:16px;margin-right:12px">🌐</span><span style="font-size:13px;color:var(--text);flex:1">Idioma</span><span style="font-size:12px;color:var(--muted)">Español ›</span></div><div style="display:flex;align-items:center;padding:14px 16px"><span style="font-size:16px;margin-right:12px">🔊</span><span style="font-size:13px;color:var(--text);flex:1">Sonido</span><span style="font-size:12px;color:var(--muted)">On ›</span></div></div>
-    <div class="card card-accent" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><div><span class="chip" style="margin-bottom:6px;display:inline-block">Premium</span><div style="font-size:13px;color:var(--text);margin-top:6px">Rondas ilimitadas</div><div style="font-size:12px;color:var(--muted)">Todos los modos · Sin límites</div></div><button class="btn btn-small" style="flex-shrink:0">$14.99/mes</button></div>
+    <div class="card card-accent" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><div><span class="chip" style="margin-bottom:6px;display:inline-block">Premium</span><div style="font-size:13px;color:var(--text);margin-top:6px">Rondas ilimitadas</div><div style="font-size:12px;color:var(--muted)">Todos los modos · Sin límites</div></div><button class="btn btn-small" style="flex-shrink:0">Ver planes</button></div>
   </div>
 </div>
 <!-- BOTTOM NAV -->
@@ -2110,6 +2143,56 @@ function showPost(s,dur,nb){
   if(nb.length>0){const b=nb[0];document.getElementById('ps-badge').style.display='flex';document.getElementById('ps-bicon').textContent=b.icon;document.getElementById('ps-bname').textContent=b.name;document.getElementById('ps-bdesc').textContent=b.desc;}
   else document.getElementById('ps-badge').style.display='none';
 }
+// ======== EDITAR PERFIL ========
+// Poder cambiar la lateralidad es lo mas importante de aqui: si se eligio mal en el
+// onboarding, los ganchos y la patada lateral quedan del lado equivocado para siempre.
+let edDom='right',edLevel='beginner';
+function edPaintToggles(){
+  const r=document.getElementById('ed-br'),l=document.getElementById('ed-bl');
+  if(r)r.classList.toggle('active',edDom==='right');
+  if(l)l.classList.toggle('active',edDom==='left');
+  ['beginner','intermediate','advanced'].forEach(function(k){
+    const b=document.getElementById('ed-lv-'+k);
+    if(b)b.classList.toggle('active',edLevel===k);
+  });
+}
+function edSetDom(d){edDom=d;edPaintToggles();}
+function edSetLevel(l){edLevel=l;edPaintToggles();}
+function openEditProfile(){
+  const el=document.getElementById('edit-profile');
+  if(!el)return;
+  document.getElementById('ed-name').value=S.user.name||'';
+  document.getElementById('ed-wt').value=S.user.wt||70;
+  document.getElementById('ed-ht').value=S.user.ht||170;
+  document.getElementById('ed-age').value=S.user.age||25;
+  edDom=S.user.dom||'right';
+  edLevel=S.user.level||'beginner';
+  edPaintToggles();
+  document.getElementById('ed-msg').textContent='';
+  el.style.display='flex';
+}
+function closeEditProfile(){
+  const el=document.getElementById('edit-profile');
+  if(el)el.style.display='none';
+}
+function saveProfileEdits(){
+  const nm=document.getElementById('ed-name').value.trim();
+  const wt=parseFloat(document.getElementById('ed-wt').value);
+  const ht=parseInt(document.getElementById('ed-ht').value,10);
+  const ag=parseInt(document.getElementById('ed-age').value,10);
+  const msg=document.getElementById('ed-msg');
+  if(!nm){msg.textContent='Escribe tu nombre.';return;}
+  if(!(wt>=25&&wt<=250)){msg.textContent='El peso debe estar entre 25 y 250 kg.';return;}
+  if(!(ht>=100&&ht<=250)){msg.textContent='La altura debe estar entre 100 y 250 cm.';return;}
+  if(!(ag>=10&&ag<=100)){msg.textContent='La edad debe estar entre 10 y 100.';return;}
+  S.user.name=nm;S.user.wt=wt;S.user.ht=ht;S.user.age=ag;S.user.level=edLevel;
+  if(S.user.dom!==edDom){S.user.dom=edDom;applyDom(edDom);} // reubica hooks y patada lateral
+  save();
+  if(typeof refHome==='function')refHome();
+  if(typeof refProfile==='function')refProfile();
+  closeEditProfile();
+}
+
 // ======== CABINA DE FOTOS ========
 // La misma funcion pinta la vista previa en vivo y la imagen final, asi lo que la
 // persona ve en pantalla es exactamente lo que se comparte.
@@ -2258,7 +2341,7 @@ async function openPhotoBooth(){
   pbCount=0;
   pbSetHint('Acom\u00f3date. Al capturar hay 3 segundos.');
   try{
-    pbStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:720},height:{ideal:1280}}});
+    pbStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:1080},height:{ideal:1920}}});
     const v=document.getElementById('pb-video');
     v.srcObject=pbStream;
     await new Promise(function(r){v.onloadedmetadata=r;});
