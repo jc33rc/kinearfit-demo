@@ -254,6 +254,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 </div>
 <!-- CABINA DE FOTOS -->
 <div id="photo-booth" style="display:none;position:fixed;inset:0;z-index:300;background:#080A12;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:12px">
+  <button onclick="closePhotoBooth()" aria-label="Cerrar" style="position:absolute;top:16px;right:18px;z-index:2;width:40px;height:40px;border-radius:20px;border:1px solid var(--border);background:rgba(13,16,32,.85);color:var(--text);font-size:18px;line-height:1;cursor:pointer">&times;</button>
   <video id="pb-video" autoplay playsinline muted style="display:none"></video>
   <canvas id="pb-canvas" style="width:100%;max-width:380px;height:auto;border-radius:18px;background:#080A12"></canvas>
   <div id="pb-hint" style="font-size:12px;color:var(--muted);text-align:center;min-height:16px"></div>
@@ -2121,6 +2122,38 @@ function srcSize(el){
   const w=el.videoWidth||el.width||0,h=el.videoHeight||el.height||0;
   return (w&&h)?{w:w,h:h}:null;
 }
+// Ultima insignia ganada (no la meta siguiente): S.badges conserva el orden de insercion.
+function lastBadgeLabel(){
+  try{
+    const ids=Array.from(S.badges||[]);
+    if(!ids.length)return null;
+    const id=ids[ids.length-1];
+    let name=null;
+    if(id.indexOf('sc_')===0){
+      const p=id.split('_'),ser=BADGE_SERIES.find(function(x){return x.key===p[1];});
+      if(ser)name=ser.label+' '+tierLabel(ser,parseInt(p[2],10));
+    } else if(id.indexOf('lvl_')===0){
+      name='Nivel '+(LEVEL_NAMES[id.slice(4)]||'');
+    } else if(id.indexOf('mo_')===0){
+      const mm=parseInt(id.slice(8,10),10);
+      if(mm>=1&&mm<=12)name='Racha de '+MONTH_NAMES[mm-1];
+    } else {
+      const b=BADGES.find(function(x){return x.id===id;});
+      if(b)name=b.name;
+    }
+    if(!name)return null;
+    return name.length>24?name.slice(0,23)+'\u2026':name;
+  }catch(e){return null;}
+}
+function rrPath(cx,x,y,w,h,r){
+  cx.beginPath();
+  cx.moveTo(x+r,y);
+  cx.lineTo(x+w-r,y);cx.quadraticCurveTo(x+w,y,x+w,y+r);
+  cx.lineTo(x+w,y+h-r);cx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  cx.lineTo(x+r,y+h);cx.quadraticCurveTo(x,y+h,x,y+h-r);
+  cx.lineTo(x,y+r);cx.quadraticCurveTo(x,y,x+r,y);
+  cx.closePath();
+}
 function paintCard(cx,W,H,src,mirror){
   cx.save();
   cx.fillStyle='#080A12';cx.fillRect(0,0,W,H);
@@ -2146,6 +2179,15 @@ function paintCard(cx,W,H,src,mirror){
   cx.fillStyle='#FF4500';cx.fillRect(64,74,8,40);
   cx.font='800 34px '+F;cx.fillStyle='#E8EDFF';cx.textBaseline='top';
   cx.fillText('KINEARFIT',88,76);
+  const bl=lastBadgeLabel();
+  if(bl){
+    cx.font='700 26px '+F;
+    const bw=cx.measureText(bl).width,ph=46,px=W-64-(bw+44),py=72;
+    cx.fillStyle='rgba(0,212,255,0.14)';rrPath(cx,px,py,bw+44,ph,ph/2);cx.fill();
+    cx.strokeStyle='rgba(0,212,255,0.45)';cx.lineWidth=2;rrPath(cx,px,py,bw+44,ph,ph/2);cx.stroke();
+    cx.fillStyle='#00D4FF';cx.textBaseline='middle';
+    cx.fillText(bl,px+22,py+ph/2+1);
+  }
   cx.textBaseline='alphabetic';
   const kcal=Math.round(st.calories||0);
   cx.font='900 190px '+F;cx.fillStyle='#FF4500';
