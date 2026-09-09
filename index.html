@@ -447,6 +447,9 @@ let MOVES={
   UPPER:{color:'#FFD60A',label:'UPPER', kp:KP.RW, offX: .04,offY:-.06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
   KICKF:{color:'#7B2D8B',label:'KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total', atkDir:'up'},
   KICKS:{color:'#E040FB',label:'KICK →',kp:KP.RA, offX: .22,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
+  // Misma patada lateral con la otra pierna. Es lateral, asi que la posicion en pantalla
+  // indica sola cual pierna: no necesita texto ni color extra.
+  KICKS_2:{color:'#E040FB',label:'KICK \u2190',kp:KP.LA, offX:-.22,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'left'},
   // ---- Movimientos LIBRES (kpAlt): se ejecutan con cualquiera de los dos lados. ----
   // Target centrado, asi que la posicion en pantalla no puede indicar lateralidad:
   // por eso aceptan ambos lados en vez de exigir el dominante.
@@ -470,6 +473,7 @@ const TUTORIAL_MOVES=[
   {mk:'UPPER',      title:'UPPER',          desc:()=>'Puño de abajo hacia arriba, al mentón, con la mano '+power()+'. Golpe corto y seco: frena en el target, no sigas de largo.'},
   {mk:'KICKF',      title:'PATADA FRONTAL', desc:()=>'Levanta la rodilla y patea hacia adelante con la pierna '+leadLeg()+'.'},
   {mk:'KICKS',      title:'PATADA LATERAL', desc:()=>'Patea hacia el costado con la pierna '+leadLeg()+'.'},
+  {mk:'KICKS_2',    title:'PATADA LATERAL (otra pierna)', desc:()=>'La misma patada lateral, con la pierna contraria. El objetivo aparece al otro lado.'},
   {mk:'ELBOW',      title:'CODAZO',         desc:()=>'Codazo en arco al menton, con el brazo cerrado y el puno pegado a la cabeza. Con cualquiera de los dos brazos.'},
   {mk:'KNEE',       title:'RODILLAZO',      desc:()=>'Sube la rodilla al plexo, de golpe y por el centro. Con cualquiera de las dos piernas.'},
   {mk:'DOGEL',      title:'ESQUIVA',        desc:()=>'Inclina el tronco en diagonal hacia la esquina segura.'}
@@ -492,18 +496,18 @@ const RUTINAS=[
    fact:'Cerrar la combinación con otro cross entrena la vuelta rápida a posición de guardia.'},
   {id:'cross_hook_upper', name:'Cross-Hook-Upper', seq:['CROSS','HOOK_L','UPPER'], level:'Intermedio',
    fact:'El upper se ejecuta mejor cuando el cuerpo ya rotó con el hook anterior — encadena momentum.'},
-  {id:'jab_upper_cross', name:'Jab-Upper-Cross', seq:['JAB','UPPER','CROSS'], level:'Intermedio',
-   fact:'Variar el orden de los golpes entrena la capacidad de reacción ante distintos ángulos de ataque.'},
+  {id:'jab_upper_cross', name:'Jab-Upper-Cross', seq:['JAB','UPPER','HOOK_L'], level:'Intermedio',
+   fact:'Jab, uppercut y gancho: cada golpe entra por un ángulo distinto, y las manos se alternan.'},
   {id:'muay_thai_basico', name:'Muay Thai Básico', seq:['JAB','CROSS','KICKF'], level:'Intermedio',
    fact:'En Muay Thai, la patada frontal (teep) se usa para mantener distancia y cortar el avance del rival.'},
   {id:'patada_lateral', name:'Patada Lateral', seq:['CROSS','HOOK_L','KICKS','JAB','KICKS'], level:'Intermedio',
    fact:'La patada lateral repetida desarrolla resistencia de cadera y equilibrio sobre una sola pierna.'},
   // ===== AVANZADO (6) =====
-  {id:'clasico_completo', name:'Clásico Completo', seq:['JAB','CROSS','HOOK_L','HOOK_R','UPPER'], level:'Avanzado',
-   fact:'Alternar hooks de ambos lados obliga al cerebro a coordinar ambos hemisferios — mejora la lateralidad.'},
-  {id:'esquiva_contra', name:'Esquiva y Contraataque', seq:['JAB','CROSS','DOGEL','HOOK_R','CROSS'], level:'Avanzado',
+  {id:'clasico_completo', name:'Clásico Completo', seq:['JAB','CROSS','HOOK_L','UPPER','HOOK_BODY_L'], level:'Avanzado',
+   fact:'Las manos se alternan golpe a golpe: así la cadera rota en ambos sentidos y no se pierde potencia.'},
+  {id:'esquiva_contra', name:'Esquiva y Contraataque', seq:['JAB','CROSS','DOGEL','HOOK_L','CROSS'], level:'Avanzado',
    fact:'Esquivar y contraatacar en menos de un segundo es la base de la defensa activa en boxeo.'},
-  {id:'demoledor', name:'El Demoledor', seq:['JAB','CROSS','HOOK_BODY_L','HOOK_R','UPPER','CROSS'], level:'Avanzado',
+  {id:'demoledor', name:'El Demoledor', seq:['JAB','CROSS','HOOK_BODY_L','UPPER','HOOK_L','CROSS'], level:'Avanzado',
    fact:'Golpear al cuerpo (hígado) antes de ir a la cabeza baja la guardia del rival — táctica clásica de boxeo.'},
   {id:'muay_thai_mix', name:'Muay Thai Mix', seq:['JAB','CROSS','HOOK_L','KICKF','CROSS','KICKS'], level:'Avanzado',
    fact:'Combinar 5 golpes distintos en secuencia entrena la transición fluida entre manos y piernas.'},
@@ -525,7 +529,12 @@ const RUTINAS=[
   {id:'clinch_completo', name:'Clinch Completo', seq:['JAB','CROSS','KNEE','ELBOW','CROSS'], level:'Avanzado',
    fact:'El clinch decide muchos combates de Muay Thai: es la fase de rodillas y codos a distancia corta.'},
   {id:'ocho_extremidades', name:'Ocho Extremidades', seq:['JAB','ELBOW','KNEE','CROSS','KICKS'], level:'Avanzado',
-   fact:'Al Muay Thai se le llama el arte de las ocho extremidades: dos punos, dos codos, dos rodillas y dos piernas.'}
+   fact:'Al Muay Thai se le llama el arte de las ocho extremidades: dos punos, dos codos, dos rodillas y dos piernas.'},
+  // ===== AMBAS PIERNAS (2) =====
+  {id:'patadas_alternas', name:'Patadas Alternas', seq:['JAB','KICKS','CROSS','KICKS_2'], level:'Intermedio',
+   fact:'Patear con ambas piernas reparte la carga: entrenar siempre del mismo lado crea desequilibrios.'},
+  {id:'doble_filo', name:'Doble Filo', seq:['JAB','CROSS','KICKS','HOOK_L','KICKS_2','CROSS'], level:'Avanzado',
+   fact:'Cambiar de pierna de apoyo entre patadas exige recuperar el equilibrio antes de volver a lanzar.'}
 ];
 // Legacy alias (selCombo index references RUTINAS now)
 const COMBOS=RUTINAS;
@@ -704,10 +713,12 @@ function applyDom(d){
     // Mirror the attack directions too, otherwise travel validation fails for lefties
     MOVES.HOOK_L.atkDir='left';MOVES.HOOK_R.atkDir='right';
     MOVES.HOOK_BODY_L.atkDir='left';MOVES.HOOK_BODY_R.atkDir='right';
+    MOVES.KICKS_2.kp=KP.RA;MOVES.KICKS_2.offX=.22;MOVES.KICKS_2.atkDir='right';
     MOVES.KICKS.atkDir='left';}
   else{MOVES.JAB.kp=KP.LW;MOVES.JAB.offX=-.18;MOVES.CROSS.kp=KP.RW;MOVES.CROSS.offX=.20;MOVES.HOOK_L.kp=KP.LW;MOVES.HOOK_L.offX=.28;MOVES.HOOK_R.kp=KP.RW;MOVES.HOOK_R.offX=-.28;MOVES.HOOK_BODY_L.kp=KP.LW;MOVES.HOOK_BODY_L.offX=.20;MOVES.HOOK_BODY_R.kp=KP.RW;MOVES.HOOK_BODY_R.offX=-.20;MOVES.UPPER.kp=KP.RW;MOVES.UPPER.offX=.04;MOVES.KICKF.kp=KP.RK;MOVES.KICKS.kp=KP.RA;MOVES.KICKS.offX=.22;
     MOVES.HOOK_L.atkDir='right';MOVES.HOOK_R.atkDir='left';
     MOVES.HOOK_BODY_L.atkDir='right';MOVES.HOOK_BODY_R.atkDir='left';
+    MOVES.KICKS_2.kp=KP.LA;MOVES.KICKS_2.offX=-.22;MOVES.KICKS_2.atkDir='left';
     MOVES.KICKS.atkDir='right';}
 }
 function setLvl(l){S.user.level=l;['b','i','a'].forEach((x,i)=>document.getElementById('lv-'+x).classList.toggle('active',['beginner','intermediate','advanced'][i]===l));}
@@ -2032,7 +2043,8 @@ function playSound(type){
       hook_body_r:{f:105,d:.17,t:'square',  vol:.50},
       upper:      {f:200,d:.09,t:'sawtooth',vol:.38}, // Ascendente
       kickf:      {f:90, d:.22,t:'sine',    vol:.55}, // Grave profundo
-      kicks:      {f:100,d:.2, t:'sine',    vol:.52}, // Lateral profundo
+      kicks:      {f:100,d:.2, t:'sine',    vol:.52},
+      kicks_2:    {f:100,d:.2, t:'sine',    vol:.52}, // Lateral profundo
       elbow:      {f:145,d:.13,t:'square',  vol:.50}, // Seco y corto
       knee:       {f:95, d:.19,t:'sine',    vol:.54}, // Grave, impacto de cuerpo
       dodge:      {f:320,d:.06,t:'sine',    vol:.26}, // Ligero
