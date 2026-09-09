@@ -256,7 +256,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 <div id="photo-booth" style="display:none;position:fixed;inset:0;z-index:300;background:#080A12;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:12px">
   <button onclick="closePhotoBooth()" aria-label="Cerrar" style="position:absolute;top:16px;right:18px;z-index:2;width:40px;height:40px;border-radius:20px;border:1px solid var(--border);background:rgba(13,16,32,.85);color:var(--text);font-size:18px;line-height:1;cursor:pointer">&times;</button>
   <video id="pb-video" autoplay playsinline muted style="display:none"></video>
-  <canvas id="pb-canvas" style="width:100%;max-width:380px;height:auto;border-radius:18px;background:#080A12"></canvas>
+  <canvas id="pb-canvas" style="max-width:100%;max-height:56vh;border-radius:18px;background:#080A12"></canvas>
   <div id="pb-hint" style="font-size:12px;color:var(--muted);text-align:center;min-height:16px"></div>
   <div id="pb-row1" style="display:flex;gap:10px;width:100%;max-width:380px">
     <button class="btn btn-secondary" style="flex:1" onclick="closePhotoBooth()">Cerrar</button>
@@ -2167,55 +2167,69 @@ function paintCard(cx,W,H,src,mirror){
     cx.drawImage(src,(W-w)/2,(H-h)/2,w,h);
     cx.restore();
   }
-  // Degradado inferior: garantiza que el texto se lea sobre cualquier foto
-  const g=cx.createLinearGradient(0,H*0.38,0,H);
-  g.addColorStop(0,'rgba(8,10,18,0)');
-  g.addColorStop(0.5,'rgba(8,10,18,0.80)');
-  g.addColorStop(1,'rgba(8,10,18,0.97)');
-  cx.fillStyle=g;cx.fillRect(0,H*0.38,W,H*0.62);
-  const g2=cx.createLinearGradient(0,0,0,220);
-  g2.addColorStop(0,'rgba(8,10,18,0.75)');g2.addColorStop(1,'rgba(8,10,18,0)');
-  cx.fillStyle=g2;cx.fillRect(0,0,W,220);
+  // Velo lateral izquierdo: la informacion vive en una columna a la izquierda para que
+  // sobreviva al recorte central que hacen los feeds y las vistas previas.
+  const gl=cx.createLinearGradient(0,0,W*0.62,0);
+  gl.addColorStop(0,'rgba(8,10,18,0.93)');
+  gl.addColorStop(0.55,'rgba(8,10,18,0.55)');
+  gl.addColorStop(1,'rgba(8,10,18,0)');
+  cx.fillStyle=gl;cx.fillRect(0,0,W*0.62,H);
+  // Oscurecido suave arriba y abajo, para que la foto no compita con el texto
+  const gv=cx.createLinearGradient(0,H*0.78,0,H);
+  gv.addColorStop(0,'rgba(8,10,18,0)');gv.addColorStop(1,'rgba(8,10,18,0.55)');
+  cx.fillStyle=gv;cx.fillRect(0,H*0.78,W,H*0.22);
+
   const F="'DM Sans',system-ui,sans-serif";
   const st=S.stats.lastSession||{};
-  cx.fillStyle='#FF4500';cx.fillRect(64,74,8,40);
-  cx.font='800 34px '+F;cx.fillStyle='#E8EDFF';cx.textBaseline='top';
-  cx.fillText('KINEARFIT',88,76);
-  if(st.routine){cx.font='700 26px '+F;cx.fillStyle='#6B7494';cx.fillText(st.routine,88,124);}
+  // Franja segura: un recorte cuadrado centrado conserva de 0.22H a 0.78H.
+  const SAFE_TOP=H*0.235, SAFE_BOT=H*0.765, X=Math.round(W*0.059);
+
+  // --- Marca ---
+  cx.textBaseline='top';
+  cx.fillStyle='#FF4500';cx.fillRect(X,SAFE_TOP,8,40);
+  cx.font='800 34px '+F;cx.fillStyle='#E8EDFF';
+  cx.fillText('KINEARFIT',X+24,SAFE_TOP+2);
+  // --- Rutina: mas clara que antes, se perdia sobre fondos claros ---
+  if(st.routine){
+    cx.font='700 27px '+F;cx.fillStyle='#B9C2DC';
+    cx.fillText(st.routine,X+24,SAFE_TOP+48);
+  }
+  // --- Insignia: dentro de la columna, no arriba a la derecha ---
   const bl=lastBadgeLabel();
   if(bl){
-    cx.font='700 26px '+F;
-    const bw=cx.measureText(bl).width,ph=46,px=W-64-(bw+44),py=72;
-    cx.fillStyle='rgba(0,212,255,0.14)';rrPath(cx,px,py,bw+44,ph,ph/2);cx.fill();
-    cx.strokeStyle='rgba(0,212,255,0.45)';cx.lineWidth=2;rrPath(cx,px,py,bw+44,ph,ph/2);cx.stroke();
+    const by=SAFE_TOP+(st.routine?96:60);
+    cx.font='700 25px '+F;
+    const bw=cx.measureText(bl).width,ph=44;
+    cx.fillStyle='rgba(0,212,255,0.16)';rrPath(cx,X,by,bw+40,ph,ph/2);cx.fill();
+    cx.strokeStyle='rgba(0,212,255,0.5)';cx.lineWidth=2;rrPath(cx,X,by,bw+40,ph,ph/2);cx.stroke();
     cx.fillStyle='#00D4FF';cx.textBaseline='middle';
-    cx.fillText(bl,px+22,py+ph/2+1);
+    cx.fillText(bl,X+20,by+ph/2+1);
+    cx.textBaseline='top';
   }
+
+  // --- Cifra grande: golpes ---
   cx.textBaseline='alphabetic';
-  // Los golpes son el numero grande: en sesiones cortas las calorias se ven flojas,
-  // y los golpes son la metrica distintiva de la app.
-  const hits=st.hits||0;
-  cx.font='900 190px '+F;cx.fillStyle='#FF4500';
-  cx.fillText(String(hits),64,H-286);
-  const wk=cx.measureText(String(hits)).width;
-  cx.font='800 44px '+F;cx.fillStyle='#6B7494';
-  cx.fillText('GOLPES',64+wk+18,H-292);
-  // 'SEGUIDOS' y no 'COMBO': el contador sube por cada acierto y esquiva sin fallar,
-  // no por combos completados. Decirle combo hacia pensar en un numero que no era.
+  const hits=String(st.hits||0);
+  const heroY=SAFE_BOT-232;
+  cx.font='900 176px '+F;cx.fillStyle='#FF4500';
+  cx.fillText(hits,X,heroY);
+  const wh=cx.measureText(hits).width;
+  cx.font='800 40px '+F;cx.fillStyle='#8E97B4';
+  cx.fillText('GOLPES',X+wh+18,heroY-6);
+
+  // --- Cuatro metricas en rejilla 2x2, tambien dentro de la franja segura ---
   const mins=Math.max(1,Math.round((st.dur||0)/60));
   const items=[['KCAL',String(Math.round(st.calories||0))],['MIN',String(mins)],
                ['SEGUIDOS',String(st.comboMax||0)],['RACHA',(S.stats.streak||0)+'d']];
-  let x=64;
+  const colX=[X,X+Math.round(W*0.25)],rowY=[SAFE_BOT-140,SAFE_BOT-28];
   items.forEach(function(it,i){
-    cx.font='800 62px '+F;cx.fillStyle='#E8EDFF';
-    cx.fillText(it[1],x,H-140);
-    const wv=cx.measureText(it[1]).width;
-    cx.font='700 26px '+F;cx.fillStyle='#6B7494';
-    cx.fillText(it[0],x,H-96);
-    const wl=cx.measureText(it[0]).width;
-    x+=Math.max(wv,wl)+72;
-    if(i<items.length-1){cx.fillStyle='rgba(255,255,255,0.14)';cx.fillRect(x-44,H-196,2,110);}
+    const cxp=colX[i%2],cyp=rowY[Math.floor(i/2)];
+    cx.font='800 54px '+F;cx.fillStyle='#E8EDFF';
+    cx.fillText(it[1],cxp,cyp);
+    cx.font='700 23px '+F;cx.fillStyle='#8E97B4';
+    cx.fillText(it[0],cxp,cyp+30);
   });
+
   // Cuenta regresiva: el celular esta apoyado a distancia, hace falta tiempo para volver a la pose
   if(pbCount>0){
     cx.fillStyle='rgba(8,10,18,0.45)';cx.fillRect(0,0,W,H);
@@ -2240,7 +2254,7 @@ async function openPhotoBooth(){
   document.getElementById('pb-row1').style.display='flex';
   document.getElementById('pb-row2').style.display='none';
   const cv=document.getElementById('pb-canvas');
-  cv.width=1080;cv.height=1350;
+  cv.width=1080;cv.height=1920; // 9:16 completo: no recorta el cuerpo
   pbCount=0;
   pbSetHint('Acom\u00f3date. Al capturar hay 3 segundos.');
   try{
