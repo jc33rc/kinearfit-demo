@@ -246,7 +246,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <div class="scroll-content" style="padding-top:0">
     <div style="text-align:center;padding:28px 0 20px"><span style="font-size:52px">🏁</span><div class="heading" style="margin-top:8px">¡Sesión Completada!</div><div class="muted-text" style="margin-top:4px">Excelente trabajo</div></div>
     <div class="card card-accent" style="text-align:center;margin-bottom:16px"><div class="label" style="margin-bottom:4px">Score Total</div><div style="font-size:44px;font-weight:900;color:var(--accent);letter-spacing:-2px" id="ps-score">0</div></div>
-    <div class="stats-grid"><div class="stat-card"><div class="stat-big" id="ps-hits">0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Golpes</div></div><div class="stat-card"><div class="stat-big" style="color:var(--green)" id="ps-acc">—</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Precisión</div></div><div class="stat-card"><div class="stat-big" id="ps-time">0:00</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Duración</div></div><div class="stat-card"><div class="stat-big" style="color:#FFD60A" id="ps-combo">×0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Mejor Combo</div></div><div class="stat-card"><div class="stat-big" style="color:#00B87A" id="ps-cal">0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">🔥 Calorías</div></div></div>
+    <div class="stats-grid"><div class="stat-card"><div class="stat-big" id="ps-hits">0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Golpes</div></div><div class="stat-card"><div class="stat-big" style="color:var(--green)" id="ps-acc">—</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Precisión</div></div><div class="stat-card"><div class="stat-big" id="ps-time">0:00</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Duración</div></div><div class="stat-card"><div class="stat-big" style="color:#FFD60A" id="ps-combo">×0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Seguidos</div></div><div class="stat-card"><div class="stat-big" style="color:#00B87A" id="ps-cal">0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">🔥 Calorías</div></div></div>
     <div class="card card-accent" id="ps-badge" style="display:none;align-items:center;gap:14px;margin-bottom:16px"><span style="font-size:44px" id="ps-bicon">🎯</span><div><span class="chip" style="margin-bottom:6px;display:inline-block">¡Nueva insignia!</span><div style="font-size:16px;font-weight:800;color:var(--text);margin:6px 0 2px" id="ps-bname"></div><div style="font-size:12px;color:var(--muted)" id="ps-bdesc"></div></div></div>
     <div class="card" style="margin-bottom:20px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span class="muted-text">Progreso nivel</span><span style="font-size:13px;font-weight:700;color:var(--text)" id="ps-xpp">0%</span></div><div class="progress-track" style="height:8px"><div class="progress-fill" id="ps-xpb" style="width:0%"></div></div></div>
     <div style="display:flex;gap:10px;margin-bottom:20px"><button class="btn btn-secondary" style="flex:1" onclick="shareSession()">📤 Compartir</button><button class="btn btn-secondary" style="flex:0 0 56px;padding:0" onclick="openPhotoBooth()" aria-label="Tomar foto">📸</button><button class="btn" style="flex:1" onclick="goTo('home')">Continuar →</button></div>
@@ -262,9 +262,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <button class="btn btn-secondary" style="flex:1" onclick="closePhotoBooth()">Cerrar</button>
     <button class="btn" style="flex:2" onclick="capturePhoto()">📸 Capturar</button>
   </div>
-  <div id="pb-row2" style="display:none;gap:10px;width:100%;max-width:380px">
-    <button class="btn btn-secondary" style="flex:1" onclick="retakePhoto()">↺ Repetir</button>
-    <button class="btn" style="flex:2" onclick="sharePhoto()">📤 Compartir</button>
+  <div id="pb-row2" style="display:none;gap:8px;width:100%;max-width:380px">
+    <button class="btn btn-secondary" style="flex:1;padding-left:6px;padding-right:6px" onclick="retakePhoto()">↺ Repetir</button>
+    <button class="btn btn-secondary" style="flex:1;padding-left:6px;padding-right:6px" onclick="savePhoto()">⬇ Guardar</button>
+    <button class="btn" style="flex:1.2;padding-left:6px;padding-right:6px" onclick="sharePhoto()">📤 Enviar</button>
   </div>
 </div>
 
@@ -1953,7 +1954,8 @@ function endSession(fromTutorial){
   const dl=S.stats.dayLog[dayKey]||{h:0,s:0};
   dl.h+=s.hits; dl.s+=1;
   S.stats.dayLog[dayKey]=dl;
-  S.stats.lastSession={hits:s.hits,dur,score:s.score,comboMax:s.comboMax,calories:sessionCal};
+  const rtName=(s.mode==='combos'&&RUTINAS[s.selCombo])?RUTINAS[s.selCombo].name:(s.mode==='libre'?'Pera Libre':null);
+  S.stats.lastSession={hits:s.hits,dur,score:s.score,comboMax:s.comboMax,calories:sessionCal,routine:rtName};
   // Racha con proteccion: un solo dia perdido no borra la racha si queda un escudo.
   // Se gana un escudo cada 7 dias de racha, con tope de 2. Asi el descanso no castiga,
   // pero tampoco se puede entrenar dia por medio indefinidamente.
@@ -2098,7 +2100,7 @@ function showPost(s,dur,nb){
   document.getElementById('ps-score').textContent=s.score.toLocaleString();
   document.getElementById('ps-hits').textContent=s.hits;
   document.getElementById('ps-time').textContent=fmtT(dur);
-  document.getElementById('ps-combo').textContent='×'+s.comboMax;
+  document.getElementById('ps-combo').textContent=s.comboMax;
   const psCal=document.getElementById('ps-cal');if(psCal)psCal.textContent=(S.stats.lastSession&&S.stats.lastSession.calories)||0;
   document.getElementById('ps-acc').textContent=s.hits>0?Math.min(98,Math.round(66+Math.random()*24))+'%':'—';
   const xp=S.stats.xp,li=LEVELS.findIndex((_,i)=>xp<(LEVEL_XP[i+1]||Infinity));
@@ -2179,6 +2181,7 @@ function paintCard(cx,W,H,src,mirror){
   cx.fillStyle='#FF4500';cx.fillRect(64,74,8,40);
   cx.font='800 34px '+F;cx.fillStyle='#E8EDFF';cx.textBaseline='top';
   cx.fillText('KINEARFIT',88,76);
+  if(st.routine){cx.font='700 26px '+F;cx.fillStyle='#6B7494';cx.fillText(st.routine,88,124);}
   const bl=lastBadgeLabel();
   if(bl){
     cx.font='700 26px '+F;
@@ -2189,13 +2192,19 @@ function paintCard(cx,W,H,src,mirror){
     cx.fillText(bl,px+22,py+ph/2+1);
   }
   cx.textBaseline='alphabetic';
-  const kcal=Math.round(st.calories||0);
+  // Los golpes son el numero grande: en sesiones cortas las calorias se ven flojas,
+  // y los golpes son la metrica distintiva de la app.
+  const hits=st.hits||0;
   cx.font='900 190px '+F;cx.fillStyle='#FF4500';
-  cx.fillText(String(kcal),64,H-286);
-  const wk=cx.measureText(String(kcal)).width;
+  cx.fillText(String(hits),64,H-286);
+  const wk=cx.measureText(String(hits)).width;
   cx.font='800 44px '+F;cx.fillStyle='#6B7494';
-  cx.fillText('KCAL',64+wk+18,H-292);
-  const items=[['GOLPES',String(st.hits||0)],['COMBO',(st.comboMax||0)+'\u00d7'],['RACHA',(S.stats.streak||0)+'d']];
+  cx.fillText('GOLPES',64+wk+18,H-292);
+  // 'SEGUIDOS' y no 'COMBO': el contador sube por cada acierto y esquiva sin fallar,
+  // no por combos completados. Decirle combo hacia pensar en un numero que no era.
+  const mins=Math.max(1,Math.round((st.dur||0)/60));
+  const items=[['KCAL',String(Math.round(st.calories||0))],['MIN',String(mins)],
+               ['SEGUIDOS',String(st.comboMax||0)],['RACHA',(S.stats.streak||0)+'d']];
   let x=64;
   items.forEach(function(it,i){
     cx.font='800 62px '+F;cx.fillStyle='#E8EDFF';
@@ -2204,8 +2213,8 @@ function paintCard(cx,W,H,src,mirror){
     cx.font='700 26px '+F;cx.fillStyle='#6B7494';
     cx.fillText(it[0],x,H-96);
     const wl=cx.measureText(it[0]).width;
-    x+=Math.max(wv,wl)+96;
-    if(i<items.length-1){cx.fillStyle='rgba(255,255,255,0.14)';cx.fillRect(x-56,H-196,2,110);}
+    x+=Math.max(wv,wl)+72;
+    if(i<items.length-1){cx.fillStyle='rgba(255,255,255,0.14)';cx.fillRect(x-44,H-196,2,110);}
   });
   // Cuenta regresiva: el celular esta apoyado a distancia, hace falta tiempo para volver a la pose
   if(pbCount>0){
@@ -2280,6 +2289,21 @@ function closePhotoBooth(){
   if(pbStream){pbStream.getTracks().forEach(function(t){t.stop();});pbStream=null;}
   const v=document.getElementById('pb-video');if(v)v.srcObject=null;
   const el=document.getElementById('photo-booth');if(el)el.style.display='none';
+}
+function savePhoto(){
+  const cv=document.getElementById('pb-canvas');
+  if(!cv||!cv.toBlob){pbSetHint('Este navegador no permite guardar la imagen.');return;}
+  cv.toBlob(function(blob){
+    if(!blob){pbSetHint('No se pudo generar la imagen.');return;}
+    try{
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download='kinearfit-'+Date.now()+'.jpg';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url);},5000);
+      pbSetHint('Imagen guardada en tus descargas.');
+    }catch(e){pbSetHint('No se pudo guardar la imagen.');}
+  },'image/jpeg',0.92);
 }
 function sharePhoto(){
   const cv=document.getElementById('pb-canvas');
