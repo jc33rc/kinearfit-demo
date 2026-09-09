@@ -153,6 +153,14 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
   <div class="scroll-content" style="padding-top:4px">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px"><div><div style="font-size:13px;color:var(--muted);font-weight:500">Buenos días</div><div class="heading" id="h-greeting" style="margin-top:2px">KinearFit 🥊</div></div><div class="streak-badge"><span style="font-size:20px">🔥</span><div><div style="font-size:18px;font-weight:900;color:var(--accent);line-height:1" id="h-streak">0</div><div style="font-size:9px;color:var(--muted);font-weight:600;letter-spacing:1px">DÍAS</div></div></div></div>
+    <div class="card" id="week-card" style="margin-bottom:16px;display:none">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <span class="label" style="margin:0">Tu semana pasada</span>
+        <span onclick="dismissWeekCard()" style="cursor:pointer;color:var(--muted);font-size:18px;line-height:1;padding:0 4px">&times;</span>
+      </div>
+      <div class="stats-row" id="week-stats"></div>
+      <div style="font-size:12px;color:var(--muted);margin-top:12px" id="week-msg"></div>
+    </div>
     <div class="card challenge-card" style="margin-bottom:16px"><span class="chip" style="color:white;background:rgba(255,255,255,.2);margin-bottom:10px;display:inline-block">Desafío de hoy</span><div style="font-size:22px;font-weight:900;color:white;margin-bottom:4px;letter-spacing:-.5px" id="daily-title">—</div><div style="font-size:13px;color:rgba(255,255,255,.75);margin-bottom:8px" id="daily-sub">—</div><div style="font-size:13px;color:white;font-weight:700;margin-bottom:16px" id="daily-obj">—</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:rgba(255,255,255,.7)" id="daily-time">🕐 ~15 min</span><button class="btn btn-small" style="background:white;color:var(--accent);border:none" onclick="startDailyChallenge()">Comenzar →</button></div></div>
     <div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span style="font-size:13px;font-weight:700;color:var(--text)">Nivel actual</span><span class="chip" id="h-level">Novato</span></div><div class="progress-track" style="height:8px;margin-bottom:8px"><div class="progress-fill" id="h-xp" style="width:0%"></div></div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:var(--muted)" id="h-lf">Novato</span><span style="font-size:11px;color:var(--muted)" id="h-lp">0% → Amateur</span></div></div>
     <div class="card" style="margin-bottom:16px"><div class="label" style="margin-bottom:14px">Última sesión</div><div class="stats-row"><div><div class="stat-value" id="h-lhits">0</div><div class="stat-label">Golpes</div></div><div style="width:1px;height:40px;background:var(--border)"></div><div><div class="stat-value" style="color:var(--green)" id="h-lacc">—</div><div class="stat-label">Precisión</div></div><div style="width:1px;height:40px;background:var(--border)"></div><div><div class="stat-value" id="h-ltime">0:00</div><div class="stat-label">Tiempo</div></div></div></div>
@@ -285,14 +293,94 @@ function calcCalories(diffKey,activeSeconds){
   const minutes=activeSeconds/60;
   return (met*3.5*kg/200)*minutes;
 }
+// Clave de dia en fecha LOCAL. Antes se usaba toISOString (UTC), lo que corria las
+// sesiones nocturnas al dia siguiente en zonas con offset negativo. La racha siempre
+// uso fecha local, asi que este helper deja todo bajo el mismo criterio.
+function localDayKey(ts){
+  const d=new Date(ts==null?Date.now():ts),p=n=>String(n).padStart(2,'0');
+  return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate());
+}
 function weeklyCalories(){
   if(!S.stats.calLog)return 0;
   let sum=0;
   for(let i=0;i<7;i++){
-    const d=new Date(Date.now()-i*86400000).toISOString().slice(0,10);
+    const d=localDayKey(Date.now()-i*86400000);
     sum+=S.stats.calLog[d]||0;
   }
   return Math.round(sum);
+}
+// ======== RESUMEN SEMANAL (aritmetica simple, sin IA ni servidor) ========
+// Compara la semana pasada completa contra la anterior. Se muestra una sola vez por semana.
+const DAY_MS=86400000;
+function dayKeyOf(ts){return localDayKey(ts);}
+function mondayTs(ts){
+  const d=new Date(ts),dow=(d.getDay()+6)%7; // 0 = lunes
+  d.setHours(0,0,0,0);
+  return d.getTime()-dow*DAY_MS;
+}
+function sumWeek(startTs){
+  const cal=S.stats.calLog||{},dl=S.stats.dayLog||{};
+  let c=0,h=0,ss=0;
+  for(let i=0;i<7;i++){
+    const k=dayKeyOf(startTs+i*DAY_MS);
+    c+=cal[k]||0;
+    const d=dl[k];
+    if(d){h+=d.h||0;ss+=d.s||0;}
+  }
+  return {cal:Math.round(c),hits:h,sess:ss};
+}
+function weekReport(){
+  const thisMon=mondayTs(Date.now());
+  const last=sumWeek(thisMon-7*DAY_MS);
+  const prev=sumWeek(thisMon-14*DAY_MS);
+  const hasLast=(last.cal>0||last.hits>0||last.sess>0);
+  const hasPrev=(prev.cal>0||prev.hits>0||prev.sess>0);
+  return {key:dayKeyOf(thisMon),last:last,prev:prev,hasLast:hasLast,hasPrev:hasPrev};
+}
+// El tono nunca reprocha: quien tuvo una semana floja ya esta a un paso de abandonar.
+function weekMessage(r){
+  if(!r.hasPrev)return 'Tu primera semana registrada. Vamos por la siguiente.';
+  const a=r.last.cal,b=r.prev.cal;
+  if(b>0&&a>=b*1.05)return 'Mejor que la semana anterior. Sigue asi.';
+  if(b>0&&a>=b*0.85)return 'Semana pareja. Manten el ritmo.';
+  return 'Semana tranquila. Retomemos.';
+}
+function fmtDelta(now,before,hasPrev){
+  if(!hasPrev)return '';
+  const d=now-before;
+  if(d===0)return 'igual';
+  const sign=d>0?'+':'\u2212';
+  return sign+Math.abs(d).toLocaleString();
+}
+function renderWeekCard(){
+  const el=document.getElementById('week-card');
+  if(!el)return;
+  const r=weekReport();
+  // No se muestra si no hubo actividad, o si ya se vio/descarto esta semana.
+  if(!r.hasLast||S.stats.weekCardShown===r.key){el.style.display='none';return;}
+  const cells=[
+    ['Calor\u00edas',r.last.cal.toLocaleString(),fmtDelta(r.last.cal,r.prev.cal,r.hasPrev),r.last.cal-r.prev.cal],
+    ['Golpes',r.last.hits.toLocaleString(),fmtDelta(r.last.hits,r.prev.hits,r.hasPrev),r.last.hits-r.prev.hits],
+    ['Sesiones',String(r.last.sess),fmtDelta(r.last.sess,r.prev.sess,r.hasPrev),r.last.sess-r.prev.sess]
+  ];
+  let html='';
+  cells.forEach(function(c,i){
+    if(i>0)html+='<div style="width:1px;height:40px;background:var(--border)"></div>';
+    const col=c[3]>0?'var(--green)':'var(--muted)';
+    html+='<div><div class="stat-value">'+c[1]+'</div>'+
+          '<div class="stat-label">'+c[0]+'</div>'+
+          (c[2]?'<div style="font-size:11px;font-weight:700;color:'+col+';margin-top:2px">'+c[2]+'</div>':'')+
+          '</div>';
+  });
+  document.getElementById('week-stats').innerHTML=html;
+  document.getElementById('week-msg').textContent=weekMessage(r);
+  el.style.display='';
+}
+function dismissWeekCard(){
+  S.stats.weekCardShown=weekReport().key;
+  save();
+  const el=document.getElementById('week-card');
+  if(el)el.style.display='none';
 }
 const LEVELS=['Novato','Amateur','Pro','Campeón','Élite'];
 const LEVEL_XP=[0,500,1500,3500,7000];
@@ -392,6 +480,36 @@ const RUTINAS=[
 // Legacy alias (selCombo index references RUTINAS now)
 const COMBOS=RUTINAS;
 
+// ======== NIVEL DEL USUARIO ========
+// S.user.level ('beginner'|'intermediate'|'advanced') se elige en el onboarding y ahora
+// SI se usa: filtra el desafio diario y sube solo cuando el usuario demuestra dominio.
+const LEVEL_NAMES={beginner:'Principiante',intermediate:'Intermedio',advanced:'Avanzado'};
+function allowedRoutineLevels(){
+  const lv=S.user.level||'beginner';
+  if(lv==='beginner')return ['F\u00e1cil'];
+  if(lv==='intermediate')return ['F\u00e1cil','Intermedio'];
+  return ['F\u00e1cil','Intermedio','Avanzado'];
+}
+// Solo asciende, nunca degrada. Los umbrales miden constancia (sesiones) y ejecucion (combos).
+function checkLevelUp(){
+  const st=S.stats,cur=S.user.level||'beginner';
+  let next=cur;
+  if(cur==='beginner'&&st.totalSessions>=5&&st.totalCombos>=25)next='intermediate';
+  else if(cur==='intermediate'&&st.totalSessions>=15&&st.totalCombos>=150)next='advanced';
+  if(next===cur)return null;
+  S.user.level=next;return next;
+}
+
+// ======== RETO MENSUAL (ventana que expira; la insignia ganada es permanente) ========
+const MONTH_NAMES=['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MONTHLY_TARGET=12;
+function monthPrefix(d){d=d||new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0');}
+function monthlyDays(d){
+  const pre=monthPrefix(d),log=(S.stats&&S.stats.calLog)||{};
+  return Object.keys(log).filter(k=>k.indexOf(pre)===0&&log[k]>0).length;
+}
+function monthlyBadgeId(d){return 'mo_'+monthPrefix(d);}
+
 // ======== DAILY CHALLENGE (deterministic by date, no backend) ========
 // Same date -> same challenge for everyone; changes automatically every day.
 function dateSeed(d){
@@ -414,8 +532,12 @@ function getDailyChallenge(){
   const today=new Date();
   const rng=mulberry32(dateSeed(today));
   // Pick a routine
-  const routineIdx=Math.floor(rng()*RUTINAS.length);
-  const routine=RUTINAS[routineIdx];
+  // Solo rutinas acordes al nivel del usuario: un principiante no puede recibir Combate Total.
+  const allowed=allowedRoutineLevels();
+  const pool=RUTINAS.filter(r=>allowed.indexOf(r.level)>=0);
+  const list=pool.length?pool:RUTINAS;
+  const routine=list[Math.floor(rng()*list.length)];
+  const routineIdx=RUTINAS.indexOf(routine);
   // Difficulty derived from the routine's own level (keeps it coherent)
   const diffKey=routine.level==='Fácil'?'easy':routine.level==='Avanzado'?'hard':'medium';
   // Extra objective of the day
@@ -491,7 +613,7 @@ let S={
   screen:'splash',
   user:{name:'',age:25,wt:70,ht:170,dom:'right',level:'beginner'},
   stats:{totalHits:0,totalKicks:0,totalDodges:0,totalCombos:0,eliteCombos:0,
-         totalSessions:0,totalRounds:0,hardRounds:0,totalTime:0,streak:0,
+         totalSessions:0,totalRounds:0,hardRounds:0,totalTime:0,streak:0,streakShields:1,
          totalCalories:0,calLog:{},
          modesUsed:0,modesSet:new Set(),lastSession:{hits:0,dur:0,score:0,comboMax:0,calories:0},xp:0},
   badges:new Set(),
@@ -1791,6 +1913,7 @@ function endSession(fromTutorial){
   clearInterval(sessTimer);clearInterval(breakTimer);sessTimer=null;breakTimer=null;
   hideCenterOverlay();
   S.sess.active=false;arRunning=false;
+  captureLastShot(); // debe correr ANTES de apagar el stream
   if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
   detector=null;currKpts=null;prevKpts=null;dodgeActive=false;dodgeZoneData=null;kptHistory=[];
   guardLowSince=null;lastBodyX=null;staticSince=null;activeNotice=null;noticeCooldownUntil=0;
@@ -1807,12 +1930,38 @@ function endSession(fromTutorial){
   S.stats.totalTime+=dur;S.stats.xp+=s.score;
   S.stats.totalCalories=(S.stats.totalCalories||0)+sessionCal;
   if(!S.stats.calLog)S.stats.calLog={};
-  const dayKey=new Date().toISOString().slice(0,10);
+  const dayKey=localDayKey();
   S.stats.calLog[dayKey]=(S.stats.calLog[dayKey]||0)+sessionCal;
+  // Registro diario paralelo para el resumen semanal. calLog se deja intacto porque
+  // weeklyCalories() y el reto mensual ya dependen de el.
+  if(!S.stats.dayLog)S.stats.dayLog={};
+  const dl=S.stats.dayLog[dayKey]||{h:0,s:0};
+  dl.h+=s.hits; dl.s+=1;
+  S.stats.dayLog[dayKey]=dl;
   S.stats.lastSession={hits:s.hits,dur,score:s.score,comboMax:s.comboMax,calories:sessionCal};
-  const today=new Date().toDateString(),lastDay=localStorage.getItem('kf3_last'),yesterday=new Date(Date.now()-86400000).toDateString();
-  if(lastDay===yesterday)S.stats.streak++;else if(lastDay!==today)S.stats.streak=1;
-  localStorage.setItem('kf3_last',today);
+  // Racha con proteccion: un solo dia perdido no borra la racha si queda un escudo.
+  // Se gana un escudo cada 7 dias de racha, con tope de 2. Asi el descanso no castiga,
+  // pero tampoco se puede entrenar dia por medio indefinidamente.
+  const DAY=86400000;
+  const today=new Date().toDateString();
+  const lastDay=localStorage.getItem('kf3_last');
+  const yesterday=new Date(Date.now()-DAY).toDateString();
+  const twoDaysAgo=new Date(Date.now()-2*DAY).toDateString();
+  if(S.stats.streakShields==null)S.stats.streakShields=1;
+  S.stats.shieldUsed=false;
+  if(lastDay!==today){
+    if(lastDay===yesterday){
+      S.stats.streak++;
+    } else if(lastDay===twoDaysAgo&&S.stats.streakShields>0){
+      S.stats.streakShields--;
+      S.stats.streak++;
+      S.stats.shieldUsed=true;
+    } else {
+      S.stats.streak=1;
+    }
+    if(S.stats.streak>0&&S.stats.streak%7===0)S.stats.streakShields=Math.min(2,S.stats.streakShields+1);
+    localStorage.setItem('kf3_last',today);
+  }
   const nb=checkBadges();save();showPost(s,dur,nb);goTo('post');
 }
 
@@ -1858,6 +2007,26 @@ function checkBadges(){
       S.badges.add(id);
       nb.push({id,icon:'',name:series.label+' '+tierLabel(series,tier),cat:series.cat,
         desc:'Alcanzaste '+tierLabel(series,tier)+' en '+series.label.toLowerCase()});
+    }
+  }
+  // Ascenso de nivel: desbloquea rutinas mas dificiles en el desafio diario.
+  const lv=checkLevelUp();
+  if(lv){
+    const lid='lvl_'+lv;
+    if(!S.badges.has(lid)){
+      S.badges.add(lid);
+      nb.push({id:lid,icon:'',name:'Nivel '+LEVEL_NAMES[lv],cat:'Racha',
+        desc:'Desbloqueaste las rutinas de nivel '+LEVEL_NAMES[lv].toLowerCase()+' en el desafio diario'});
+    }
+  }
+  // Reto del mes: la ventana se cierra al terminar el mes, pero lo ganado no se quita.
+  if(monthlyDays()>=MONTHLY_TARGET){
+    const mid=monthlyBadgeId();
+    if(!S.badges.has(mid)){
+      S.badges.add(mid);
+      const nm=MONTH_NAMES[new Date().getMonth()];
+      nb.push({id:mid,icon:'',name:'Racha de '+nm,cat:'Racha',
+        desc:'Entrenaste '+MONTHLY_TARGET+' dias distintos en '+nm});
     }
   }
   return nb;
@@ -1924,16 +2093,129 @@ function showPost(s,dur,nb){
   if(nb.length>0){const b=nb[0];document.getElementById('ps-badge').style.display='flex';document.getElementById('ps-bicon').textContent=b.icon;document.getElementById('ps-bname').textContent=b.name;document.getElementById('ps-bdesc').textContent=b.desc;}
   else document.getElementById('ps-badge').style.display='none';
 }
+// ======== SELFIE COMPARTIBLE ========
+// La foto vive solo en memoria: NO entra en S.stats, porque save() serializa a
+// localStorage y una imagen agotaria la cuota.
+let lastShotData=null;
+function captureLastShot(){
+  try{
+    const v=document.getElementById('cam-video');
+    if(!v||!v.videoWidth||!v.videoHeight){lastShotData=null;return;}
+    const cv=document.createElement('canvas');
+    cv.width=v.videoWidth;cv.height=v.videoHeight;
+    const cx=cv.getContext('2d');
+    cx.translate(cv.width,0);cx.scale(-1,1); // espejo: como el usuario se vio en pantalla
+    cx.drawImage(v,0,0,cv.width,cv.height);
+    lastShotData=cv.toDataURL('image/jpeg',0.85);
+  }catch(e){lastShotData=null;}
+}
+function shareText(){
+  const s=S.stats.lastSession||{};
+  return '\ud83d\udcaa KinearFit \u2014 '+(s.hits||0)+' golpes \u00b7 '+
+         Math.round(s.calories||0)+' kcal\nhttps://jc33rc.github.io/kinearfit-demo/';
+}
+function buildShareImage(cb){
+  const W=1080,H=1350;
+  const st=S.stats.lastSession||{};
+  function paint(img){
+    try{
+      const cv=document.createElement('canvas');cv.width=W;cv.height=H;
+      const cx=cv.getContext('2d');
+      cx.fillStyle='#080A12';cx.fillRect(0,0,W,H);
+      if(img&&img.width){
+        const r=Math.max(W/img.width,H/img.height);
+        const w=img.width*r,h=img.height*r;
+        cx.drawImage(img,(W-w)/2,(H-h)/2,w,h);
+      }
+      // Degradado inferior para que el texto siempre se lea sobre la foto
+      const g=cx.createLinearGradient(0,H*0.38,0,H);
+      g.addColorStop(0,'rgba(8,10,18,0)');
+      g.addColorStop(0.5,'rgba(8,10,18,0.80)');
+      g.addColorStop(1,'rgba(8,10,18,0.97)');
+      cx.fillStyle=g;cx.fillRect(0,H*0.38,W,H*0.62);
+      // Velo superior para la marca
+      const g2=cx.createLinearGradient(0,0,0,220);
+      g2.addColorStop(0,'rgba(8,10,18,0.75)');g2.addColorStop(1,'rgba(8,10,18,0)');
+      cx.fillStyle=g2;cx.fillRect(0,0,W,220);
+      const F="'DM Sans',system-ui,sans-serif";
+      // --- Marca ---
+      cx.fillStyle='#FF4500';cx.fillRect(64,74,8,40);
+      cx.font='800 34px '+F;cx.fillStyle='#E8EDFF';cx.textBaseline='top';
+      cx.fillText('KINEARFIT',88,76);
+      // --- Cifra principal: calorias ---
+      const kcal=Math.round(st.calories||0);
+      cx.textBaseline='alphabetic';
+      cx.font='900 190px '+F;cx.fillStyle='#FF4500';
+      cx.fillText(String(kcal),64,H-286);
+      const wk=cx.measureText(String(kcal)).width;
+      cx.font='800 44px '+F;cx.fillStyle='#6B7494';
+      cx.fillText('KCAL',64+wk+18,H-292);
+      // --- Fila de metricas ---
+      const items=[
+        ['GOLPES',String(st.hits||0)],
+        ['COMBO',(st.comboMax||0)+'\u00d7'],
+        ['RACHA',(S.stats.streak||0)+'d']
+      ];
+      let x=64;
+      items.forEach(function(it,i){
+        cx.font='800 62px '+F;cx.fillStyle='#E8EDFF';
+        cx.fillText(it[1],x,H-140);
+        cx.font='700 26px '+F;cx.fillStyle='#6B7494';
+        cx.fillText(it[0],x,H-96);
+        const w=Math.max(cx.measureText(it[0]).width,
+                         (cx.font='800 62px '+F,cx.measureText(it[1]).width));
+        x+=w+96;
+        if(i<items.length-1){
+          cx.fillStyle='rgba(255,255,255,0.14)';
+          cx.fillRect(x-56,H-196,2,110);
+        }
+      });
+      if(cv.toBlob)cv.toBlob(function(b){cb(b);},'image/jpeg',0.9);else cb(null);
+    }catch(e){cb(null);}
+  }
+  function go(){
+    if(!lastShotData){paint(null);return;}
+    const img=new Image();
+    img.onload=function(){paint(img);};
+    img.onerror=function(){paint(null);};
+    img.src=lastShotData;
+  }
+  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go).catch(go);
+  else go();
+}
 function shareSession(){
-  const s=S.stats.lastSession;
-  const txt='💪 KinearFit — '+s.hits+' golpes · 🏆 '+(s.score||0).toLocaleString()+' pts\nhttps://jc33rc.github.io/kinearfit-demo/';
-  if(navigator.share)navigator.share({title:'KinearFit',text:txt}).catch(()=>{});
-  else if(navigator.clipboard){navigator.clipboard.writeText(txt).then(function(){alert('Copiado!');}).catch(function(){});}
+  const txt=shareText();
+  buildShareImage(function(blob){
+    if(blob){
+      try{
+        const file=new File([blob],'kinearfit.jpg',{type:'image/jpeg'});
+        if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+          navigator.share({files:[file],title:'KinearFit',text:txt}).catch(function(){});
+          return;
+        }
+        // Sin share de archivos: se descarga la imagen para compartirla a mano
+        const url=URL.createObjectURL(blob);
+        const a=document.createElement('a');
+        a.href=url;a.download='kinearfit.jpg';
+        document.body.appendChild(a);a.click();document.body.removeChild(a);
+        setTimeout(function(){URL.revokeObjectURL(url);},5000);
+        return;
+      }catch(e){}
+    }
+    shareSessionText();
+  });
+}
+// Respaldo de siempre: si no se pudo armar la imagen, se comparte el texto.
+function shareSessionText(){
+  const txt=shareText();
+  if(navigator.share)navigator.share({title:'KinearFit',text:txt}).catch(function(){});
+  else if(navigator.clipboard)navigator.clipboard.writeText(txt).then(function(){alert('Copiado!');}).catch(function(){});
 }
 
 // ======== HOME / PROFILE ========
 function refHome(){
   renderDailyChallenge();
+  renderWeekCard();
   const n=S.user.name||'Entrenador';
   document.getElementById('h-greeting').textContent=n+' 🥊';
   document.getElementById('h-streak').textContent=S.stats.streak;
@@ -1973,7 +2255,7 @@ function refProfile(){
   document.getElementById('pf-level').textContent=LEVELS[Math.min(li,LEVELS.length-1)];
   document.getElementById('pf-streak').textContent='🔥 '+S.stats.streak+' dias';
   const totalSeries=BADGE_SERIES.reduce((a,s)=>a+s.thresholds.length,0);
-  const rows=[['Sesiones',S.stats.totalSessions],['Golpes',S.stats.totalHits.toLocaleString()],['Tiempo',fmtT(S.stats.totalTime)],['🔥 Cal. semana',weeklyCalories().toLocaleString()],['🔥 Cal. total',(S.stats.totalCalories||0).toLocaleString()],['Racha',S.stats.streak+' dias'],['Insignias',S.badges.size+'/'+(BADGES.length+totalSeries)]];
+  const rows=[['Sesiones',S.stats.totalSessions],['Golpes',S.stats.totalHits.toLocaleString()],['Tiempo',fmtT(S.stats.totalTime)],['🔥 Cal. semana',weeklyCalories().toLocaleString()],['🔥 Cal. total',(S.stats.totalCalories||0).toLocaleString()],['Racha',S.stats.streak+' dias'],['Nivel',LEVEL_NAMES[S.user.level||'beginner']],['\ud83d\udee1\ufe0f Escudos',(S.stats.streakShields||0)+'/2'],['Reto del mes',monthlyDays()+'/'+MONTHLY_TARGET+' dias'],['Insignias',S.badges.size+'/'+(BADGES.length+totalSeries)]];
   document.getElementById('pf-stats').innerHTML=rows.map((r,i)=>'<div style="display:flex;justify-content:space-between;'+(i<rows.length-1?'padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid var(--border)':'')+'"><span class="muted-text">'+r[0]+'</span><span style="font-size:13px;font-weight:700;color:var(--text)">'+r[1]+'</span></div>').join('');
 }
 
