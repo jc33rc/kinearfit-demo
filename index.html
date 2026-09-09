@@ -249,9 +249,24 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <div class="stats-grid"><div class="stat-card"><div class="stat-big" id="ps-hits">0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Golpes</div></div><div class="stat-card"><div class="stat-big" style="color:var(--green)" id="ps-acc">—</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Precisión</div></div><div class="stat-card"><div class="stat-big" id="ps-time">0:00</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Duración</div></div><div class="stat-card"><div class="stat-big" style="color:#FFD60A" id="ps-combo">×0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Mejor Combo</div></div><div class="stat-card"><div class="stat-big" style="color:#00B87A" id="ps-cal">0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">🔥 Calorías</div></div></div>
     <div class="card card-accent" id="ps-badge" style="display:none;align-items:center;gap:14px;margin-bottom:16px"><span style="font-size:44px" id="ps-bicon">🎯</span><div><span class="chip" style="margin-bottom:6px;display:inline-block">¡Nueva insignia!</span><div style="font-size:16px;font-weight:800;color:var(--text);margin:6px 0 2px" id="ps-bname"></div><div style="font-size:12px;color:var(--muted)" id="ps-bdesc"></div></div></div>
     <div class="card" style="margin-bottom:20px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span class="muted-text">Progreso nivel</span><span style="font-size:13px;font-weight:700;color:var(--text)" id="ps-xpp">0%</span></div><div class="progress-track" style="height:8px"><div class="progress-fill" id="ps-xpb" style="width:0%"></div></div></div>
-    <div style="display:flex;gap:10px;margin-bottom:20px"><button class="btn btn-secondary" style="flex:1" onclick="shareSession()">📤 Compartir</button><button class="btn" style="flex:1" onclick="goTo('home')">Continuar →</button></div>
+    <div style="display:flex;gap:10px;margin-bottom:20px"><button class="btn btn-secondary" style="flex:1" onclick="shareSession()">📤 Compartir</button><button class="btn btn-secondary" style="flex:0 0 56px;padding:0" onclick="openPhotoBooth()" aria-label="Tomar foto">📸</button><button class="btn" style="flex:1" onclick="goTo('home')">Continuar →</button></div>
   </div>
 </div>
+<!-- CABINA DE FOTOS -->
+<div id="photo-booth" style="display:none;position:fixed;inset:0;z-index:300;background:#080A12;flex-direction:column;align-items:center;justify-content:center;padding:18px;gap:12px">
+  <video id="pb-video" autoplay playsinline muted style="display:none"></video>
+  <canvas id="pb-canvas" style="width:100%;max-width:380px;height:auto;border-radius:18px;background:#080A12"></canvas>
+  <div id="pb-hint" style="font-size:12px;color:var(--muted);text-align:center;min-height:16px"></div>
+  <div id="pb-row1" style="display:flex;gap:10px;width:100%;max-width:380px">
+    <button class="btn btn-secondary" style="flex:1" onclick="closePhotoBooth()">Cerrar</button>
+    <button class="btn" style="flex:2" onclick="capturePhoto()">📸 Capturar</button>
+  </div>
+  <div id="pb-row2" style="display:none;gap:10px;width:100%;max-width:380px">
+    <button class="btn btn-secondary" style="flex:1" onclick="retakePhoto()">↺ Repetir</button>
+    <button class="btn" style="flex:2" onclick="sharePhoto()">📤 Compartir</button>
+  </div>
+</div>
+
 <!-- BADGES -->
 <div class="screen" id="screen-badges">
   <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
@@ -1913,7 +1928,6 @@ function endSession(fromTutorial){
   clearInterval(sessTimer);clearInterval(breakTimer);sessTimer=null;breakTimer=null;
   hideCenterOverlay();
   S.sess.active=false;arRunning=false;
-  captureLastShot(); // debe correr ANTES de apagar el stream
   if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
   detector=null;currKpts=null;prevKpts=null;dodgeActive=false;dodgeZoneData=null;kptHistory=[];
   guardLowSince=null;lastBodyX=null;staticSince=null;activeNotice=null;noticeCooldownUntil=0;
@@ -2093,120 +2107,160 @@ function showPost(s,dur,nb){
   if(nb.length>0){const b=nb[0];document.getElementById('ps-badge').style.display='flex';document.getElementById('ps-bicon').textContent=b.icon;document.getElementById('ps-bname').textContent=b.name;document.getElementById('ps-bdesc').textContent=b.desc;}
   else document.getElementById('ps-badge').style.display='none';
 }
-// ======== SELFIE COMPARTIBLE ========
-// La foto vive solo en memoria: NO entra en S.stats, porque save() serializa a
-// localStorage y una imagen agotaria la cuota.
-let lastShotData=null;
-function captureLastShot(){
-  try{
-    const v=document.getElementById('cam-video');
-    if(!v||!v.videoWidth||!v.videoHeight){lastShotData=null;return;}
-    const cv=document.createElement('canvas');
-    cv.width=v.videoWidth;cv.height=v.videoHeight;
-    const cx=cv.getContext('2d');
-    cx.translate(cv.width,0);cx.scale(-1,1); // espejo: como el usuario se vio en pantalla
-    cx.drawImage(v,0,0,cv.width,cv.height);
-    lastShotData=cv.toDataURL('image/jpeg',0.85);
-  }catch(e){lastShotData=null;}
-}
+// ======== CABINA DE FOTOS ========
+// La misma funcion pinta la vista previa en vivo y la imagen final, asi lo que la
+// persona ve en pantalla es exactamente lo que se comparte.
+let pbStream=null,pbActive=false,pbRaf=null,pbCount=0,pbCountTimer=null;
 function shareText(){
   const s=S.stats.lastSession||{};
   return '\ud83d\udcaa KinearFit \u2014 '+(s.hits||0)+' golpes \u00b7 '+
          Math.round(s.calories||0)+' kcal\nhttps://jc33rc.github.io/kinearfit-demo/';
 }
-function buildShareImage(cb){
-  const W=1080,H=1350;
+function srcSize(el){
+  if(!el)return null;
+  const w=el.videoWidth||el.width||0,h=el.videoHeight||el.height||0;
+  return (w&&h)?{w:w,h:h}:null;
+}
+function paintCard(cx,W,H,src,mirror){
+  cx.save();
+  cx.fillStyle='#080A12';cx.fillRect(0,0,W,H);
+  const sz=srcSize(src);
+  if(sz){
+    const r=Math.max(W/sz.w,H/sz.h),w=sz.w*r,h=sz.h*r;
+    cx.save();
+    if(mirror){cx.translate(W,0);cx.scale(-1,1);}
+    cx.drawImage(src,(W-w)/2,(H-h)/2,w,h);
+    cx.restore();
+  }
+  // Degradado inferior: garantiza que el texto se lea sobre cualquier foto
+  const g=cx.createLinearGradient(0,H*0.38,0,H);
+  g.addColorStop(0,'rgba(8,10,18,0)');
+  g.addColorStop(0.5,'rgba(8,10,18,0.80)');
+  g.addColorStop(1,'rgba(8,10,18,0.97)');
+  cx.fillStyle=g;cx.fillRect(0,H*0.38,W,H*0.62);
+  const g2=cx.createLinearGradient(0,0,0,220);
+  g2.addColorStop(0,'rgba(8,10,18,0.75)');g2.addColorStop(1,'rgba(8,10,18,0)');
+  cx.fillStyle=g2;cx.fillRect(0,0,W,220);
+  const F="'DM Sans',system-ui,sans-serif";
   const st=S.stats.lastSession||{};
-  function paint(img){
-    try{
-      const cv=document.createElement('canvas');cv.width=W;cv.height=H;
-      const cx=cv.getContext('2d');
-      cx.fillStyle='#080A12';cx.fillRect(0,0,W,H);
-      if(img&&img.width){
-        const r=Math.max(W/img.width,H/img.height);
-        const w=img.width*r,h=img.height*r;
-        cx.drawImage(img,(W-w)/2,(H-h)/2,w,h);
-      }
-      // Degradado inferior para que el texto siempre se lea sobre la foto
-      const g=cx.createLinearGradient(0,H*0.38,0,H);
-      g.addColorStop(0,'rgba(8,10,18,0)');
-      g.addColorStop(0.5,'rgba(8,10,18,0.80)');
-      g.addColorStop(1,'rgba(8,10,18,0.97)');
-      cx.fillStyle=g;cx.fillRect(0,H*0.38,W,H*0.62);
-      // Velo superior para la marca
-      const g2=cx.createLinearGradient(0,0,0,220);
-      g2.addColorStop(0,'rgba(8,10,18,0.75)');g2.addColorStop(1,'rgba(8,10,18,0)');
-      cx.fillStyle=g2;cx.fillRect(0,0,W,220);
-      const F="'DM Sans',system-ui,sans-serif";
-      // --- Marca ---
-      cx.fillStyle='#FF4500';cx.fillRect(64,74,8,40);
-      cx.font='800 34px '+F;cx.fillStyle='#E8EDFF';cx.textBaseline='top';
-      cx.fillText('KINEARFIT',88,76);
-      // --- Cifra principal: calorias ---
-      const kcal=Math.round(st.calories||0);
-      cx.textBaseline='alphabetic';
-      cx.font='900 190px '+F;cx.fillStyle='#FF4500';
-      cx.fillText(String(kcal),64,H-286);
-      const wk=cx.measureText(String(kcal)).width;
-      cx.font='800 44px '+F;cx.fillStyle='#6B7494';
-      cx.fillText('KCAL',64+wk+18,H-292);
-      // --- Fila de metricas ---
-      const items=[
-        ['GOLPES',String(st.hits||0)],
-        ['COMBO',(st.comboMax||0)+'\u00d7'],
-        ['RACHA',(S.stats.streak||0)+'d']
-      ];
-      let x=64;
-      items.forEach(function(it,i){
-        cx.font='800 62px '+F;cx.fillStyle='#E8EDFF';
-        cx.fillText(it[1],x,H-140);
-        cx.font='700 26px '+F;cx.fillStyle='#6B7494';
-        cx.fillText(it[0],x,H-96);
-        const w=Math.max(cx.measureText(it[0]).width,
-                         (cx.font='800 62px '+F,cx.measureText(it[1]).width));
-        x+=w+96;
-        if(i<items.length-1){
-          cx.fillStyle='rgba(255,255,255,0.14)';
-          cx.fillRect(x-56,H-196,2,110);
-        }
-      });
-      if(cv.toBlob)cv.toBlob(function(b){cb(b);},'image/jpeg',0.9);else cb(null);
-    }catch(e){cb(null);}
-  }
-  function go(){
-    if(!lastShotData){paint(null);return;}
-    const img=new Image();
-    img.onload=function(){paint(img);};
-    img.onerror=function(){paint(null);};
-    img.src=lastShotData;
-  }
-  if(document.fonts&&document.fonts.ready)document.fonts.ready.then(go).catch(go);
-  else go();
-}
-function shareSession(){
-  const txt=shareText();
-  buildShareImage(function(blob){
-    if(blob){
-      try{
-        const file=new File([blob],'kinearfit.jpg',{type:'image/jpeg'});
-        if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
-          navigator.share({files:[file],title:'KinearFit',text:txt}).catch(function(){});
-          return;
-        }
-        // Sin share de archivos: se descarga la imagen para compartirla a mano
-        const url=URL.createObjectURL(blob);
-        const a=document.createElement('a');
-        a.href=url;a.download='kinearfit.jpg';
-        document.body.appendChild(a);a.click();document.body.removeChild(a);
-        setTimeout(function(){URL.revokeObjectURL(url);},5000);
-        return;
-      }catch(e){}
-    }
-    shareSessionText();
+  cx.fillStyle='#FF4500';cx.fillRect(64,74,8,40);
+  cx.font='800 34px '+F;cx.fillStyle='#E8EDFF';cx.textBaseline='top';
+  cx.fillText('KINEARFIT',88,76);
+  cx.textBaseline='alphabetic';
+  const kcal=Math.round(st.calories||0);
+  cx.font='900 190px '+F;cx.fillStyle='#FF4500';
+  cx.fillText(String(kcal),64,H-286);
+  const wk=cx.measureText(String(kcal)).width;
+  cx.font='800 44px '+F;cx.fillStyle='#6B7494';
+  cx.fillText('KCAL',64+wk+18,H-292);
+  const items=[['GOLPES',String(st.hits||0)],['COMBO',(st.comboMax||0)+'\u00d7'],['RACHA',(S.stats.streak||0)+'d']];
+  let x=64;
+  items.forEach(function(it,i){
+    cx.font='800 62px '+F;cx.fillStyle='#E8EDFF';
+    cx.fillText(it[1],x,H-140);
+    const wv=cx.measureText(it[1]).width;
+    cx.font='700 26px '+F;cx.fillStyle='#6B7494';
+    cx.fillText(it[0],x,H-96);
+    const wl=cx.measureText(it[0]).width;
+    x+=Math.max(wv,wl)+96;
+    if(i<items.length-1){cx.fillStyle='rgba(255,255,255,0.14)';cx.fillRect(x-56,H-196,2,110);}
   });
+  // Cuenta regresiva: el celular esta apoyado a distancia, hace falta tiempo para volver a la pose
+  if(pbCount>0){
+    cx.fillStyle='rgba(8,10,18,0.45)';cx.fillRect(0,0,W,H);
+    cx.font='900 320px '+F;cx.fillStyle='#FF4500';
+    cx.textAlign='center';cx.textBaseline='middle';
+    cx.fillText(String(pbCount),W/2,H/2);
+    cx.textAlign='left';cx.textBaseline='alphabetic';
+  }
+  cx.restore();
 }
-// Respaldo de siempre: si no se pudo armar la imagen, se comparte el texto.
-function shareSessionText(){
+function pbSetHint(t){const e=document.getElementById('pb-hint');if(e)e.textContent=t;}
+function pbLoop(){
+  if(!pbActive)return;
+  const cv=document.getElementById('pb-canvas');
+  if(cv){const cx=cv.getContext('2d');paintCard(cx,cv.width,cv.height,document.getElementById('pb-video'),true);}
+  pbRaf=requestAnimationFrame(pbLoop);
+}
+async function openPhotoBooth(){
+  const el=document.getElementById('photo-booth');
+  if(!el)return;
+  el.style.display='flex';
+  document.getElementById('pb-row1').style.display='flex';
+  document.getElementById('pb-row2').style.display='none';
+  const cv=document.getElementById('pb-canvas');
+  cv.width=1080;cv.height=1350;
+  pbCount=0;
+  pbSetHint('Acom\u00f3date. Al capturar hay 3 segundos.');
+  try{
+    pbStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'user',width:{ideal:720},height:{ideal:1280}}});
+    const v=document.getElementById('pb-video');
+    v.srcObject=pbStream;
+    await new Promise(function(r){v.onloadedmetadata=r;});
+    v.play();
+    pbActive=true;
+    if(document.fonts&&document.fonts.ready)document.fonts.ready.then(pbLoop).catch(pbLoop);
+    else pbLoop();
+  }catch(e){
+    pbSetHint('No se pudo abrir la c\u00e1mara. Puedes compartir solo los datos.');
+    pbActive=true;pbLoop(); // igual muestra la tarjeta con fondo oscuro
+  }
+}
+function capturePhoto(){
+  if(pbCountTimer)return; // ya hay una cuenta en curso
+  pbCount=3;pbSetHint('');
+  pbCountTimer=setInterval(function(){
+    pbCount--;
+    if(pbCount<=0){
+      clearInterval(pbCountTimer);pbCountTimer=null;pbCount=0;
+      // Un cuadro final limpio, sin el numero encima, y se congela
+      const cv=document.getElementById('pb-canvas');
+      if(cv)paintCard(cv.getContext('2d'),cv.width,cv.height,document.getElementById('pb-video'),true);
+      pbActive=false;
+      if(pbRaf)cancelAnimationFrame(pbRaf);
+      document.getElementById('pb-row1').style.display='none';
+      document.getElementById('pb-row2').style.display='flex';
+      pbSetHint('\u00bfTe gust\u00f3? Comparte o repite.');
+    }
+  },1000);
+}
+function retakePhoto(){
+  document.getElementById('pb-row1').style.display='flex';
+  document.getElementById('pb-row2').style.display='none';
+  pbSetHint('Acom\u00f3date. Al capturar hay 3 segundos.');
+  pbActive=true;pbLoop();
+}
+function closePhotoBooth(){
+  pbActive=false;
+  if(pbRaf)cancelAnimationFrame(pbRaf);
+  if(pbCountTimer){clearInterval(pbCountTimer);pbCountTimer=null;}
+  pbCount=0;
+  if(pbStream){pbStream.getTracks().forEach(function(t){t.stop();});pbStream=null;}
+  const v=document.getElementById('pb-video');if(v)v.srcObject=null;
+  const el=document.getElementById('photo-booth');if(el)el.style.display='none';
+}
+function sharePhoto(){
+  const cv=document.getElementById('pb-canvas');
+  const txt=shareText();
+  if(!cv||!cv.toBlob){shareSession();return;}
+  cv.toBlob(function(blob){
+    if(!blob){shareSession();return;}
+    try{
+      const file=new File([blob],'kinearfit.jpg',{type:'image/jpeg'});
+      if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+        navigator.share({files:[file],title:'KinearFit',text:txt}).catch(function(){});
+        return;
+      }
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download='kinearfit.jpg';
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url);},5000);
+    }catch(e){shareSession();}
+  },'image/jpeg',0.9);
+}
+// Compartir rapido, solo texto
+function shareSession(){
   const txt=shareText();
   if(navigator.share)navigator.share({title:'KinearFit',text:txt}).catch(function(){});
   else if(navigator.clipboard)navigator.clipboard.writeText(txt).then(function(){alert('Copiado!');}).catch(function(){});
