@@ -440,14 +440,14 @@ let MOVES={
   CROSS:{color:'#FF4D00',label:'CROSS', kp:KP.RW, offX: .20,offY:-.14,velThr:38, size:.14,velType:'total', atkDir:'up'},
   HOOK_L:{color:'#F77F00',label:'HOOK', kp:KP.LW, offX: .28,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'right'},
   HOOK_R:{color:'#F77F00',label:'HOOK', kp:KP.RW, offX:-.28,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
-  HOOK_BODY_L:{color:'#FF9E2C',label:'HOOK CUERPO', kp:KP.LW, offX: .20,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'right'},
-  HOOK_BODY_R:{color:'#FF9E2C',label:'HOOK CUERPO', kp:KP.RW, offX:-.20,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
-  UPPER:{color:'#FFD60A',label:'UPPER', kp:KP.RW, offX: .04,offY:-.06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
-  KICKF:{color:'#7B2D8B',label:'KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total', atkDir:'up'},
-  KICKS:{color:'#E040FB',label:'KICK →',kp:KP.RA, offX: .22,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
+  HOOK_BODY_L:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.LW, offX: .20,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'right'},
+  HOOK_BODY_R:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.RW, offX:-.20,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
+  UPPER:{color:'#FFD60A',label:'UPPERCUT', kp:KP.RW, offX: .04,offY:-.06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
+  KICKF:{color:'#7B2D8B',label:'FRONT KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total', atkDir:'up'},
+  KICKS:{color:'#E040FB',label:'ROUND KICK →',kp:KP.RA, offX: .22,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
   // Misma patada lateral con la otra pierna. Es lateral, asi que la posicion en pantalla
   // indica sola cual pierna: no necesita texto ni color extra.
-  KICKS_2:{color:'#E040FB',label:'KICK \u2190',kp:KP.LA, offX:-.22,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'left'},
+  KICKS_2:{color:'#E040FB',label:'ROUND KICK \u2190',kp:KP.LA, offX:-.22,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'left'},
   // ---- Movimientos LIBRES (kpAlt): se ejecutan con cualquiera de los dos lados. ----
   // Target centrado, asi que la posicion en pantalla no puede indicar lateralidad:
   // por eso aceptan ambos lados en vez de exigir el dominante.
@@ -462,19 +462,19 @@ function lead(){return S.user.dom==='left'?'derecha':'izquierda';}   // mano ade
 function power(){return S.user.dom==='left'?'izquierda':'derecha';}  // mano de poder
 function leadLeg(){return S.user.dom==='left'?'izquierda':'derecha';}// pierna de patada
 const TUTORIAL_MOVES=[
-  {mk:'JAB',        title:'JAB',            desc:()=>'Puño recto con la mano '+lead()+'.'},
-  {mk:'CROSS',      title:'CROSS',          desc:()=>'Puño recto con la mano '+power()+'.'},
-  {mk:'HOOK_L',     title:'HOOK ADELANTADO',desc:()=>'Gancho en arco con la mano '+lead()+'.'},
-  {mk:'HOOK_R',     title:'HOOK DE PODER',  desc:()=>'Gancho en arco con la mano '+power()+'.'},
-  {mk:'HOOK_BODY_L',title:'HOOK CUERPO ADEL.',desc:()=>'Gancho al costado/hígado con la '+lead()+', agáchate un poco.'},
-  {mk:'HOOK_BODY_R',title:'HOOK CUERPO PODER',desc:()=>'Gancho al costado/hígado con la '+power()+', agáchate un poco.'},
-  {mk:'UPPER',      title:'UPPER',          desc:()=>'Puño de abajo hacia arriba, al mentón, con la mano '+power()+'. Golpe corto y seco: frena en el target, no sigas de largo.'},
-  {mk:'KICKF',      title:'PATADA FRONTAL', desc:()=>'Levanta la rodilla y patea hacia adelante con la pierna '+leadLeg()+'.'},
-  {mk:'KICKS',      title:'PATADA LATERAL', desc:()=>'Patea hacia el costado con la pierna '+leadLeg()+'.'},
-  {mk:'KICKS_2',    title:'PATADA LATERAL (otra pierna)', desc:()=>'La misma patada lateral, con la pierna contraria. El objetivo aparece al otro lado.'},
-  {mk:'ELBOW',      title:'CODAZO',         desc:()=>'Codazo en arco al menton, con el brazo cerrado y el puno pegado a la cabeza. Con cualquiera de los dos brazos.'},
-  {mk:'KNEE',       title:'RODILLAZO',      desc:()=>'Sube la rodilla al plexo, de golpe y por el centro. Con cualquiera de las dos piernas.'},
-  {mk:'DOGEL',      title:'ESQUIVA',        desc:()=>'Inclina el tronco en diagonal hacia la esquina segura.'}
+  {mk:'JAB', en:'JAB', title:'JAB',            desc:()=>'Puño recto con la mano '+lead()+'.'},
+  {mk:'CROSS', en:'CROSS', title:'CROSS',          desc:()=>'Puño recto con la mano '+power()+'.'},
+  {mk:'HOOK_L', en:'HOOK', title:'GANCHO ADELANTADO',desc:()=>'Gancho en arco con la mano '+lead()+'.'},
+  {mk:'HOOK_R', en:'HOOK', title:'GANCHO DE PODER',  desc:()=>'Gancho en arco con la mano '+power()+'.'},
+  {mk:'HOOK_BODY_L', en:'BODY HOOK', title:'GANCHO AL CUERPO ADEL.',desc:()=>'Gancho al costado/hígado con la '+lead()+', agáchate un poco.'},
+  {mk:'HOOK_BODY_R', en:'BODY HOOK', title:'GANCHO AL CUERPO PODER',desc:()=>'Gancho al costado/hígado con la '+power()+', agáchate un poco.'},
+  {mk:'UPPER', en:'UPPERCUT', title:'GANCHO ASCENDENTE',          desc:()=>'Puño de abajo hacia arriba, al mentón, con la mano '+power()+'. Golpe corto y seco: frena en el target, no sigas de largo.'},
+  {mk:'KICKF', en:'FRONT KICK', title:'PATADA FRONTAL', desc:()=>'Levanta la rodilla y patea hacia adelante con la pierna '+leadLeg()+'.'},
+  {mk:'KICKS', en:'ROUND KICK', title:'PATADA CIRCULAR', desc:()=>'Patea hacia el costado con la pierna '+leadLeg()+'.'},
+  {mk:'KICKS_2', en:'ROUND KICK', title:'PATADA CIRCULAR (otra pierna)', desc:()=>'La misma patada lateral, con la pierna contraria. El objetivo aparece al otro lado.'},
+  {mk:'ELBOW', en:'ELBOW', title:'CODAZO',         desc:()=>'Codazo en arco al menton, con el brazo cerrado y el puno pegado a la cabeza. Con cualquiera de los dos brazos.'},
+  {mk:'KNEE', en:'KNEE', title:'RODILLAZO',      desc:()=>'Sube la rodilla al plexo, de golpe y por el centro. Con cualquiera de las dos piernas.'},
+  {mk:'DOGEL', en:'DODGE', title:'ESQUIVA',        desc:()=>'Inclina el tronco en diagonal hacia la esquina segura.'}
 ];
 function moveDesc(m){return typeof m.desc==='function'?m.desc():m.desc;}
 const RUTINAS=[
@@ -810,7 +810,8 @@ function rendTutorialMoves(){
     const mv=MOVES[m.mk];const col=mv?mv.color:'#888';
     return '<div class="card" onclick="startTutorial(\''+m.mk+'\')" style="display:flex;align-items:center;gap:12px;margin-bottom:10px;cursor:pointer">'+
         '<span style="width:14px;height:14px;border-radius:50%;background:'+col+';box-shadow:0 0 10px '+col+';flex-shrink:0"></span>'+
-        '<div style="flex:1"><div style="font-size:14px;font-weight:800;color:var(--text)">'+m.title+'</div>'+
+        '<div style="flex:1"><div style="font-size:14px;font-weight:800;color:var(--text)">'+(m.en||m.title)+'</div>'+
+        ((m.en&&m.en!==m.title)?'<div style="font-size:11px;font-weight:700;color:var(--muted);margin-bottom:2px">'+m.title+'</div>':'')+
         '<div style="font-size:11px;color:var(--muted)">'+moveDesc(m)+'</div></div>'+
         '<span style="color:var(--muted);font-size:18px">›</span>'+
     '</div>';
@@ -827,9 +828,11 @@ function initTutorial(){
   const banner=document.getElementById('tutorial-banner');
   const mv=MOVES[S.tutorial.mk];
   const col=mv?mv.color:'#00D4FF';
-  banner.innerHTML='<div style="font-family:var(--font);font-weight:900;font-size:26px;color:'+col+';text-shadow:0 0 16px '+col+'">'+move.title+'</div>'+
+  banner.innerHTML='<div style="font-family:var(--font);font-weight:900;font-size:26px;color:'+col+';text-shadow:0 0 16px '+col+'">'+(move.en||move.title)+'</div>'+
+    ((move.en&&move.en!==move.title)?'<div style="font-family:var(--font);font-weight:700;font-size:13px;color:rgba(255,255,255,.55);margin-top:2px">'+move.title+'</div>':'')+
     '<div style="font-family:var(--font);font-weight:600;color:rgba(255,255,255,.8);font-size:14px;margin-top:4px;max-width:300px;margin-left:auto;margin-right:auto;line-height:1.4">'+moveDesc(move)+'</div>'+
-    '<div style="font-family:var(--font);font-weight:900;font-size:22px;color:white;margin-top:10px"><span id="tut-count">0</span> <span style="font-size:13px;color:rgba(255,255,255,.6);font-weight:700">aciertos</span></div>';
+    '<div style="font-family:var(--font);font-weight:900;font-size:52px;line-height:1;color:'+col+';text-shadow:0 0 22px '+col+';margin-top:14px"><span id="tut-count">0</span></div>'+
+    '<div style="font-family:var(--font);font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,.55);font-weight:700;margin-top:2px">aciertos</div>';
   banner.style.display='block';
   document.getElementById('tut-exit').style.display='block';
 }
