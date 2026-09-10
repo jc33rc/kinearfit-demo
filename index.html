@@ -134,7 +134,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="form-group"><label class="form-label">PESO (kg)</label><input class="form-input" id="in-wt" type="number" placeholder="kg"></div><div class="form-group"><label class="form-label">ALTURA (cm)</label><input class="form-input" id="in-ht" type="number" placeholder="cm"></div></div>
     </div>
     <div id="op2" style="display:none">
-      <div class="form-group"><label class="form-label">MANO DOMINANTE</label><div style="display:flex;gap:8px"><button class="toggle-btn active" id="br" onclick="setDom('right')">🤜 Diestro</button><button class="toggle-btn" id="bl" onclick="setDom('left')">🤛 Zurdo</button></div></div>
+      <div class="form-group"><label class="form-label">LATERALIDAD</label><div style="display:flex;gap:8px"><button class="toggle-btn active" id="br" onclick="setDom('right')">🤜 Diestro</button><button class="toggle-btn" id="bl" onclick="setDom('left')">🤛 Zurdo</button></div></div>
       <div class="form-group"><label class="form-label">NIVEL</label><div style="display:flex;gap:8px"><button class="level-btn active" id="lv-b" onclick="setLvl('beginner')">Principiante</button><button class="level-btn" id="lv-i" onclick="setLvl('intermediate')">Intermedio</button><button class="level-btn" id="lv-a" onclick="setLvl('advanced')">Avanzado</button></div></div>
     </div>
     <div id="op3" style="display:none">
@@ -152,7 +152,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 <div class="screen" id="screen-home">
   <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
   <div class="scroll-content" style="padding-top:4px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px"><div><div style="font-size:13px;color:var(--muted);font-weight:500">Buenos días</div><div class="heading" id="h-greeting" style="margin-top:2px">KinearFit 🥊</div></div><div class="streak-badge"><span style="font-size:20px">🔥</span><div><div style="font-size:18px;font-weight:900;color:var(--accent);line-height:1" id="h-streak">0</div><div style="font-size:9px;color:var(--muted);font-weight:600;letter-spacing:1px">DÍAS</div></div></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px"><div><div style="font-size:13px;color:var(--muted);font-weight:500">Hola</div><div class="heading" id="h-greeting" style="margin-top:2px">KinearFit 🥊</div></div><div class="streak-badge"><span style="font-size:20px">🔥</span><div><div style="font-size:18px;font-weight:900;color:var(--accent);line-height:1" id="h-streak">0</div><div style="font-size:9px;color:var(--muted);font-weight:600;letter-spacing:1px">DÍAS</div></div></div></div>
     <div class="card" id="week-card" style="margin-bottom:16px;display:none">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
         <span class="label" style="margin:0">Tu semana pasada</span>
@@ -163,7 +163,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     </div>
     <div class="card challenge-card" style="margin-bottom:16px"><span class="chip" style="color:white;background:rgba(255,255,255,.2);margin-bottom:10px;display:inline-block">Desafío de hoy</span><div style="font-size:22px;font-weight:900;color:white;margin-bottom:4px;letter-spacing:-.5px" id="daily-title">—</div><div style="font-size:13px;color:rgba(255,255,255,.75);margin-bottom:8px" id="daily-sub">—</div><div style="font-size:13px;color:white;font-weight:700;margin-bottom:16px" id="daily-obj">—</div><div style="display:flex;justify-content:space-between;align-items:center"><span style="font-size:13px;color:rgba(255,255,255,.7)" id="daily-time">🕐 ~15 min</span><button class="btn btn-small" style="background:white;color:var(--accent);border:none" onclick="startDailyChallenge()">Comenzar →</button></div></div>
     <div class="card" style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px"><span style="font-size:13px;font-weight:700;color:var(--text)">Nivel actual</span><span class="chip" id="h-level">Novato</span></div><div class="progress-track" style="height:8px;margin-bottom:8px"><div class="progress-fill" id="h-xp" style="width:0%"></div></div><div style="display:flex;justify-content:space-between"><span style="font-size:11px;color:var(--muted)" id="h-lf">Novato</span><span style="font-size:11px;color:var(--muted)" id="h-lp">0% → Amateur</span></div></div>
-    <div class="card" style="margin-bottom:16px"><div class="label" style="margin-bottom:14px">Última sesión</div><div class="stats-row"><div><div class="stat-value" id="h-lhits">0</div><div class="stat-label">Golpes</div></div><div style="width:1px;height:40px;background:var(--border)"></div><div><div class="stat-value" style="color:var(--green)" id="h-lacc">—</div><div class="stat-label">Precisión</div></div><div style="width:1px;height:40px;background:var(--border)"></div><div><div class="stat-value" id="h-ltime">0:00</div><div class="stat-label">Tiempo</div></div></div></div>
+    <div class="card" style="margin-bottom:16px"><div class="label" style="margin-bottom:14px">Última sesión</div><div class="stats-row"><div><div class="stat-value" id="h-lhits">0</div><div class="stat-label">Golpes</div></div><div style="width:1px;height:40px;background:var(--border)"></div><div><div class="stat-value" style="color:var(--green)" id="h-lacc">—</div><div class="stat-label">Golpes/min</div></div><div style="width:1px;height:40px;background:var(--border)"></div><div><div class="stat-value" id="h-ltime">0:00</div><div class="stat-label">Tiempo</div></div></div></div>
     <div class="card" style="display:flex;align-items:center;gap:14px"><span style="font-size:36px;opacity:.35" id="h-nbicon">🔁</span><div style="flex:1"><div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:2px" id="h-nbname">3 en Raya</div><div style="font-size:12px;color:var(--muted);margin-bottom:8px" id="h-nbdesc">3 días seguidos</div><div class="progress-track" style="height:5px"><div class="progress-fill" id="h-nbp" style="width:33%;background:#FFD60A"></div></div></div></div>
   </div>
 </div>
@@ -217,7 +217,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <div id="loading-overlay">
     <div style="font-size:40px">🥊</div>
     <div style="font-size:18px;font-weight:800;color:white" id="load-title">Iniciando KinearFit...</div>
-    <div style="font-size:13px;color:rgba(255,255,255,.5);text-align:center;max-width:260px;line-height:1.6" id="load-sub">Activando cámara y cargando IA</div>
+    <div style="font-size:13px;color:rgba(255,255,255,.5);text-align:center;max-width:260px;line-height:1.6" id="load-sub">Activando cámara...</div>
     <div class="loading-bar-track"><div class="loading-bar-fill" id="load-bar"></div></div>
     <div style="font-size:11px;color:rgba(255,255,255,.35);margin-top:8px" id="load-pct">0%</div>
   </div>
@@ -243,8 +243,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
   <div class="scroll-content" style="padding-top:0">
     <div style="text-align:center;padding:28px 0 20px"><span style="font-size:52px">🏁</span><div class="heading" style="margin-top:8px">¡Sesión Completada!</div><div class="muted-text" style="margin-top:4px">Excelente trabajo</div></div>
-    <div class="card card-accent" style="text-align:center;margin-bottom:16px"><div class="label" style="margin-bottom:4px">Score Total</div><div style="font-size:44px;font-weight:900;color:var(--accent);letter-spacing:-2px" id="ps-score">0</div></div>
-    <div class="stats-grid"><div class="stat-card"><div class="stat-big" id="ps-hits">0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Golpes</div></div><div class="stat-card"><div class="stat-big" style="color:var(--green)" id="ps-acc">—</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Precisión</div></div><div class="stat-card"><div class="stat-big" id="ps-time">0:00</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Duración</div></div><div class="stat-card"><div class="stat-big" style="color:#FFD60A" id="ps-combo">×0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Seguidos</div></div><div class="stat-card"><div class="stat-big" style="color:#00B87A" id="ps-cal">0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">🔥 Calorías</div></div></div>
+    <div class="card card-accent" style="text-align:center;margin-bottom:16px"><div class="label" style="margin-bottom:4px">Puntaje Total</div><div style="font-size:44px;font-weight:900;color:var(--accent);letter-spacing:-2px" id="ps-score">0</div></div>
+    <div class="stats-grid"><div class="stat-card"><div class="stat-big" id="ps-hits">0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Golpes</div></div><div class="stat-card"><div class="stat-big" style="color:var(--green)" id="ps-acc">—</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Golpes/min</div></div><div class="stat-card"><div class="stat-big" id="ps-time">0:00</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Duración</div></div><div class="stat-card"><div class="stat-big" style="color:#FFD60A" id="ps-combo">×0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">Seguidos</div></div><div class="stat-card"><div class="stat-big" style="color:#00B87A" id="ps-cal">0</div><div style="font-size:10px;font-weight:600;color:var(--muted);letter-spacing:1.2px;text-transform:uppercase;margin-top:4px">🔥 Calorías</div></div></div>
     <div class="card card-accent" id="ps-badge" style="display:none;align-items:center;gap:14px;margin-bottom:16px"><span style="font-size:44px" id="ps-bicon">🎯</span><div><span class="chip" style="margin-bottom:6px;display:inline-block">¡Nueva insignia!</span><div style="font-size:16px;font-weight:800;color:var(--text);margin:6px 0 2px" id="ps-bname"></div><div style="font-size:12px;color:var(--muted)" id="ps-bdesc"></div></div></div>
     <div class="card" style="margin-bottom:20px"><div style="display:flex;justify-content:space-between;margin-bottom:8px"><span class="muted-text">Progreso nivel</span><span style="font-size:13px;font-weight:700;color:var(--text)" id="ps-xpp">0%</span></div><div class="progress-track" style="height:8px"><div class="progress-fill" id="ps-xpb" style="width:0%"></div></div></div>
     <div style="display:flex;gap:10px;margin-bottom:20px"><button class="btn btn-secondary" style="flex:1" onclick="shareSession()">📤 Compartir</button><button class="btn btn-secondary" style="flex:0 0 56px;padding:0" onclick="openPhotoBooth()" aria-label="Tomar foto">📸</button><button class="btn" style="flex:1" onclick="goTo('home')">Continuar →</button></div>
@@ -389,8 +389,8 @@ function weekReport(){
 function weekMessage(r){
   if(!r.hasPrev)return 'Tu primera semana registrada. Vamos por la siguiente.';
   const a=r.last.cal,b=r.prev.cal;
-  if(b>0&&a>=b*1.05)return 'Mejor que la semana anterior. Sigue asi.';
-  if(b>0&&a>=b*0.85)return 'Semana pareja. Manten el ritmo.';
+  if(b>0&&a>=b*1.05)return 'Mejor que la semana anterior. Sigue así.';
+  if(b>0&&a>=b*0.85)return 'Semana pareja. Mantén el ritmo.';
   return 'Semana tranquila. Retomemos.';
 }
 function fmtDelta(now,before,hasPrev){
@@ -460,19 +460,21 @@ let MOVES={
 // Para diestro: mano adelantada = izquierda, mano de poder = derecha. Para zurdo, al revés.
 function lead(){return S.user.dom==='left'?'derecha':'izquierda';}   // mano adelantada
 function power(){return S.user.dom==='left'?'izquierda':'derecha';}  // mano de poder
-function leadLeg(){return S.user.dom==='left'?'izquierda':'derecha';}// pierna de patada
+function leadLeg(){return S.user.dom==='left'?'izquierda':'derecha';}
+// La patada espejada usa la pierna contraria a la que patea normalmente.
+function otherLeg(){return S.user.dom==='left'?'derecha':'izquierda';}// pierna de patada
 const TUTORIAL_MOVES=[
   {mk:'JAB', en:'JAB', title:'JAB',            desc:()=>'Puño recto con la mano '+lead()+'.'},
   {mk:'CROSS', en:'CROSS', title:'CROSS',          desc:()=>'Puño recto con la mano '+power()+'.'},
   {mk:'HOOK_L', en:'HOOK', title:'GANCHO ADELANTADO',desc:()=>'Gancho en arco con la mano '+lead()+'.'},
   {mk:'HOOK_R', en:'HOOK', title:'GANCHO DE PODER',  desc:()=>'Gancho en arco con la mano '+power()+'.'},
-  {mk:'HOOK_BODY_L', en:'BODY HOOK', title:'GANCHO AL CUERPO ADEL.',desc:()=>'Gancho al costado/hígado con la '+lead()+', agáchate un poco.'},
-  {mk:'HOOK_BODY_R', en:'BODY HOOK', title:'GANCHO AL CUERPO PODER',desc:()=>'Gancho al costado/hígado con la '+power()+', agáchate un poco.'},
+  {mk:'HOOK_BODY_L', en:'BODY HOOK', title:'GANCHO AL CUERPO ADEL.',desc:()=>'Gancho al costado, a la altura del hígado, con la '+lead()+'. Agáchate un poco.'},
+  {mk:'HOOK_BODY_R', en:'BODY HOOK', title:'GANCHO AL CUERPO PODER',desc:()=>'Gancho al costado, a la altura del hígado, con la '+power()+'. Agáchate un poco.'},
   {mk:'UPPER', en:'UPPERCUT', title:'GANCHO ASCENDENTE',          desc:()=>'Puño de abajo hacia arriba, al mentón, con la mano '+power()+'. Golpe corto y seco: frena en el target, no sigas de largo.'},
   {mk:'KICKF', en:'FRONT KICK', title:'PATADA FRONTAL', desc:()=>'Levanta la rodilla y patea hacia adelante con la pierna '+leadLeg()+'.'},
-  {mk:'KICKS', en:'ROUND KICK', title:'PATADA CIRCULAR', desc:()=>'Patea hacia el costado con la pierna '+leadLeg()+'.'},
-  {mk:'KICKS_2', en:'ROUND KICK', title:'PATADA CIRCULAR (otra pierna)', desc:()=>'La misma patada lateral, con la pierna contraria. El objetivo aparece al otro lado.'},
-  {mk:'ELBOW', en:'ELBOW', title:'CODAZO',         desc:()=>'Codazo en arco al menton, con el brazo cerrado y el puno pegado a la cabeza. Con cualquiera de los dos brazos.'},
+  {mk:'KICKS', en:'ROUND KICK', title:'PATADA CIRCULAR', desc:()=>'Patea en arco con la pierna '+leadLeg()+', girando la cadera. Lánzala rápido: despacio pierde fuerza y equilibrio.'},
+  {mk:'KICKS_2', en:'ROUND KICK', title:'PATADA CIRCULAR (otra pierna)', desc:()=>'La misma patada en arco, ahora con la pierna '+otherLeg()+'. El objetivo aparece al otro lado.'},
+  {mk:'ELBOW', en:'ELBOW', title:'CODAZO',         desc:()=>'Codazo en arco al mentón, con el brazo cerrado y el puño pegado a la cabeza. Con cualquiera de los dos brazos.'},
   {mk:'KNEE', en:'KNEE', title:'RODILLAZO',      desc:()=>'Sube la rodilla al plexo, de golpe y por el centro. Con cualquiera de las dos piernas.'},
   {mk:'DOGEL', en:'DODGE', title:'ESQUIVA',        desc:()=>'Inclina el tronco en diagonal hacia la esquina segura.'}
 ];
@@ -480,57 +482,57 @@ function moveDesc(m){return typeof m.desc==='function'?m.desc():m.desc;}
 const RUTINAS=[
   // ===== FÁCIL (4) =====
   {id:'jab_simple', name:'Jab Simple', seq:['JAB'], level:'Fácil',
-   fact:'El jab es el golpe más usado en boxeo: rápido, mide distancia y prepara combinaciones.'},
+   fact:'El JAB es el golpe más usado en boxeo: rápido, mide distancia y prepara combinaciones.'},
   {id:'uno_dos', name:'Uno-Dos', seq:['JAB','CROSS'], level:'Fácil',
-   fact:'El "uno-dos" es la base de toda combinación de boxeo: jab para medir, cross para conectar.'},
+   fact:'El "uno-dos" es la base de toda combinación de boxeo: JAB para medir, CROSS para conectar.'},
   {id:'doble_jab', name:'Doble Jab', seq:['JAB','JAB','CROSS'], level:'Fácil',
-   fact:'Doblar el jab rompe el ritmo del oponente y abre la guardia para el cross.'},
+   fact:'Doblar el JAB rompe el ritmo del oponente y abre la guardia para el CROSS.'},
   {id:'patada_simple', name:'Patada Simple', seq:['JAB','KICKF'], level:'Fácil',
-   fact:'Combinar manos y patadas obliga al cuerpo a cambiar de plano de movimiento, mejorando la coordinación.'},
+   fact:'Pasar del JAB a la patada obliga a cambiar el peso de una pierna a otra sin perder el equilibrio.'},
   // ===== INTERMEDIO (6) =====
   {id:'uno_dos_tres', name:'Uno-Dos-Tres', seq:['JAB','CROSS','HOOK_L'], level:'Intermedio',
-   fact:'Añadir el hook después del cross genera rotación de cadera, clave para potencia real.'},
+   fact:'Añadir el HOOK después del CROSS genera rotación de cadera, clave para potencia real.'},
   {id:'uno_dos_tres_dos', name:'Uno-Dos-Tres-Dos', seq:['JAB','CROSS','HOOK_L','CROSS'], level:'Intermedio',
-   fact:'Cerrar la combinación con otro cross entrena la vuelta rápida a posición de guardia.'},
+   fact:'Volver al CROSS después del HOOK es lo que hace real al combo: el rival espera que termines, y ahí entra el último golpe.'},
   {id:'cross_hook_upper', name:'Cross-Hook-Upper', seq:['CROSS','HOOK_L','UPPER'], level:'Intermedio',
-   fact:'El upper se ejecuta mejor cuando el cuerpo ya rotó con el hook anterior — encadena momentum.'},
+   fact:'El UPPERCUT se ejecuta mejor cuando el cuerpo ya rotó con el HOOK anterior: encadena impulso.'},
   {id:'jab_upper_cross', name:'Jab-Upper-Hook', seq:['JAB','UPPER','HOOK_L'], level:'Intermedio',
-   fact:'Jab, uppercut y gancho: cada golpe entra por un ángulo distinto, y las manos se alternan.'},
+   fact:'JAB, UPPERCUT y HOOK: cada golpe entra por un ángulo distinto, y las manos se alternan.'},
   {id:'muay_thai_basico', name:'Muay Thai Básico', seq:['JAB','CROSS','KICKF'], level:'Intermedio',
-   fact:'En Muay Thai, la patada frontal (teep) se usa para mantener distancia y cortar el avance del rival.'},
-  {id:'patada_lateral', name:'Patada Lateral', seq:['CROSS','HOOK_L','KICKS','JAB','KICKS'], level:'Intermedio',
-   fact:'La patada lateral repetida desarrolla resistencia de cadera y equilibrio sobre una sola pierna.'},
+   fact:'En Muay Thai, el FRONT KICK (teep) se usa para mantener distancia y cortar el avance del rival.'},
+  {id:'patada_lateral', name:'Patada Circular', seq:['CROSS','HOOK_L','KICKS','JAB','KICKS'], level:'Intermedio',
+   fact:'El ROUND KICK gana potencia con la velocidad: lanzarlo despacio le quita fuerza y equilibrio.'},
   // ===== AVANZADO (6) =====
   {id:'clasico_completo', name:'Clásico Completo', seq:['JAB','CROSS','HOOK_L','UPPER','HOOK_BODY_L'], level:'Avanzado',
    fact:'Las manos se alternan golpe a golpe: así la cadera rota en ambos sentidos y no se pierde potencia.'},
   {id:'esquiva_contra', name:'Esquiva y Contraataque', seq:['JAB','CROSS','DOGEL','HOOK_L','CROSS'], level:'Avanzado',
    fact:'Esquivar y contraatacar en menos de un segundo es la base de la defensa activa en boxeo.'},
   {id:'demoledor', name:'El Demoledor', seq:['JAB','CROSS','HOOK_BODY_L','UPPER','HOOK_L','CROSS'], level:'Avanzado',
-   fact:'Golpear al cuerpo (hígado) antes de ir a la cabeza baja la guardia del rival — táctica clásica de boxeo.'},
+   fact:'Golpear al cuerpo antes de ir a la cabeza baja la guardia del rival: táctica clásica de boxeo.'},
   {id:'muay_thai_mix', name:'Muay Thai Mix', seq:['JAB','CROSS','HOOK_L','KICKF','CROSS','KICKS'], level:'Avanzado',
-   fact:'Combinar 5 golpes distintos en secuencia entrena la transición fluida entre manos y piernas.'},
+   fact:'Combinar cinco golpes distintos en secuencia entrena la transición fluida entre manos y piernas.'},
   {id:'doble_patada', name:'Doble Patada', seq:['CROSS','KICKF','JAB','KICKS'], level:'Avanzado',
-   fact:'Encadenar dos tipos de patada distintos exige recuperar el equilibrio rápidamente entre cada una.'},
+   fact:'El FRONT KICK empuja hacia adelante y el ROUND KICK cruza de lado: cambiar entre los dos obliga a reorientar todo el cuerpo.'},
   {id:'combate_total', name:'Combate Total', seq:['JAB','CROSS','DOGER','HOOK_L','UPPER','KICKS','CROSS','KICKF'], level:'Avanzado',
-   fact:'Esta rutina integra ataque, defensa y patadas — el equivalente a un asalto completo de combate.'},
+   fact:'Un asalto de boxeo dura tres minutos, y casi nadie golpea todo el tiempo: se alterna entre atacar, moverse y recuperar.'},
   // ===== CORTA DISTANCIA: CODOS Y RODILLAS (6) =====
   // Regla de diseno: el codazo nunca va despues de un gancho (misma trayectoria en arco),
   // y el rodillazo nunca despues de una patada (la pierna que baja activaria el siguiente).
   {id:'rodilla_simple', name:'Rodilla Simple', seq:['JAB','KNEE'], level:'Fácil',
-   fact:'En Muay Thai la rodilla es el arma del clinch: se lanza de cerca, donde los punos pierden potencia.'},
+   fact:'El KNEE es el arma del clinch en Muay Thai: se lanza de cerca, donde los puños ya no tienen espacio para acelerar.'},
   {id:'codo_simple', name:'Codo Simple', seq:['CROSS','ELBOW'], level:'Fácil',
-   fact:'El codo es una de las superficies mas duras del cuerpo y recorre menos distancia que un puno.'},
+   fact:'El ELBOW golpea con hueso casi sin músculo encima: por eso es de los golpes más contundentes a corta distancia.'},
   {id:'clinch_basico', name:'Clinch Básico', seq:['JAB','CROSS','KNEE'], level:'Intermedio',
-   fact:'Los rodillazos puntuan alto en Muay Thai porque exigen controlar al oponente antes de lanzarlos.'},
+   fact:'Los golpes de KNEE puntúan alto en Muay Thai porque exigen controlar al oponente antes de lanzarlos.'},
   {id:'codo_cerca', name:'Codo de Cerca', seq:['JAB','CROSS','ELBOW'], level:'Intermedio',
-   fact:'El codo llega mas rapido que el puno aunque el brazo se mueva mas lento: recorre menos camino.'},
+   fact:'A corta distancia el ELBOW llega antes que el puño, porque recorre menos camino.'},
   {id:'clinch_completo', name:'Clinch Completo', seq:['JAB','CROSS','KNEE','ELBOW','CROSS'], level:'Avanzado',
-   fact:'El clinch decide muchos combates de Muay Thai: es la fase de rodillas y codos a distancia corta.'},
+   fact:'El clinch decide muchos combates de Muay Thai: es la fase de KNEE y ELBOW a distancia corta.'},
   {id:'ocho_extremidades', name:'Ocho Extremidades', seq:['JAB','ELBOW','KNEE','CROSS','KICKS'], level:'Avanzado',
-   fact:'Al Muay Thai se le llama el arte de las ocho extremidades: dos punos, dos codos, dos rodillas y dos piernas.'},
+   fact:'Al Muay Thai se le llama el arte de las ocho extremidades: dos puños, dos codos, dos rodillas y dos piernas.'},
   // ===== AMBAS PIERNAS (2) =====
   {id:'patadas_alternas', name:'Patadas Alternas', seq:['JAB','KICKS','CROSS','KICKS_2'], level:'Intermedio',
-   fact:'Patear con ambas piernas reparte la carga: entrenar siempre del mismo lado crea desequilibrios.'},
+   fact:'La pierna de atrás pega más fuerte, pero la de adelante llega antes: en Muay Thai se usan las dos por razones distintas.'},
   {id:'doble_filo', name:'Doble Filo', seq:['JAB','CROSS','KICKS','HOOK_L','KICKS_2','CROSS'], level:'Avanzado',
    fact:'Cambiar de pierna de apoyo entre patadas exige recuperar el equilibrio antes de volver a lanzar.'}
 ];
@@ -634,11 +636,11 @@ function startDailyChallenge(){
   startSession('combos',DAILY.diffKey);
 }
 const BADGES=[
-  {id:'fk', icon:'',name:'Primera Patada',cat:'Golpes',desc:'Tu primera patada',         c:s=>s.totalKicks>=1},
-  {id:'fd', icon:'',name:'Primer Día',    cat:'Racha', desc:'Tu primera sesión',         c:s=>s.totalSessions>=1},
-  {id:'rh', icon:'',name:'Guerrero',      cat:'Tiempo',desc:'Ronda en Avanzado',         c:s=>s.hardRounds>=1},
-  {id:'dg', icon:'',name:'Primera Esquiva',cat:'Golpes',desc:'Tu primera esquiva',       c:s=>s.totalDodges>=1},
-  {id:'exp',icon:'',name:'Explorador',    cat:'Golpes',desc:'Usa los 2 modos',          c:s=>s.modesUsed>=2}
+  {id:'fk', icon:'',name:'Primera Patada',cat:'Golpes',desc:'Lanzaste tu primera patada.',         c:s=>s.totalKicks>=1},
+  {id:'fd', icon:'',name:'Primera Sesión',cat:'Racha', desc:'Completaste tu primer entrenamiento.',         c:s=>s.totalSessions>=1},
+  {id:'rh', icon:'',name:'Guerrero',      cat:'Tiempo',desc:'Completaste una ronda en nivel Avanzado.',         c:s=>s.hardRounds>=1},
+  {id:'dg', icon:'',name:'Primera Esquiva',cat:'Golpes',desc:'Esquivaste por primera vez.',       c:s=>s.totalDodges>=1},
+  {id:'exp',icon:'',name:'Explorador',    cat:'Golpes',desc:'Probaste los dos modos de entrenamiento.',          c:s=>s.modesUsed>=2}
 ];
 
 // ======== SCALABLE BADGE SERIES ========
@@ -652,9 +654,25 @@ const BADGE_SERIES=[
 ];
 // Color ramp per tier index (0..6): muted -> accent -> cyan, increasing glow
 const TIER_COLORS=['#6B7494','#8A93B8','#FFA15C','#FF6A1F','#FF4500','#00D4FF','#FFFFFF'];
+// Cada serie tiene su propia frase: una plantilla unica producia textos como
+// "Alcanzaste 60min en tiempo", que no es espanol correcto.
+function seriesDesc(series,idx){
+  const v=tierLabel(series,idx);
+  switch(series.key){
+    case 'totalHits':   return 'Conectaste '+v+' golpes.';
+    case 'totalCombos': return 'Completaste '+v+' combos.';
+    case 'totalTime':   return 'Entrenaste '+v+' en total.';
+    case 'streak':      return v+' seguidos entrenando.';
+  }
+  return '';
+}
 function tierLabel(series,idx){
   const v=series.thresholds[idx];
-  if(series.unit==='min')return Math.round(v/60)+'min';
+  if(series.unit==='min'){
+    // 2880min no se lee; 48h si. Los umbrales no cambian, solo como se escriben.
+    const m=Math.round(v/60);
+    return m<60?m+'min':Math.round(m/60)+'h';
+  }
   if(series.unit)return v+' '+series.unit;
   return ''+v;
 }
@@ -1011,7 +1029,7 @@ async function loadMoveNet(){
     try{await tf.setBackend('webgl');await tf.ready();}catch(e){try{await tf.setBackend('cpu');await tf.ready();}catch(e2){}}
     setLoad(60,'Descargando modelo...','Primera vez ~10 seg');
     detector=await poseDetection.createDetector(poseDetection.SupportedModels.MoveNet,{modelType:poseDetection.movenet.modelType.SINGLEPOSE_LIGHTNING,enableSmoothing:true});
-    setTrkBadge(2,'IA lista ✓');
+    setTrkBadge(2,'Listo ✓');
   }catch(e){setTrkBadge(0,'Error: '+e.message.substring(0,20));console.error(e);}
 }
 function setTrkBadge(lvl,txt){document.getElementById('t-dot').style.background=['#FF3B30','#F77F00','#00B87A'][lvl];document.getElementById('t-txt').textContent=txt;}
@@ -1376,9 +1394,9 @@ function showCenterOverlay(mk){
   if(mk==='GUARD'){
     html='<div><div class="co-big co-guard">🛡️ GUARD UP</div><div class="co-sub">Sube la guardia</div></div>';
   } else if(mk==='MOVE'){
-    html='<div><div class="co-big co-move">👣 MOVE</div><div class="co-sub">Muévete — no te quedes quieto</div></div>';
+    html='<div><div class="co-big co-move">👣 MOVE</div><div class="co-sub">Muévete, no te quedes quieto</div></div>';
   } else if(mk==='REST'){
-    html='<div><div class="co-big co-rest">⏸ DESCANSO</div><div class="co-sub" id="co-rest-time">Recupera el aliento</div></div>';
+    html='<div><div class="co-big co-rest">⏸ REST</div><div class="co-sub" id="co-rest-time">Recupera el aliento</div></div>';
   }
   ov.innerHTML=html;ov.style.display='flex';
 }
@@ -2081,7 +2099,7 @@ function checkBadges(){
     if(!S.badges.has(id)){
       S.badges.add(id);
       nb.push({id,icon:'',name:series.label+' '+tierLabel(series,tier),cat:series.cat,
-        desc:'Alcanzaste '+tierLabel(series,tier)+' en '+series.label.toLowerCase()});
+        desc:seriesDesc(series,tier)});
     }
   }
   // Ascenso de nivel: desbloquea rutinas mas dificiles en el desafio diario.
@@ -2091,7 +2109,7 @@ function checkBadges(){
     if(!S.badges.has(lid)){
       S.badges.add(lid);
       nb.push({id:lid,icon:'',name:'Nivel '+LEVEL_NAMES[lv],cat:'Racha',
-        desc:'Desbloqueaste las rutinas de nivel '+LEVEL_NAMES[lv].toLowerCase()+' en el desafio diario'});
+        desc:'Desbloqueaste las rutinas '+(lv==='intermediate'?'intermedias':'avanzadas')+' del desafío diario.'});
     }
   }
   // Reto del mes: la ventana se cierra al terminar el mes, pero lo ganado no se quita.
@@ -2101,7 +2119,7 @@ function checkBadges(){
       S.badges.add(mid);
       const nm=MONTH_NAMES[new Date().getMonth()];
       nb.push({id:mid,icon:'',name:'Racha de '+nm,cat:'Racha',
-        desc:'Entrenaste '+MONTHLY_TARGET+' dias distintos en '+nm});
+        desc:'Entrenaste '+MONTHLY_TARGET+' días distintos en '+nm.toLowerCase()+'.'});
     }
   }
   return nb;
@@ -2160,7 +2178,7 @@ function showPost(s,dur,nb){
   document.getElementById('ps-time').textContent=fmtT(dur);
   document.getElementById('ps-combo').textContent=s.comboMax;
   const psCal=document.getElementById('ps-cal');if(psCal)psCal.textContent=(S.stats.lastSession&&S.stats.lastSession.calories)||0;
-  document.getElementById('ps-acc').textContent=s.hits>0?Math.min(98,Math.round(66+Math.random()*24))+'%':'—';
+  document.getElementById('ps-acc').textContent=(s.hits>0&&dur>0)?Math.round(s.hits/(dur/60)):'—';
   const xp=S.stats.xp,li=LEVELS.findIndex((_,i)=>xp<(LEVEL_XP[i+1]||Infinity));
   const pct=li<LEVEL_XP.length-1?Math.round((xp-LEVEL_XP[li])/(LEVEL_XP[li+1]-LEVEL_XP[li])*100):100;
   document.getElementById('ps-xpp').textContent=pct+'%';
@@ -2459,7 +2477,7 @@ function refHome(){
   renderDailyChallenge();
   renderWeekCard();
   const n=S.user.name||'Entrenador';
-  document.getElementById('h-greeting').textContent=n+' 🥊';
+  document.getElementById('h-greeting').textContent='Hola, '+n;
   document.getElementById('h-streak').textContent=S.stats.streak;
   const xp=S.stats.xp,li=LEVELS.findIndex((_,i)=>xp<(LEVEL_XP[i+1]||Infinity));
   const cur=LEVELS[Math.min(li,LEVELS.length-1)],nxt=LEVELS[Math.min(li+1,LEVELS.length-1)];
@@ -2470,7 +2488,7 @@ function refHome(){
   document.getElementById('h-lp').textContent=pct+'% -> '+nxt;
   const ls=S.stats.lastSession;
   document.getElementById('h-lhits').textContent=ls.hits||0;
-  document.getElementById('h-lacc').textContent=ls.hits>0?Math.round(68+Math.random()*22)+'%':'--';
+  document.getElementById('h-lacc').textContent=(ls.hits>0&&ls.dur>0)?Math.round(ls.hits/(ls.dur/60)):'--';
   document.getElementById('h-ltime').textContent=ls.dur>0?fmtT(ls.dur):'0:00';
   let bestSeries=null,bestPct=-1;
   for(const series of BADGE_SERIES){
