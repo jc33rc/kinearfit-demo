@@ -76,9 +76,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 #cam-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:0;z-index:0}
 #ar-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:2;touch-action:none}
 #hud{position:absolute;inset:0;z-index:3;pointer-events:none;display:flex;flex-direction:column}
-.hud-top{background:linear-gradient(180deg,rgba(0,0,0,.75) 0%,transparent 100%);padding:56px 18px 20px;display:flex;justify-content:space-between;align-items:center}
+.hud-top{background:linear-gradient(180deg,rgba(0,0,0,.75) 0%,transparent 100%);padding:52px 18px 10px;display:flex;justify-content:space-between;align-items:center}
 .hud-timer{font-size:38px;font-weight:900;color:#00D4FF;text-shadow:0 0 25px rgba(0,212,255,.8),0 0 50px rgba(0,212,255,.3);letter-spacing:-1px}
 .hud-val{font-size:22px;font-weight:900;color:white;line-height:1.1}
+#hud-cal2{color:#00B87A}
 .hud-lbl{font-size:9px;color:rgba(255,255,255,.5);letter-spacing:1.5px;text-transform:uppercase}
 .hud-bottom{margin-top:auto;background:linear-gradient(0deg,rgba(0,0,0,.8) 0%,transparent 100%);padding:16px 16px 28px;display:flex;align-items:center;gap:8px}
 #btn-end{pointer-events:all;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;color:white;font-family:var(--font);font-size:12px;font-weight:700;padding:8px 14px;cursor:pointer;margin-left:auto}
@@ -228,11 +229,10 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <button id="tut-exit" onclick="exitTutorial()" style="position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:7;display:none;background:rgba(0,0,0,.6);border:1.5px solid rgba(255,255,255,.3);color:white;font-family:var(--font);font-weight:800;font-size:14px;padding:12px 32px;border-radius:30px;cursor:pointer;backdrop-filter:blur(8px)">Salir</button>
   <div id="hud">
     <div class="hud-top">
-      <div><div class="hud-lbl">Ronda</div><div class="hud-val" id="hud-rnd">1/3</div></div>
-      <div class="hud-timer" id="hud-tmr">3:00</div>
-      <div style="text-align:right"><div class="hud-lbl">Score</div><div class="hud-val" id="hud-sc">0</div></div>
+      <div style="min-width:74px"><div class="hud-lbl">Combos</div><div class="hud-val" id="hud-cmb">0</div></div>
+      <div style="text-align:center"><div class="hud-lbl" id="hud-rnd">1/3</div><div class="hud-timer" id="hud-tmr">3:00</div></div>
+      <div style="min-width:74px;text-align:right"><div class="hud-lbl">Kcal</div><div class="hud-val" id="hud-cal2">0</div></div>
     </div>
-    <div style="display:flex;justify-content:center;margin-top:8px"><div style="background:rgba(0,184,122,.16);border:1.5px solid rgba(0,184,122,.5);border-radius:24px;padding:7px 20px;display:flex;align-items:center;gap:7px"><span style="font-size:18px">🔥</span><span style="font-size:22px;font-weight:900;color:#00B87A" id="hud-cal2">0</span><span style="font-size:14px;font-weight:700;color:rgba(255,255,255,.65)">kcal</span></div></div>
     <div class="hud-bottom">
       <div id="hb-libre" style="display:none;gap:8px;align-items:center"><div style="background:rgba(255,255,255,.08);border-radius:12px;padding:6px 14px"><span style="font-size:13px;font-weight:700;color:white" id="hud-hits">0</span><span style="font-size:11px;color:rgba(255,255,255,.5)"> golpes</span></div><div style="background:rgba(255,255,255,.08);border-radius:12px;padding:6px 14px"><span style="font-size:13px;font-weight:700;color:#00B87A" id="hud-cal">0</span><span style="font-size:11px;color:rgba(255,255,255,.5)"> cal</span></div></div>
       <div id="hb-combo" style="display:none;align-items:center;gap:6px;flex:1"><span style="font-size:11px;color:rgba(255,255,255,.4)">SIG:</span><div id="nxt-moves" style="display:flex;gap:6px"></div></div>
@@ -520,7 +520,7 @@ const RUTINAS=[
   // y el rodillazo nunca despues de una patada (la pierna que baja activaria el siguiente).
   {id:'rodilla_simple', name:'Rodilla Simple', seq:['JAB','KNEE'], level:'Fácil',
    fact:'En Muay Thai la rodilla es el arma del clinch: se lanza de cerca, donde los punos pierden potencia.'},
-  {id:'codo_simple', name:'Codo Simple', seq:['JAB','ELBOW'], level:'Fácil',
+  {id:'codo_simple', name:'Codo Simple', seq:['CROSS','ELBOW'], level:'Fácil',
    fact:'El codo es una de las superficies mas duras del cuerpo y recorre menos distancia que un puno.'},
   {id:'clinch_basico', name:'Clinch Básico', seq:['JAB','CROSS','KNEE'], level:'Intermedio',
    fact:'Los rodillazos puntuan alto en Muay Thai porque exigen controlar al oponente antes de lanzarlos.'},
@@ -727,8 +727,17 @@ function setLvl(l){S.user.level=l;['b','i','a'].forEach((x,i)=>document.getEleme
 function selMode(m){S.mode=m;document.getElementById('mc-libre').classList.toggle('active',m==='libre');document.getElementById('mc-combos').classList.toggle('active',m==='combos');document.getElementById('combos-panel').style.display=m==='combos'?'block':'none';if(m==='combos')rendCombos();}
 function rendCombos(){
   var html = '';
-  for(var i=0;i<COMBOS.length;i++){
-    var c=COMBOS[i];
+  // Se ordena solo la VISTA. El arreglo no se toca, porque S.selCombo guarda el indice
+  // y reordenarlo cambiaria la rutina seleccionada de quien ya tenga una guardada.
+  var orden={'F\u00e1cil':0,'Intermedio':1,'Avanzado':2};
+  var vista=COMBOS.map(function(c,idx){return {c:c,idx:idx};});
+  vista.sort(function(a,b){
+    var d=(orden[a.c.level]==null?9:orden[a.c.level])-(orden[b.c.level]==null?9:orden[b.c.level]);
+    return d!==0?d:a.idx-b.idx;
+  });
+  for(var v=0;v<vista.length;v++){
+    var i=vista[v].idx;
+    var c=vista[v].c;
     var active = i===S.selCombo ? 'active' : '';
     var lvlStyle = c.level==='Avanzado' ? 'background:#FFEDEB;color:#FF3B30' : c.level==='Intermedio' ? 'background:#FFF4E6;color:#F77F00' : '';
     var lvlClass = c.level==='Fácil' ? 'chip-green' : '';
@@ -1954,7 +1963,7 @@ function updateHUD(){
   const s=S.sess,mult=getMultiplier();
   document.getElementById('hud-rnd').textContent=`${s.round}/${s.totalRounds}`;
   document.getElementById('hud-tmr').textContent=fmtT(s.timeLeft);
-  document.getElementById('hud-sc').textContent=s.score.toLocaleString();
+  const cmb=document.getElementById('hud-cmb');if(cmb)cmb.textContent=s.combos||0;
   document.getElementById('hud-hits').textContent=s.hits;
   const kcal=Math.round(calcCalories(s.diff,s.activeSeconds||0));
   document.getElementById('hud-cal').textContent=kcal;
