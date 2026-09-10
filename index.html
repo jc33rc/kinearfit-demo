@@ -177,7 +177,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <div class="card" style="display:flex;align-items:center;gap:14px;margin-bottom:20px;cursor:pointer" onclick="openTutorial()"><span style="font-size:32px">🎓</span><div><div style="font-size:15px;font-weight:800;color:var(--text)">Tutorial / Repaso</div><div style="font-size:12px;color:var(--muted)">Practica un golpe a la vez</div></div><span style="margin-left:auto;color:var(--muted);font-size:18px">›</span></div>
     <div id="combos-panel" style="display:none;margin-bottom:16px"><div class="label" style="margin-bottom:12px">Selecciona un combo</div><div id="combo-list" style="max-height:44vh;overflow-y:auto;-webkit-overflow-scrolling:touch;padding-right:4px"></div></div>
     <div class="label" style="margin-bottom:10px">Dificultad</div>
-    <div style="display:flex;gap:8px;margin-bottom:16px"><button class="diff-btn easy" id="de" onclick="selDiff('easy')">Fácil</button><button class="diff-btn medium active" id="dm" onclick="selDiff('medium')">Intermedio</button><button class="diff-btn hard" id="dh" onclick="selDiff('hard')">Avanzado</button></div>
+    <div style="display:flex;gap:8px;margin-bottom:16px"><button class="diff-btn easy" id="de" onclick="selDiff('easy')">Principiante</button><button class="diff-btn medium active" id="dm" onclick="selDiff('medium')">Intermedio</button><button class="diff-btn hard" id="dh" onclick="selDiff('hard')">Avanzado</button></div>
     <div class="card" style="margin-bottom:20px">
       <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="muted-text">Duración ronda</span><span style="font-size:13px;font-weight:700;color:var(--text)" id="cfg-d">3 min</span></div>
       <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="muted-text">Descanso</span><span style="font-size:13px;font-weight:700;color:var(--text)" id="cfg-r">45 seg</span></div>
@@ -333,7 +333,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 
 <script>
 // ======== CONSTANTS ========
-const DIFF={easy:{dur:60,rest:60,spd:'Lenta',mult:0.8,level:'Fácil',met:5.5},medium:{dur:180,rest:45,spd:'Media',mult:1.0,level:'Intermedio',met:7.8},hard:{dur:300,rest:30,spd:'Rápida',mult:1.25,level:'Avanzado',met:9.8}};
+const DIFF={easy:{dur:60,rest:60,spd:'Lenta',mult:0.8,level:'Principiante',met:5.5},medium:{dur:180,rest:45,spd:'Media',mult:1.0,level:'Intermedio',met:7.8},hard:{dur:300,rest:30,spd:'Rápida',mult:1.25,level:'Avanzado',met:9.8}};
 // Calorie estimate (ACSM / Compendium of Physical Activities): kcal/min = MET × 3.5 × kg ÷ 200
 function calcCalories(diffKey,activeSeconds){
   const met=(DIFF[diffKey]&&DIFF[diffKey].met)||7.0;
@@ -431,7 +431,7 @@ function dismissWeekCard(){
   if(el)el.style.display='none';
 }
 const LEVELS=['Novato','Amateur','Pro','Campeón','Élite'];
-const LEVEL_XP=[0,500,1500,3500,7000];
+const LEVEL_XP=[0,12000,80000,300000,900000];
 const KP={NOSE:0,LE:1,RE:2,LEAR:3,REAR:4,LS:5,RS:6,LELB:7,RELB:8,LW:9,RW:10,LH:11,RH:12,LK:13,RK:14,LA:15,RA:16};
 
 // HOOK uses lateral velocity (velType:'x'), others use total velocity
@@ -481,13 +481,13 @@ const TUTORIAL_MOVES=[
 function moveDesc(m){return typeof m.desc==='function'?m.desc():m.desc;}
 const RUTINAS=[
   // ===== FÁCIL (4) =====
-  {id:'jab_simple', name:'Jab Simple', seq:['JAB'], level:'Fácil',
+  {id:'jab_simple', name:'Jab Simple', seq:['JAB'], level:'Principiante',
    fact:'El JAB es el golpe más usado en boxeo: rápido, mide distancia y prepara combinaciones.'},
-  {id:'uno_dos', name:'Uno-Dos', seq:['JAB','CROSS'], level:'Fácil',
+  {id:'uno_dos', name:'Uno-Dos', seq:['JAB','CROSS'], level:'Principiante',
    fact:'El "uno-dos" es la base de toda combinación de boxeo: JAB para medir, CROSS para conectar.'},
-  {id:'doble_jab', name:'Doble Jab', seq:['JAB','JAB','CROSS'], level:'Fácil',
+  {id:'doble_jab', name:'Doble Jab', seq:['JAB','JAB','CROSS'], level:'Principiante',
    fact:'Doblar el JAB rompe el ritmo del oponente y abre la guardia para el CROSS.'},
-  {id:'patada_simple', name:'Patada Simple', seq:['JAB','KICKF'], level:'Fácil',
+  {id:'patada_simple', name:'Patada Simple', seq:['JAB','KICKF'], level:'Principiante',
    fact:'Pasar del JAB a la patada obliga a cambiar el peso de una pierna a otra sin perder el equilibrio.'},
   // ===== INTERMEDIO (6) =====
   {id:'uno_dos_tres', name:'Uno-Dos-Tres', seq:['JAB','CROSS','HOOK_L'], level:'Intermedio',
@@ -518,9 +518,9 @@ const RUTINAS=[
   // ===== CORTA DISTANCIA: CODOS Y RODILLAS (6) =====
   // Regla de diseno: el codazo nunca va despues de un gancho (misma trayectoria en arco),
   // y el rodillazo nunca despues de una patada (la pierna que baja activaria el siguiente).
-  {id:'rodilla_simple', name:'Rodilla Simple', seq:['JAB','KNEE'], level:'Fácil',
+  {id:'rodilla_simple', name:'Rodilla Simple', seq:['JAB','KNEE'], level:'Principiante',
    fact:'El KNEE es el arma del clinch en Muay Thai: se lanza de cerca, donde los puños ya no tienen espacio para acelerar.'},
-  {id:'codo_simple', name:'Codo Simple', seq:['CROSS','ELBOW'], level:'Fácil',
+  {id:'codo_simple', name:'Codo Simple', seq:['CROSS','ELBOW'], level:'Principiante',
    fact:'El ELBOW golpea con hueso casi sin músculo encima: por eso es de los golpes más contundentes a corta distancia.'},
   {id:'clinch_basico', name:'Clinch Básico', seq:['JAB','CROSS','KNEE'], level:'Intermedio',
    fact:'Los golpes de KNEE puntúan alto en Muay Thai porque exigen controlar al oponente antes de lanzarlos.'},
@@ -545,9 +545,9 @@ const COMBOS=RUTINAS;
 const LEVEL_NAMES={beginner:'Principiante',intermediate:'Intermedio',advanced:'Avanzado'};
 function allowedRoutineLevels(){
   const lv=S.user.level||'beginner';
-  if(lv==='beginner')return ['F\u00e1cil'];
-  if(lv==='intermediate')return ['F\u00e1cil','Intermedio'];
-  return ['F\u00e1cil','Intermedio','Avanzado'];
+  if(lv==='beginner')return ['Principiante'];
+  if(lv==='intermediate')return ['Principiante','Intermedio'];
+  return ['Principiante','Intermedio','Avanzado'];
 }
 // Solo asciende, nunca degrada. Los umbrales miden constancia (sesiones) y ejecucion (combos).
 function checkLevelUp(){
@@ -598,7 +598,7 @@ function getDailyChallenge(){
   const routine=list[Math.floor(rng()*list.length)];
   const routineIdx=RUTINAS.indexOf(routine);
   // Difficulty derived from the routine's own level (keeps it coherent)
-  const diffKey=routine.level==='Fácil'?'easy':routine.level==='Avanzado'?'hard':'medium';
+  const diffKey=routine.level==='Principiante'?'easy':routine.level==='Avanzado'?'hard':'medium';
   // Extra objective of the day
   const objectives=[
     {id:'combo3',label:'Logra un combo ×3',check:s=>s.comboMax>=3},
@@ -745,7 +745,7 @@ function rendCombos(){
   var html = '';
   // Se ordena solo la VISTA. El arreglo no se toca, porque S.selCombo guarda el indice
   // y reordenarlo cambiaria la rutina seleccionada de quien ya tenga una guardada.
-  var orden={'F\u00e1cil':0,'Intermedio':1,'Avanzado':2};
+  var orden={'Principiante':0,'Intermedio':1,'Avanzado':2};
   var vista=COMBOS.map(function(c,idx){return {c:c,idx:idx};});
   vista.sort(function(a,b){
     var d=(orden[a.c.level]==null?9:orden[a.c.level])-(orden[b.c.level]==null?9:orden[b.c.level]);
@@ -756,7 +756,7 @@ function rendCombos(){
     var c=vista[v].c;
     var active = i===S.selCombo ? 'active' : '';
     var lvlStyle = c.level==='Avanzado' ? 'background:#FFEDEB;color:#FF3B30' : c.level==='Intermedio' ? 'background:#FFF4E6;color:#F77F00' : '';
-    var lvlClass = c.level==='Fácil' ? 'chip-green' : '';
+    var lvlClass = c.level==='Principiante' ? 'chip-green' : '';
     html += '<div class="combo-item '+active+'" onclick="selCombo('+i+')">';
     html += '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">';
     html += '<span style="font-size:14px;font-weight:700;color:var(--text)">'+c.name+'</span>';
@@ -775,7 +775,7 @@ function selCombo(i){
   S.selCombo=i;
   const r=RUTINAS[i];
   if(r){
-    const diffKey=r.level==='Fácil'?'easy':r.level==='Avanzado'?'hard':'medium';
+    const diffKey=r.level==='Principiante'?'easy':r.level==='Avanzado'?'hard':'medium';
     if(diffKey!==S.diff)selDiff(diffKey);
   }
   rendCombos();
