@@ -1830,15 +1830,25 @@ function drawDodgeZone(c,ctx){
 
   ctx.save();
 
-  // Dim the danger corner quadrant
+  // Diagonal split: 45 deg line through center, perpendicular to the danger->safe axis
+  var L=Math.hypot(c.width,c.height);
+  ctx.save();
+  ctx.translate(c.width*0.5,c.height*0.5);
+  ctx.rotate(ang);
+
   ctx.globalAlpha=0.25+urgency*0.2;
   ctx.fillStyle='#FF3B30';
-  ctx.fillRect(dz.dangerCorner.includes('l')?0:c.width*0.5, dz.dangerCorner.includes('t')?0:c.height*0.5, c.width*0.5, c.height*0.5);
+  ctx.fillRect(-L,-L,L,L*2);
 
-  // Safe corner highlight (subtle green)
   ctx.globalAlpha=0.10;
   ctx.fillStyle='#00B87A';
-  ctx.fillRect(dz.safeCorner.includes('l')?0:c.width*0.5, dz.safeCorner.includes('t')?0:c.height*0.5, c.width*0.5, c.height*0.5);
+  ctx.fillRect(0,-L,L,L*2);
+
+  ctx.globalAlpha=0.45;
+  ctx.strokeStyle='#FFFFFF';
+  ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(0,-L);ctx.lineTo(0,L);ctx.stroke();
+  ctx.restore();
 
   ctx.globalAlpha=1;
 
