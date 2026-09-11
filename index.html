@@ -152,7 +152,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 <div class="screen" id="screen-home">
   <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
   <div class="scroll-content" style="padding-top:4px">
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px"><div><div style="font-size:13px;color:var(--muted);font-weight:500">Hola</div><div class="heading" id="h-greeting" style="margin-top:2px">KinearFit 🥊</div></div><div class="streak-badge"><span style="font-size:20px">🔥</span><div><div style="font-size:18px;font-weight:900;color:var(--accent);line-height:1" id="h-streak">0</div><div style="font-size:9px;color:var(--muted);font-weight:600;letter-spacing:1px">DÍAS</div></div></div></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px"><div><div style="font-size:13px;color:var(--muted);font-weight:500">Hola</div><div class="heading" id="h-greeting" style="margin-top:2px">Entrenador</div></div><div class="streak-badge"><span style="font-size:20px">🔥</span><div><div style="font-size:18px;font-weight:900;color:var(--accent);line-height:1" id="h-streak">0</div><div style="font-size:9px;color:var(--muted);font-weight:600;letter-spacing:1px">DÍAS</div></div></div></div>
     <div class="card" id="week-card" style="margin-bottom:16px;display:none">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
         <span class="label" style="margin:0">Tu semana pasada</span>
@@ -317,7 +317,36 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 <div class="screen" id="screen-profile">
   <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
   <div class="scroll-content" style="padding-top:4px">
-    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px"><div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--accent),#FF8C00);display:flex;align-items:center;justify-content:center;font-size:28px;box-shadow:0 4px 20px rgba(255,77,0,.35)">🥊</div><div><div style="font-size:22px;font-weight:900;color:var(--text);letter-spacing:-.5px" id="pf-name">Entrenador</div><div style="display:flex;gap:8px;align-items:center;margin-top:4px"><span class="chip" id="pf-level">Novato</span><span class="muted-text" style="font-size:12px" id="pf-streak">🔥 0 días</span></div></div><button onclick="openEditProfile()" aria-label="Editar perfil" style="margin-left:auto;flex-shrink:0;width:38px;height:38px;border-radius:19px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:15px;line-height:1;cursor:pointer">✎</button></div>
+    <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px"><svg viewBox="0 0 1024 1024" style="width:64px;height:64px;border-radius:50%;flex-shrink:0;box-shadow:0 4px 20px rgba(255,77,0,.35)" aria-label="KinearFit">
+      <defs>
+        <radialGradient id="av-b" cx="36%" cy="32%" r="74%">
+          <stop offset="0%" stop-color="#FFC08A"/><stop offset="26%" stop-color="#FF7A2E"/>
+          <stop offset="62%" stop-color="#FF4500"/><stop offset="100%" stop-color="#92210A"/>
+        </radialGradient>
+        <radialGradient id="av-g" cx="50%" cy="50%" r="50%">
+          <stop offset="36%" stop-color="#FF4500" stop-opacity=".55"/>
+          <stop offset="100%" stop-color="#FF4500" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="av-s" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#fff" stop-opacity=".55"/>
+          <stop offset="50%" stop-color="#fff" stop-opacity=".12"/>
+          <stop offset="100%" stop-color="#fff" stop-opacity="0"/>
+        </radialGradient>
+        <radialGradient id="av-e" cx="50%" cy="50%" r="50%">
+          <stop offset="58%" stop-color="#000" stop-opacity="0"/>
+          <stop offset="100%" stop-color="#000" stop-opacity=".42"/>
+        </radialGradient>
+      </defs>
+      <rect width="1024" height="1024" fill="#080A12"/>
+      <circle cx="512" cy="512" r="490" fill="url(#av-g)"/>
+      <circle cx="512" cy="512" r="312" fill="url(#av-b)"/>
+      <g stroke="#8C1F08" stroke-opacity=".5" stroke-width="10" fill="none">
+        <path d="M512 247 L512 777"/><path d="M247 512 L777 512"/>
+        <circle cx="512" cy="512" r="156"/>
+      </g>
+      <circle cx="512" cy="512" r="312" fill="url(#av-s)"/>
+      <circle cx="512" cy="512" r="312" fill="url(#av-e)"/>
+    </svg><div><div style="font-size:22px;font-weight:900;color:var(--text);letter-spacing:-.5px" id="pf-name">Entrenador</div><div style="display:flex;gap:8px;align-items:center;margin-top:4px"><span class="chip" id="pf-level">Novato</span><span class="muted-text" style="font-size:12px" id="pf-streak">🔥 0 días</span></div></div><button onclick="openEditProfile()" aria-label="Editar perfil" style="margin-left:auto;flex-shrink:0;width:38px;height:38px;border-radius:19px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:15px;line-height:1;cursor:pointer">✎</button></div>
     <div class="card" style="margin-bottom:16px"><div class="label" style="margin-bottom:14px">Estadísticas</div><div id="pf-stats"></div></div>
     <div style="background:var(--white);border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:16px"><div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid var(--border)"><span style="font-size:16px;margin-right:12px">🌐</span><span style="font-size:13px;color:var(--text);flex:1">Idioma</span><span style="font-size:12px;color:var(--muted)">Español ›</span></div><div style="display:flex;align-items:center;padding:14px 16px"><span style="font-size:16px;margin-right:12px">🔊</span><span style="font-size:13px;color:var(--text);flex:1">Sonido</span><span style="font-size:12px;color:var(--muted)">On ›</span></div></div>
     <div class="card card-accent" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px"><div><span class="chip" style="margin-bottom:6px;display:inline-block">Premium</span><div style="font-size:13px;color:var(--text);margin-top:6px">Rondas ilimitadas</div><div style="font-size:12px;color:var(--muted)">Todos los modos · Sin límites</div></div><button class="btn btn-small" style="flex-shrink:0">Ver planes</button></div>
@@ -444,10 +473,10 @@ let MOVES={
   HOOK_BODY_R:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.RW, offX:-.20,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
   UPPER:{color:'#FFD60A',label:'UPPERCUT', kp:KP.RW, offX: .04,offY:-.06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
   KICKF:{color:'#7B2D8B',label:'FRONT KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total', atkDir:'up'},
-  KICKS:{color:'#E040FB',label:'ROUND KICK →',kp:KP.RA, offX: .22,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
+  KICKS:{color:'#E040FB',label:'ROUND KICK →',kp:KP.RA, offX: .17,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
   // Misma patada lateral con la otra pierna. Es lateral, asi que la posicion en pantalla
   // indica sola cual pierna: no necesita texto ni color extra.
-  KICKS_2:{color:'#E040FB',label:'ROUND KICK \u2190',kp:KP.LA, offX:-.22,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'left'},
+  KICKS_2:{color:'#E040FB',label:'ROUND KICK \u2190',kp:KP.LA, offX:-.17,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'left'},
   // ---- Movimientos LIBRES (kpAlt): se ejecutan con cualquiera de los dos lados. ----
   // Target centrado, asi que la posicion en pantalla no puede indicar lateralidad:
   // por eso aceptan ambos lados en vez de exigir el dominante.
@@ -505,7 +534,7 @@ const RUTINAS=[
   // ===== AVANZADO (6) =====
   {id:'clasico_completo', name:'Clásico Completo', seq:['JAB','CROSS','HOOK_L','UPPER','HOOK_BODY_L'], level:'Avanzado',
    fact:'Las manos se alternan golpe a golpe: así la cadera rota en ambos sentidos y no se pierde potencia.'},
-  {id:'esquiva_contra', name:'Esquiva y Contraataque', seq:['JAB','CROSS','DOGEL','HOOK_L','CROSS'], level:'Avanzado',
+  {id:'esquiva_contra', name:'Esquiva y Contraataque', seq:['JAB','CROSS','DOGER','HOOK_L','CROSS'], level:'Avanzado',
    fact:'Esquivar y contraatacar en menos de un segundo es la base de la defensa activa en boxeo.'},
   {id:'demoledor', name:'El Demoledor', seq:['JAB','CROSS','HOOK_BODY_L','UPPER','HOOK_L','CROSS'], level:'Avanzado',
    fact:'Golpear al cuerpo antes de ir a la cabeza baja la guardia del rival: táctica clásica de boxeo.'},
@@ -725,16 +754,16 @@ function obNext(){
 }
 function setDom(d){S.user.dom=d;document.getElementById('br').classList.toggle('active',d==='right');document.getElementById('bl').classList.toggle('active',d==='left');applyDom(d);}
 function applyDom(d){
-  if(d==='left'){MOVES.JAB.kp=KP.RW;MOVES.JAB.offX=.18;MOVES.CROSS.kp=KP.LW;MOVES.CROSS.offX=-.20;MOVES.HOOK_L.kp=KP.RW;MOVES.HOOK_L.offX=-.28;MOVES.HOOK_R.kp=KP.LW;MOVES.HOOK_R.offX=.28;MOVES.HOOK_BODY_L.kp=KP.RW;MOVES.HOOK_BODY_L.offX=-.20;MOVES.HOOK_BODY_R.kp=KP.LW;MOVES.HOOK_BODY_R.offX=.20;MOVES.UPPER.kp=KP.LW;MOVES.UPPER.offX=-.04;MOVES.KICKF.kp=KP.LK;MOVES.KICKS.kp=KP.LA;MOVES.KICKS.offX=-.22;
+  if(d==='left'){MOVES.JAB.kp=KP.RW;MOVES.JAB.offX=.18;MOVES.CROSS.kp=KP.LW;MOVES.CROSS.offX=-.20;MOVES.HOOK_L.kp=KP.RW;MOVES.HOOK_L.offX=-.28;MOVES.HOOK_R.kp=KP.LW;MOVES.HOOK_R.offX=.28;MOVES.HOOK_BODY_L.kp=KP.RW;MOVES.HOOK_BODY_L.offX=-.20;MOVES.HOOK_BODY_R.kp=KP.LW;MOVES.HOOK_BODY_R.offX=.20;MOVES.UPPER.kp=KP.LW;MOVES.UPPER.offX=-.04;MOVES.KICKF.kp=KP.LK;MOVES.KICKS.kp=KP.LA;MOVES.KICKS.offX=-.17;
     // Mirror the attack directions too, otherwise travel validation fails for lefties
     MOVES.HOOK_L.atkDir='left';MOVES.HOOK_R.atkDir='right';
     MOVES.HOOK_BODY_L.atkDir='left';MOVES.HOOK_BODY_R.atkDir='right';
-    MOVES.KICKS_2.kp=KP.RA;MOVES.KICKS_2.offX=.22;MOVES.KICKS_2.atkDir='right';
+    MOVES.KICKS_2.kp=KP.RA;MOVES.KICKS_2.offX=.17;MOVES.KICKS_2.atkDir='right';
     MOVES.KICKS.atkDir='left';}
-  else{MOVES.JAB.kp=KP.LW;MOVES.JAB.offX=-.18;MOVES.CROSS.kp=KP.RW;MOVES.CROSS.offX=.20;MOVES.HOOK_L.kp=KP.LW;MOVES.HOOK_L.offX=.28;MOVES.HOOK_R.kp=KP.RW;MOVES.HOOK_R.offX=-.28;MOVES.HOOK_BODY_L.kp=KP.LW;MOVES.HOOK_BODY_L.offX=.20;MOVES.HOOK_BODY_R.kp=KP.RW;MOVES.HOOK_BODY_R.offX=-.20;MOVES.UPPER.kp=KP.RW;MOVES.UPPER.offX=.04;MOVES.KICKF.kp=KP.RK;MOVES.KICKS.kp=KP.RA;MOVES.KICKS.offX=.22;
+  else{MOVES.JAB.kp=KP.LW;MOVES.JAB.offX=-.18;MOVES.CROSS.kp=KP.RW;MOVES.CROSS.offX=.20;MOVES.HOOK_L.kp=KP.LW;MOVES.HOOK_L.offX=.28;MOVES.HOOK_R.kp=KP.RW;MOVES.HOOK_R.offX=-.28;MOVES.HOOK_BODY_L.kp=KP.LW;MOVES.HOOK_BODY_L.offX=.20;MOVES.HOOK_BODY_R.kp=KP.RW;MOVES.HOOK_BODY_R.offX=-.20;MOVES.UPPER.kp=KP.RW;MOVES.UPPER.offX=.04;MOVES.KICKF.kp=KP.RK;MOVES.KICKS.kp=KP.RA;MOVES.KICKS.offX=.17;
     MOVES.HOOK_L.atkDir='right';MOVES.HOOK_R.atkDir='left';
     MOVES.HOOK_BODY_L.atkDir='right';MOVES.HOOK_BODY_R.atkDir='left';
-    MOVES.KICKS_2.kp=KP.LA;MOVES.KICKS_2.offX=-.22;MOVES.KICKS_2.atkDir='left';
+    MOVES.KICKS_2.kp=KP.LA;MOVES.KICKS_2.offX=-.17;MOVES.KICKS_2.atkDir='left';
     MOVES.KICKS.atkDir='right';}
 }
 function setLvl(l){S.user.level=l;['b','i','a'].forEach((x,i)=>document.getElementById('lv-'+x).classList.toggle('active',['beginner','intermediate','advanced'][i]===l));}
@@ -1294,7 +1323,7 @@ function activateDodge(mk,now){
   const cx=body?body.x*c.width:c.width*0.5;
   const cy=body?body.y*c.height:c.height*0.4;
   // Diagonal: danger corner based on move (DOGEL=top-left danger -> move to bottom-right; DOGER=top-right danger -> move to bottom-left)
-  const dangerCorner=mk==='DOGEL'?'tl':'tr';
+  const dangerCorner=((mk==='DOGEL')!==(S.user.dom==='left'))?'tl':'tr';
   const safeCorner=mk==='DOGEL'?'br':'bl';
   dodgeZoneData={cx,cy,w:c.width*0.44,h:c.height*0.36,dir:mk==='DOGEL'?'left':'right',dangerCorner,safeCorner};
 }
@@ -1317,6 +1346,7 @@ function checkDodgeSuccess(){
     dodgeActive=false;const pos={x:dz.cx+dx,y:dz.cy+dy};dodgeZoneData=null;
     S.sess.dodges++;S.sess.score+=30;
     S.sess.comboStr++;S.sess.comboMax=Math.max(S.sess.comboMax,S.sess.comboStr);
+    S.sess.lastHitAt=Date.now();
     addEffect(pos,'#00B87A','DODGE!');playSound('dodge');
     updateHUD();
     if(isTutorial){
@@ -1414,6 +1444,7 @@ function doHit(mk,pos){
   const base=isKick?25:15;
   S.sess.score+=base*mult;S.sess.hits++;
   S.sess.comboStr++;S.sess.comboMax=Math.max(S.sess.comboMax,S.sess.comboStr);
+  S.sess.lastHitAt=Date.now();
   if(isKick)S.sess.kicks++;
   addEffect(pos,MOVES[mk].color,MOVES[mk].label);
   playSound(mk.toLowerCase());
@@ -1469,6 +1500,20 @@ function initCanvas(){
   arRunning=true;hitEffects=[];kptHistory=[];initCanvasTouch();
   requestAnimationFrame(arLoop);
 }
+// Si pasan mas de COMBO_TIMEOUT sin acertar, la racha se rompe. Sin esto el
+// contador solo bajaba al fallar una esquiva, y en rutinas sin esquivas nunca.
+const COMBO_TIMEOUT=3000;
+function checkComboTimeout(){
+  const s=S.sess;
+  if(!s.active||s.mode==='libre')return;
+  if(!s.comboStr||s.comboStr<=0)return;
+  if(!s.lastHitAt){s.lastHitAt=Date.now();return;}
+  if(Date.now()-s.lastHitAt>COMBO_TIMEOUT){
+    s.comboStr=0;
+    s.lastHitAt=Date.now();
+    updateHUD();
+  }
+}
 function arLoop(){
   if(!arRunning)return;
   const c=document.getElementById('ar-canvas');
@@ -1489,6 +1534,7 @@ function arLoop(){
   else{ctx.fillStyle='#0A0A10';ctx.fillRect(0,0,c.width,c.height);}
   // AR layers
   updatePearPhysics();
+  checkComboTimeout();
   if(S.sess.mode==='tutorial'){drawTutorialTarget(c,ctx);drawDodgeZone(c,ctx);}
   else if(S.sess.mode==='libre'){drawPear(c,ctx);drawPower(c,ctx);}
   else{drawTargets(c,ctx);drawDodgeZone(c,ctx);}
@@ -1986,7 +2032,7 @@ function startBreak(){
   showCenterOverlay('REST');
   const restEl=()=>document.getElementById('co-rest-time');
   if(restEl())restEl().textContent=fmtT(bt);
-  breakTimer=setInterval(()=>{bt--;document.getElementById('hud-tmr').textContent=fmtT(bt);if(restEl())restEl().textContent=fmtT(bt);if(bt<=0){clearInterval(breakTimer);hideCenterOverlay();S.sess.round++;S.sess.timeLeft=DIFF[S.sess.diff].dur;S.sess.active=true;updateHUD();startRoundTimer();if(S.sess.mode!=='libre'){rendNextMoves();}}},1000);
+  breakTimer=setInterval(()=>{bt--;document.getElementById('hud-tmr').textContent=fmtT(bt);if(restEl())restEl().textContent=fmtT(bt);if(bt<=0){clearInterval(breakTimer);hideCenterOverlay();S.sess.comboStr=0;S.sess.lastHitAt=Date.now();S.sess.round++;S.sess.timeLeft=DIFF[S.sess.diff].dur;S.sess.active=true;updateHUD();startRoundTimer();if(S.sess.mode!=='libre'){rendNextMoves();}}},1000);
 }
 function updateHUD(){
   const s=S.sess,mult=getMultiplier();
@@ -2487,7 +2533,7 @@ function refHome(){
   renderDailyChallenge();
   renderWeekCard();
   const n=S.user.name||'Entrenador';
-  document.getElementById('h-greeting').textContent='Hola, '+n;
+  document.getElementById('h-greeting').textContent=n;
   document.getElementById('h-streak').textContent=S.stats.streak;
   const xp=S.stats.xp,li=LEVELS.findIndex((_,i)=>xp<(LEVEL_XP[i+1]||Infinity));
   const cur=LEVELS[Math.min(li,LEVELS.length-1)],nxt=LEVELS[Math.min(li+1,LEVELS.length-1)];
