@@ -265,8 +265,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <div class="form-group">
     <label class="form-label">LATERALIDAD</label>
     <div style="display:flex;gap:10px">
-      <button class="toggle-btn" id="ed-br" style="flex:1" onclick="edSetDom('right')">\U0001F91C Diestro</button>
-      <button class="toggle-btn" id="ed-bl" style="flex:1" onclick="edSetDom('left')">\U0001F91B Zurdo</button>
+      <button class="toggle-btn" id="ed-br" style="flex:1" onclick="edSetDom('right')">🤜 Diestro</button>
+      <button class="toggle-btn" id="ed-bl" style="flex:1" onclick="edSetDom('left')">🤛 Zurdo</button>
     </div>
     <div style="font-size:11px;color:var(--muted);margin-top:8px">Cambia de que lado aparecen los ganchos y la patada lateral.</div>
   </div>
@@ -1323,8 +1323,11 @@ function activateDodge(mk,now){
   const cx=body?body.x*c.width:c.width*0.5;
   const cy=body?body.y*c.height:c.height*0.4;
   // Diagonal: danger corner based on move (DOGEL=top-left danger -> move to bottom-right; DOGER=top-right danger -> move to bottom-left)
-  const dangerCorner=((mk==='DOGEL')!==(S.user.dom==='left'))?'tl':'tr';
-  const safeCorner=mk==='DOGEL'?'br':'bl';
+  // Para un zurdo se espeja el par completo: si solo se invierte el peligro,
+  // el refugio queda del mismo lado y la esquiva deja de tener sentido.
+  const asLeft=((mk==='DOGEL')!==(S.user.dom==='left'));
+  const dangerCorner=asLeft?'tl':'tr';
+  const safeCorner  =asLeft?'br':'bl';
   dodgeZoneData={cx,cy,w:c.width*0.44,h:c.height*0.36,dir:mk==='DOGEL'?'left':'right',dangerCorner,safeCorner};
 }
 function checkDodgeSuccess(){
@@ -1502,7 +1505,7 @@ function initCanvas(){
 }
 // Si pasan mas de COMBO_TIMEOUT sin acertar, la racha se rompe. Sin esto el
 // contador solo bajaba al fallar una esquiva, y en rutinas sin esquivas nunca.
-const COMBO_TIMEOUT=3000;
+const COMBO_TIMEOUT=2000;
 function checkComboTimeout(){
   const s=S.sess;
   if(!s.active||s.mode==='libre')return;
