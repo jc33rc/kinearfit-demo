@@ -1436,7 +1436,7 @@ function showCenterOverlay(mk){
 function hideCenterOverlay(){document.getElementById('center-overlay').style.display='none';}
 function advCombo(seq){
   S.sess.combIdx++;
-  if(S.sess.combIdx>=seq.length){S.sess.combIdx=0;S.sess.combos++;S.sess.comboStr++;S.sess.comboMax=Math.max(S.sess.comboMax,S.sess.comboStr);if(RUTINAS[S.sess.selCombo]&&RUTINAS[S.sess.selCombo].level==='Avanzado')S.sess.eliteCombos=(S.sess.eliteCombos||0)+1;}
+  if(S.sess.combIdx>=seq.length){S.sess.combIdx=0;S.sess.combos++;if(RUTINAS[S.sess.selCombo]&&RUTINAS[S.sess.selCombo].level==='Avanzado')S.sess.eliteCombos=(S.sess.eliteCombos||0)+1;}
   rendNextMoves();
 }
 function announceCurrentMove(){}
@@ -2035,7 +2035,7 @@ function startBreak(){
   showCenterOverlay('REST');
   const restEl=()=>document.getElementById('co-rest-time');
   if(restEl())restEl().textContent=fmtT(bt);
-  breakTimer=setInterval(()=>{bt--;document.getElementById('hud-tmr').textContent=fmtT(bt);if(restEl())restEl().textContent=fmtT(bt);if(bt<=0){clearInterval(breakTimer);hideCenterOverlay();S.sess.comboStr=0;S.sess.lastHitAt=Date.now();S.sess.round++;S.sess.timeLeft=DIFF[S.sess.diff].dur;S.sess.active=true;updateHUD();startRoundTimer();if(S.sess.mode!=='libre'){rendNextMoves();}}},1000);
+  breakTimer=setInterval(()=>{bt--;document.getElementById('hud-tmr').textContent=fmtT(bt);if(restEl())restEl().textContent=fmtT(bt);if(bt<=0){clearInterval(breakTimer);hideCenterOverlay();S.sess.lastHitAt=Date.now();S.sess.round++;S.sess.timeLeft=DIFF[S.sess.diff].dur;S.sess.active=true;updateHUD();startRoundTimer();if(S.sess.mode!=='libre'){rendNextMoves();}}},1000);
 }
 function updateHUD(){
   const s=S.sess,mult=getMultiplier();
@@ -2046,7 +2046,7 @@ function updateHUD(){
   const kcal=Math.round(calcCalories(s.diff,s.activeSeconds||0));
   document.getElementById('hud-cal').textContent=kcal;
   const cal2=document.getElementById('hud-cal2');if(cal2)cal2.textContent=kcal;
-  // El multiplicador vive en la etiqueta de Combos: misma fila, sin sumar altura.
+  // El multiplicador vive en la etiqueta, en la misma fila, sin sumar altura.
   const cl=document.getElementById('hud-cmb-lbl');
   if(cl){
     if(s.comboStr>=2){cl.textContent=`Combos ×${s.comboStr}${mult>1?'!':''}`;cl.style.color='#FFD60A';}
