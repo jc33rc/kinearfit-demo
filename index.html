@@ -134,7 +134,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px"><div class="form-group"><label class="form-label">PESO (kg)</label><input class="form-input" id="in-wt" type="number" placeholder="kg"></div><div class="form-group"><label class="form-label">ALTURA (cm)</label><input class="form-input" id="in-ht" type="number" placeholder="cm"></div></div>
     </div>
     <div id="op2" style="display:none">
-      <div class="form-group"><label class="form-label">LATERALIDAD</label><div style="display:flex;gap:8px"><button class="toggle-btn active" id="br" onclick="setDom('right')">🤜 Diestro</button><button class="toggle-btn" id="bl" onclick="setDom('left')">🤛 Zurdo</button></div></div>
+      <div class="form-group"><label class="form-label">LATERALIDAD</label><div style="display:flex;gap:8px"><button class="toggle-btn" id="bl" onclick="setDom('left')">Zurdo</button><button class="toggle-btn active" id="br" onclick="setDom('right')">Diestro</button></div></div>
       <div class="form-group"><label class="form-label">NIVEL</label><div style="display:flex;gap:8px"><button class="level-btn active" id="lv-b" onclick="setLvl('beginner')">Principiante</button><button class="level-btn" id="lv-i" onclick="setLvl('intermediate')">Intermedio</button><button class="level-btn" id="lv-a" onclick="setLvl('advanced')">Avanzado</button></div></div>
     </div>
     <div id="op3" style="display:none">
@@ -227,7 +227,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <button id="tut-exit" onclick="exitTutorial()" style="position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:7;display:none;background:rgba(0,0,0,.6);border:1.5px solid rgba(255,255,255,.3);color:white;font-family:var(--font);font-weight:800;font-size:14px;padding:12px 32px;border-radius:30px;cursor:pointer;backdrop-filter:blur(8px)">Salir</button>
   <div id="hud">
     <div class="hud-top">
-      <div style="min-width:74px"><div class="hud-lbl" id="hud-cmb-lbl">Combos</div><div class="hud-val" id="hud-cmb">0</div></div>
+      <div style="min-width:74px" id="hud-cmb-box"><div class="hud-lbl" id="hud-cmb-lbl">Combos</div><div class="hud-val" id="hud-cmb">0</div></div>
       <div style="text-align:center"><div class="hud-lbl" id="hud-rnd">1/3</div><div class="hud-timer" id="hud-tmr">3:00</div></div>
       <div style="min-width:74px;text-align:right"><div class="hud-lbl">Kcal</div><div class="hud-val" id="hud-cal2">0</div></div>
     </div>
@@ -265,8 +265,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <div class="form-group">
     <label class="form-label">LATERALIDAD</label>
     <div style="display:flex;gap:10px">
-      <button class="toggle-btn" id="ed-br" style="flex:1" onclick="edSetDom('right')">🤜 Diestro</button>
-      <button class="toggle-btn" id="ed-bl" style="flex:1" onclick="edSetDom('left')">🤛 Zurdo</button>
+      <button class="toggle-btn" id="ed-bl" style="flex:1" onclick="edSetDom('left')">Zurdo</button>
+      <button class="toggle-btn" id="ed-br" style="flex:1" onclick="edSetDom('right')">Diestro</button>
     </div>
     <div style="font-size:11px;color:var(--muted);margin-top:8px">Cambia de que lado aparecen los ganchos y la patada lateral.</div>
   </div>
@@ -1017,7 +1017,8 @@ async function startSession(mode,diff){
   for(const k in hitCool)delete hitCool[k];  // clear stale cooldowns from previous sessions
   kptHistory=[];dodgeZoneData=null;dodgeT=0;
   S.sess={active:false,mode,diff,round:1,totalRounds:3,timeLeft:DIFF[diff].dur,score:0,hits:0,comboStr:0,comboMax:0,kicks:0,dodges:0,combos:0,combIdx:0,selCombo:S.selCombo,startTime:Date.now(),activeSeconds:0};
-  S.stats.modesSet.add(mode);S.stats.modesUsed=S.stats.modesSet.size;
+  // El tutorial no cuenta: la insignia Explorador se refiere a libre y guiado.
+  if(mode!=='tutorial'){S.stats.modesSet.add(mode);S.stats.modesUsed=S.stats.modesSet.size;}
   pearDamage=0;pearFlash=0;pearBounce={x:0,y:0,vx:0,vy:0};
   dodgeActive=false;dodgeZoneData=null;
   goTo('session');document.getElementById('bottom-nav').style.display='none';
@@ -1032,6 +1033,7 @@ async function startSession(mode,diff){
   await sleep(350);
   document.getElementById('loading-overlay').style.display='none';
   initCanvas();S.sess.active=true;
+  S.sess.startTime=Date.now(); // el reloj arranca con la rutina, no en la carga
   if(mode==='tutorial'){
     document.getElementById('hud').style.display='none';
     initTutorial();
@@ -2027,7 +2029,7 @@ function drawEffects(c,ctx){
 // ======== SESSION TIMER ========
 function startRoundTimer(){
   clearInterval(sessTimer);
-  sessTimer=setInterval(()=>{if(!S.sess.active)return;S.sess.timeLeft--;S.sess.activeSeconds=(S.sess.activeSeconds||0)+1;updateHUD();if(S.sess.timeLeft<=0){clearInterval(sessTimer);if(S.sess.round<S.sess.totalRounds)startBreak();else endSession();}},1000);
+  sessTimer=setInterval(()=>{if(!S.sess.active)return;S.sess.timeLeft--;S.sess.activeSeconds=(S.sess.activeSeconds||0)+1;updateHUD();if(S.sess.timeLeft<=0){clearInterval(sessTimer);if(S.sess.round<S.sess.totalRounds)startBreak();else{S.sess.completed=true;endSession();}}},1000);
 }
 function startBreak(){
   S.sess.active=false;let bt=DIFF[S.sess.diff].rest;
@@ -2041,6 +2043,9 @@ function updateHUD(){
   const s=S.sess,mult=getMultiplier();
   document.getElementById('hud-rnd').textContent=`${s.round}/${s.totalRounds}`;
   document.getElementById('hud-tmr').textContent=fmtT(s.timeLeft);
+  // En modo libre no hay secuencias que completar: el contador de combos se oculta.
+  const cmbBox=document.getElementById('hud-cmb-box');
+  if(cmbBox)cmbBox.style.visibility=(s.mode==='libre')?'hidden':'visible';
   const cmb=document.getElementById('hud-cmb');if(cmb)cmb.textContent=s.combos||0;
   document.getElementById('hud-hits').textContent=s.hits;
   const kcal=Math.round(calcCalories(s.diff,s.activeSeconds||0));
@@ -2076,7 +2081,9 @@ function endSession(fromTutorial){
   const sessionCal=Math.round(calcCalories(s.diff,s.activeSeconds||0));
   S.stats.totalHits+=s.hits;S.stats.totalKicks+=s.kicks;S.stats.totalDodges+=s.dodges;
   S.stats.totalCombos+=s.combos;S.stats.totalSessions+=1;
-  S.stats.totalRounds+=s.round-1;if(s.diff==='hard')S.stats.hardRounds+=s.round-1;
+    // Si la sesion se culmino, la ronda en curso tambien se completo.
+  const roundsDone=s.completed?s.round:s.round-1;
+  S.stats.totalRounds+=roundsDone;if(s.diff==='hard')S.stats.hardRounds+=s.round-1;
   S.stats.totalTime+=dur;S.stats.xp+=s.score;
   S.stats.totalCalories=(S.stats.totalCalories||0)+sessionCal;
   if(!S.stats.calLog)S.stats.calLog={};
@@ -2380,17 +2387,6 @@ function paintCard(cx,W,H,src,mirror){
     cx.fillText(st.routine,X+24,SAFE_TOP+48);
   }
   // --- Insignia: dentro de la columna, no arriba a la derecha ---
-  const bl=lastBadgeLabel();
-  if(bl){
-    const by=SAFE_TOP+(st.routine?96:60);
-    cx.font='700 25px '+F;
-    const bw=cx.measureText(bl).width,ph=44;
-    cx.fillStyle='rgba(0,212,255,0.16)';rrPath(cx,X,by,bw+40,ph,ph/2);cx.fill();
-    cx.strokeStyle='rgba(0,212,255,0.5)';cx.lineWidth=2;rrPath(cx,X,by,bw+40,ph,ph/2);cx.stroke();
-    cx.fillStyle='#00D4FF';cx.textBaseline='middle';
-    cx.fillText(bl,X+20,by+ph/2+1);
-    cx.textBaseline='top';
-  }
 
   // --- Cifra grande: golpes ---
   cx.textBaseline='alphabetic';
