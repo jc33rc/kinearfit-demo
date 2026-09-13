@@ -76,11 +76,11 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 #cam-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:0;z-index:0}
 #ar-canvas{position:absolute;inset:0;width:100%;height:100%;z-index:2;touch-action:none}
 #hud{position:absolute;inset:0;z-index:3;pointer-events:none;display:flex;flex-direction:column}
-.hud-top{background:linear-gradient(180deg,rgba(0,0,0,.75) 0%,transparent 100%);padding:52px 18px 10px;display:flex;justify-content:space-between;align-items:center}
+.hud-top{background:linear-gradient(180deg,rgba(0,0,0,.75) 0%,transparent 100%);padding:52px 18px 10px;display:flex;justify-content:space-between;align-items:flex-end}
 .hud-timer{font-size:38px;font-weight:900;color:#00D4FF;text-shadow:0 0 25px rgba(0,212,255,.8),0 0 50px rgba(0,212,255,.3);letter-spacing:-1px}
-.hud-val{font-size:22px;font-weight:900;color:white;line-height:1.1}
+.hud-val{font-size:27px;font-weight:900;color:white;line-height:1.1;white-space:nowrap}
 #hud-cal2{color:#00B87A}
-.hud-lbl{font-size:9px;color:rgba(255,255,255,.5);letter-spacing:1.5px;text-transform:uppercase}
+.hud-lbl{font-size:11px;color:rgba(255,255,255,.5);letter-spacing:1.4px;text-transform:uppercase;white-space:nowrap}
 .hud-bottom{margin-top:auto;background:linear-gradient(0deg,rgba(0,0,0,.8) 0%,transparent 100%);padding:16px 16px 28px;display:flex;align-items:center;gap:8px}
 #btn-end{pointer-events:all;background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.2);border-radius:10px;color:white;font-family:var(--font);font-size:12px;font-weight:700;padding:8px 14px;cursor:pointer;margin-left:auto}
 .tracking-badge{position:absolute;top:116px;right:12px;z-index:4;display:flex;align-items:center;gap:5px;background:rgba(0,0,0,.55);border-radius:20px;padding:5px 10px}
@@ -227,9 +227,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
   <button id="tut-exit" onclick="exitTutorial()" style="position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:7;display:none;background:rgba(0,0,0,.6);border:1.5px solid rgba(255,255,255,.3);color:white;font-family:var(--font);font-weight:800;font-size:14px;padding:12px 32px;border-radius:30px;cursor:pointer;backdrop-filter:blur(8px)">Salir</button>
   <div id="hud">
     <div class="hud-top">
-      <div style="min-width:74px" id="hud-cmb-box"><div class="hud-lbl" id="hud-cmb-lbl">Combos</div><div class="hud-val" id="hud-cmb">0</div></div>
+      <div style="min-width:92px" id="hud-cmb-box"><div class="hud-lbl" id="hud-cmb-lbl">Combos</div><div class="hud-val" id="hud-cmb">0</div></div>
       <div style="text-align:center"><div class="hud-lbl" id="hud-rnd">1/3</div><div class="hud-timer" id="hud-tmr">3:00</div></div>
-      <div style="min-width:74px;text-align:right"><div class="hud-lbl">Kcal</div><div class="hud-val" id="hud-cal2">0</div></div>
+      <div style="min-width:92px;text-align:right"><div class="hud-lbl">Kcal</div><div class="hud-val" id="hud-cal2">0</div></div>
     </div>
     <div class="hud-bottom">
       <div id="hb-libre" style="display:none;gap:8px;align-items:center"><div style="background:rgba(255,255,255,.08);border-radius:12px;padding:6px 14px"><span style="font-size:13px;font-weight:700;color:white" id="hud-hits">0</span><span style="font-size:11px;color:rgba(255,255,255,.5)"> golpes</span></div><div style="background:rgba(255,255,255,.08);border-radius:12px;padding:6px 14px"><span style="font-size:13px;font-weight:700;color:#00B87A" id="hud-cal">0</span><span style="font-size:11px;color:rgba(255,255,255,.5)"> cal</span></div></div>
@@ -1041,7 +1041,7 @@ async function startSession(mode,diff){
     document.getElementById('hud').style.display='flex';
     updateHUD();
     const libre=mode==='libre';
-    document.getElementById('hb-libre').style.display=libre?'flex':'none';
+    document.getElementById('hb-libre').style.display='none';
     document.getElementById('hb-combo').style.display=libre?'none':'flex';
     if(!libre){rendNextMoves();}
     startRoundTimer();
@@ -2043,10 +2043,12 @@ function updateHUD(){
   const s=S.sess,mult=getMultiplier();
   document.getElementById('hud-rnd').textContent=`${s.round}/${s.totalRounds}`;
   document.getElementById('hud-tmr').textContent=fmtT(s.timeLeft);
-  // En modo libre no hay secuencias que completar: el contador de combos se oculta.
+  // En modo libre no hay secuencias, asi que ese espacio lo ocupan los golpes.
+  const esLibre=(s.mode==='libre');
   const cmbBox=document.getElementById('hud-cmb-box');
-  if(cmbBox)cmbBox.style.visibility=(s.mode==='libre')?'hidden':'visible';
-  const cmb=document.getElementById('hud-cmb');if(cmb)cmb.textContent=s.combos||0;
+  if(cmbBox)cmbBox.style.visibility='visible';
+  const cmb=document.getElementById('hud-cmb');
+  if(cmb)cmb.textContent=esLibre?(s.hits||0):(s.combos||0);
   document.getElementById('hud-hits').textContent=s.hits;
   const kcal=Math.round(calcCalories(s.diff,s.activeSeconds||0));
   document.getElementById('hud-cal').textContent=kcal;
@@ -2054,7 +2056,8 @@ function updateHUD(){
   // El multiplicador vive en la etiqueta, en la misma fila, sin sumar altura.
   const cl=document.getElementById('hud-cmb-lbl');
   if(cl){
-    if(s.comboStr>=2){cl.textContent=`Combos ×${s.comboStr}${mult>1?'!':''}`;cl.style.color='#FFD60A';}
+    if(esLibre){cl.textContent='Golpes';cl.style.color='';}
+    else if(s.comboStr>=2){cl.textContent=`Combos ×${s.comboStr}${mult>1?'!':''}`;cl.style.color='#FFD60A';}
     else {cl.textContent='Combos';cl.style.color='';}
   }
 }
