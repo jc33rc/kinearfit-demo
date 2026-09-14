@@ -465,18 +465,18 @@ const KP={NOSE:0,LE:1,RE:2,LEAR:3,REAR:4,LS:5,RS:6,LELB:7,RELB:8,LW:9,RW:10,LH:1
 
 // HOOK uses lateral velocity (velType:'x'), others use total velocity
 let MOVES={
-  JAB:  {color:'#1A56FF',label:'JAB',   kp:KP.LW, offX:-.18,offY:-.12,velThr:38, size:.13,velType:'total', atkDir:'up'},
-  CROSS:{color:'#FF4D00',label:'CROSS', kp:KP.RW, offX: .20,offY:-.14,velThr:38, size:.14,velType:'total', atkDir:'up'},
-  HOOK_L:{color:'#F77F00',label:'HOOK', kp:KP.LW, offX: .28,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'right'},
-  HOOK_R:{color:'#F77F00',label:'HOOK', kp:KP.RW, offX:-.28,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
-  HOOK_BODY_L:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.LW, offX: .20,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'right'},
-  HOOK_BODY_R:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.RW, offX:-.20,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
+  JAB:  {color:'#1A56FF',label:'JAB',   kp:KP.LW, offX:-.14,offY:-.12,velThr:38, size:.13,velType:'total', atkDir:'up'},
+  CROSS:{color:'#FF4D00',label:'CROSS', kp:KP.RW, offX: .14,offY:-.14,velThr:38, size:.14,velType:'total', atkDir:'up'},
+  HOOK_L:{color:'#F77F00',label:'HOOK', kp:KP.LW, offX:-.14,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
+  HOOK_R:{color:'#F77F00',label:'HOOK', kp:KP.RW, offX: .14,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
+  HOOK_BODY_L:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.LW, offX:-.14,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'right'},
+  HOOK_BODY_R:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.RW, offX: .14,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
   UPPER:{color:'#FFD60A',label:'UPPERCUT', kp:KP.RW, offX: .04,offY:-.06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
   KICKF:{color:'#7B2D8B',label:'FRONT KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total', atkDir:'up'},
-  KICKS:{color:'#E040FB',label:'ROUND KICK →',kp:KP.RA, offX: .17,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
+  KICKS:{color:'#E040FB',label:'ROUND KICK →',kp:KP.RA, offX: .14,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
   // Misma patada lateral con la otra pierna. Es lateral, asi que la posicion en pantalla
   // indica sola cual pierna: no necesita texto ni color extra.
-  KICKS_2:{color:'#E040FB',label:'ROUND KICK \u2190',kp:KP.LA, offX:-.17,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'left'},
+  KICKS_2:{color:'#E040FB',label:'ROUND KICK \u2190',kp:KP.LA, offX:-.14,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'left'},
   // ---- Movimientos LIBRES (kpAlt): se ejecutan con cualquiera de los dos lados. ----
   // Target centrado, asi que la posicion en pantalla no puede indicar lateralidad:
   // por eso aceptan ambos lados en vez de exigir el dominante.
@@ -754,16 +754,16 @@ function obNext(){
 }
 function setDom(d){S.user.dom=d;document.getElementById('br').classList.toggle('active',d==='right');document.getElementById('bl').classList.toggle('active',d==='left');applyDom(d);}
 function applyDom(d){
-  if(d==='left'){MOVES.JAB.kp=KP.RW;MOVES.JAB.offX=.18;MOVES.CROSS.kp=KP.LW;MOVES.CROSS.offX=-.20;MOVES.HOOK_L.kp=KP.RW;MOVES.HOOK_L.offX=-.28;MOVES.HOOK_R.kp=KP.LW;MOVES.HOOK_R.offX=.28;MOVES.HOOK_BODY_L.kp=KP.RW;MOVES.HOOK_BODY_L.offX=-.20;MOVES.HOOK_BODY_R.kp=KP.LW;MOVES.HOOK_BODY_R.offX=.20;MOVES.UPPER.kp=KP.LW;MOVES.UPPER.offX=-.04;MOVES.KICKF.kp=KP.LK;MOVES.KICKS.kp=KP.LA;MOVES.KICKS.offX=-.17;
+  if(d==='left'){MOVES.JAB.kp=KP.RW;MOVES.JAB.offX=.14;MOVES.CROSS.kp=KP.LW;MOVES.CROSS.offX=-.14;MOVES.HOOK_L.kp=KP.RW;MOVES.HOOK_L.offX=.14;MOVES.HOOK_R.kp=KP.LW;MOVES.HOOK_R.offX=-.14;MOVES.HOOK_BODY_L.kp=KP.RW;MOVES.HOOK_BODY_L.offX=.14;MOVES.HOOK_BODY_R.kp=KP.LW;MOVES.HOOK_BODY_R.offX=-.14;MOVES.UPPER.kp=KP.LW;MOVES.UPPER.offX=-.04;MOVES.KICKF.kp=KP.LK;MOVES.KICKS.kp=KP.LA;MOVES.KICKS.offX=-.14;
     // Mirror the attack directions too, otherwise travel validation fails for lefties
-    MOVES.HOOK_L.atkDir='left';MOVES.HOOK_R.atkDir='right';
-    MOVES.HOOK_BODY_L.atkDir='left';MOVES.HOOK_BODY_R.atkDir='right';
-    MOVES.KICKS_2.kp=KP.RA;MOVES.KICKS_2.offX=.17;MOVES.KICKS_2.atkDir='right';
-    MOVES.KICKS.atkDir='left';}
-  else{MOVES.JAB.kp=KP.LW;MOVES.JAB.offX=-.18;MOVES.CROSS.kp=KP.RW;MOVES.CROSS.offX=.20;MOVES.HOOK_L.kp=KP.LW;MOVES.HOOK_L.offX=.28;MOVES.HOOK_R.kp=KP.RW;MOVES.HOOK_R.offX=-.28;MOVES.HOOK_BODY_L.kp=KP.LW;MOVES.HOOK_BODY_L.offX=.20;MOVES.HOOK_BODY_R.kp=KP.RW;MOVES.HOOK_BODY_R.offX=-.20;MOVES.UPPER.kp=KP.RW;MOVES.UPPER.offX=.04;MOVES.KICKF.kp=KP.RK;MOVES.KICKS.kp=KP.RA;MOVES.KICKS.offX=.17;
     MOVES.HOOK_L.atkDir='right';MOVES.HOOK_R.atkDir='left';
     MOVES.HOOK_BODY_L.atkDir='right';MOVES.HOOK_BODY_R.atkDir='left';
-    MOVES.KICKS_2.kp=KP.LA;MOVES.KICKS_2.offX=-.17;MOVES.KICKS_2.atkDir='left';
+    MOVES.KICKS_2.kp=KP.RA;MOVES.KICKS_2.offX=.14;MOVES.KICKS_2.atkDir='right';
+    MOVES.KICKS.atkDir='left';}
+  else{MOVES.JAB.kp=KP.LW;MOVES.JAB.offX=-.14;MOVES.CROSS.kp=KP.RW;MOVES.CROSS.offX=.14;MOVES.HOOK_L.kp=KP.LW;MOVES.HOOK_L.offX=-.14;MOVES.HOOK_R.kp=KP.RW;MOVES.HOOK_R.offX=.14;MOVES.HOOK_BODY_L.kp=KP.LW;MOVES.HOOK_BODY_L.offX=-.14;MOVES.HOOK_BODY_R.kp=KP.RW;MOVES.HOOK_BODY_R.offX=.14;MOVES.UPPER.kp=KP.RW;MOVES.UPPER.offX=.04;MOVES.KICKF.kp=KP.RK;MOVES.KICKS.kp=KP.RA;MOVES.KICKS.offX=.14;
+    MOVES.HOOK_L.atkDir='left';MOVES.HOOK_R.atkDir='right';
+    MOVES.HOOK_BODY_L.atkDir='left';MOVES.HOOK_BODY_R.atkDir='right';
+    MOVES.KICKS_2.kp=KP.LA;MOVES.KICKS_2.offX=-.14;MOVES.KICKS_2.atkDir='left';
     MOVES.KICKS.atkDir='right';}
 }
 function setLvl(l){S.user.level=l;['b','i','a'].forEach((x,i)=>document.getElementById('lv-'+x).classList.toggle('active',['beginner','intermediate','advanced'][i]===l));}
