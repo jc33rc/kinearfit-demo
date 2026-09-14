@@ -88,6 +88,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .t-txt{font-size:10px;color:white;font-weight:600}
 .co-big{font-family:var(--font);font-weight:900;letter-spacing:-2px;text-shadow:0 0 30px currentColor,0 4px 20px rgba(0,0,0,.6);animation:coPulse .6s ease-out}
 .co-guard{font-size:64px;color:#00D4FF}
+.co-pos{font-size:56px;color:#F77F00}
 .co-move{font-size:56px;color:#FFD60A}
 .co-rest{font-size:52px;color:#00B87A}
 .co-sub{font-family:var(--font);font-weight:700;color:rgba(255,255,255,.7);font-size:16px;margin-top:10px;letter-spacing:2px;text-transform:uppercase}
@@ -469,10 +470,10 @@ let MOVES={
   CROSS:{color:'#FF4D00',label:'CROSS', kp:KP.RW, offX: .14,offY:-.14,velThr:38, size:.14,velType:'total', atkDir:'up'},
   HOOK_L:{color:'#F77F00',label:'HOOK', kp:KP.LW, offX:-.14,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
   HOOK_R:{color:'#F77F00',label:'HOOK', kp:KP.RW, offX: .14,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
-  HOOK_BODY_L:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.LW, offX:-.14,offY: .18,velThr:14, size:.11,velType:'lateral', atkDir:'right'},
-  HOOK_BODY_R:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.RW, offX: .14,offY: .18,velThr:14, size:.11,velType:'lateral', atkDir:'left'},
+  HOOK_BODY_L:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.LW, offX:-.14,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'left', requireLow:true},
+  HOOK_BODY_R:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.RW, offX: .14,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'right', requireLow:true},
   UPPER:{color:'#FFD60A',label:'UPPERCUT', kp:KP.RW, offX: .04,offY:-.06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
-  KICKF:{color:'#7B2D8B',label:'FRONT KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total', atkDir:'up'},
+  KICKF:{color:'#00E5C0',label:'FRONT KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total', atkDir:'up'},
   KICKS:{color:'#E040FB',label:'ROUND KICK →',kp:KP.RA, offX: .14,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
   // Misma patada lateral con la otra pierna. Es lateral, asi que la posicion en pantalla
   // indica sola cual pierna: no necesita texto ni color extra.
@@ -956,6 +957,17 @@ function kpCandidates(mv){
 // ELBOW: exige brazo cerrado (muneca cerca del hombro). Un hook desplaza el codo lateralmente
 // igual que un codazo, pero con el brazo extendido: esta condicion los separa.
 function strikeGate(mv,idx){
+  // BODY HOOK: el puno debe ir bajo, hacia el costado. En guardia esta arriba,
+  // asi que cargar el brazo ya no puede confundirse con el golpe.
+  if(mv.requireLow){
+    if(!currKpts)return false;
+    const w=currKpts[idx],ls=currKpts[KP.LS],rs=currKpts[KP.RS];
+    if(!w||!ls||!rs||ls.score<0.25||rs.score<0.25)return false;
+    const shY=(ls.y+rs.y)/2;
+    const lh=currKpts[KP.LH],rh=currKpts[KP.RH];
+    const hipY=(lh&&rh&&lh.score>0.2&&rh.score>0.2)?(lh.y+rh.y)/2:shY+0.25;
+    if(w.y<=shY+(hipY-shY)*0.45)return false;
+  }
   if(!mv.needFolded)return true;
   if(!currKpts)return false;
   const isLeft=(idx===KP.LELB);
@@ -1110,7 +1122,7 @@ function showPosOverlay(big,sub){
   posOverlayMk=big;
   const ov=document.getElementById('center-overlay');
   if(!ov)return;
-  ov.innerHTML='<div><div class="co-big" style="color:#F77F00;text-shadow:0 0 22px #F77F00">'+big+'</div><div class="co-sub">'+sub+'</div></div>';
+  ov.innerHTML='<div style="margin-top:26vh"><div class="co-big co-pos">'+big+'</div><div class="co-sub">'+sub+'</div></div>';
   ov.style.display='flex';
 }
 function hidePosOverlay(){
