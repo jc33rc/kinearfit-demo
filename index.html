@@ -362,7 +362,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 
 <script>
 // ======== CONSTANTS ========
-const DIFF={easy:{dur:60,rest:60,spd:'Lenta',mult:0.8,level:'Principiante',met:5.5},medium:{dur:180,rest:45,spd:'Media',mult:1.0,level:'Intermedio',met:7.8},hard:{dur:300,rest:30,spd:'Rápida',mult:1.25,level:'Avanzado',met:9.8}};
+const DIFF={easy:{dur:60,rest:30,spd:'Lenta',mult:0.8,level:'Principiante',met:5.5},medium:{dur:180,rest:45,spd:'Media',mult:1.0,level:'Intermedio',met:7.8},hard:{dur:300,rest:30,spd:'Rápida',mult:1.25,level:'Avanzado',met:9.8}};
 // Calorie estimate (ACSM / Compendium of Physical Activities): kcal/min = MET × 3.5 × kg ÷ 200
 function calcCalories(diffKey,activeSeconds){
   const met=(DIFF[diffKey]&&DIFF[diffKey].met)||7.0;
@@ -469,8 +469,8 @@ let MOVES={
   CROSS:{color:'#FF4D00',label:'CROSS', kp:KP.RW, offX: .14,offY:-.14,velThr:38, size:.14,velType:'total', atkDir:'up'},
   HOOK_L:{color:'#F77F00',label:'HOOK', kp:KP.LW, offX:-.14,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
   HOOK_R:{color:'#F77F00',label:'HOOK', kp:KP.RW, offX: .14,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
-  HOOK_BODY_L:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.LW, offX:-.14,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'right'},
-  HOOK_BODY_R:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.RW, offX: .14,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
+  HOOK_BODY_L:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.LW, offX:-.14,offY: .18,velThr:14, size:.11,velType:'lateral', atkDir:'right'},
+  HOOK_BODY_R:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.RW, offX: .14,offY: .18,velThr:14, size:.11,velType:'lateral', atkDir:'left'},
   UPPER:{color:'#FFD60A',label:'UPPERCUT', kp:KP.RW, offX: .04,offY:-.06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
   KICKF:{color:'#7B2D8B',label:'FRONT KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total', atkDir:'up'},
   KICKS:{color:'#E040FB',label:'ROUND KICK →',kp:KP.RA, offX: .14,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
@@ -1069,6 +1069,16 @@ function setTrkBadge(lvl,txt){document.getElementById('t-dot').style.background=
 // Ideal framing: head + knees visible. Too close = knees not seen. Too far = body too small.
 let posState='ok', posCandidate='ok', posSince=0;
 const POS_HOLD_MS=1500; // a state must persist this long before the badge changes (anti-spam)
+const LEG_MOVES=['KICKF','KICKS','KICKS_2','KNEE'];
+function routineUsesLegs(){
+  const s=S.sess;
+  if(!s)return true;
+  if(s.mode==='libre')return true;            // la pera admite patadas
+  if(s.mode==='tutorial')return LEG_MOVES.indexOf(S.tutorial&&S.tutorial.mk)>=0;
+  const r=RUTINAS[s.selCombo];
+  if(!r||!r.seq)return true;
+  return r.seq.some(function(m){return LEG_MOVES.indexOf(m)>=0;});
+}
 function evaluatePosition(kpts,avg){
   // If we can barely see the person at all, that's the priority message.
   if(avg<0.25){ commitPos('lost'); return; }
@@ -1085,9 +1095,28 @@ function evaluatePosition(kpts,avg){
     if(headToShoulder<0.07) tooFar=true;
   }
   let state='ok';
-  if(!kneesVisible) state='close';     // knees not seen -> user is too close
-  else if(tooFar)   state='far';       // body too small -> too far
+  // Las rodillas solo importan si la rutina en curso usa piernas. Entrenando
+  // solo tren superior, en un espacio chico, exigirlas seria un estorbo.
+  if(!kneesVisible && routineUsesLegs()) state='close';
+  else if(tooFar) state='far';
   commitPos(state);
+}
+// El aviso grande al centro, con la misma forma que GUARD UP y MOVE.
+let posOverlayMk=null,coBusyUntil=0;
+function showPosOverlay(big,sub){
+  if(!S.sess||!S.sess.active)return;          // no durante el descanso
+  if(coBusyUntil>Date.now())return;           // no encima de GUARD UP ni MOVE
+  if(posOverlayMk===big)return;
+  posOverlayMk=big;
+  const ov=document.getElementById('center-overlay');
+  if(!ov)return;
+  ov.innerHTML='<div><div class="co-big" style="color:#F77F00;text-shadow:0 0 22px #F77F00">'+big+'</div><div class="co-sub">'+sub+'</div></div>';
+  ov.style.display='flex';
+}
+function hidePosOverlay(){
+  if(posOverlayMk===null)return;
+  posOverlayMk=null;
+  hideCenterOverlay();
 }
 function commitPos(state){
   const now=Date.now();
@@ -1096,10 +1125,10 @@ function commitPos(state){
   if(state!==posState && (now-posSince)>=POS_HOLD_MS){
     posState=state;
     switch(state){
-      case 'ok':    setTrkBadge(2,'Posición ✓'); break;
-      case 'close': setTrkBadge(1,'Aléjate un poco'); break;
-      case 'far':   setTrkBadge(1,'Acércate un poco'); break;
-      case 'lost':  setTrkBadge(0,'Ajusta posición'); break;
+      case 'ok':    setTrkBadge(2,'Posición ✓'); hidePosOverlay(); break;
+      case 'close': setTrkBadge(1,'Aléjate'); showPosOverlay('ALÉJATE','Que se te vean las rodillas'); break;
+      case 'far':   setTrkBadge(1,'Acércate'); showPosOverlay('ACÉRCATE','Te ves muy pequeño en cuadro'); break;
+      case 'lost':  setTrkBadge(0,'Ajusta posición'); showPosOverlay('AJUSTA TU POSICIÓN','No te veo bien'); break;
     }
   }
 }
@@ -1434,6 +1463,8 @@ function showCenterOverlay(mk){
     html='<div><div class="co-big co-rest">⏸ REST</div><div class="co-sub" id="co-rest-time">Recupera el aliento</div></div>';
   }
   ov.innerHTML=html;ov.style.display='flex';
+  posOverlayMk=null;
+  coBusyUntil=Date.now()+(mk==='REST'?600000:2600);
 }
 function hideCenterOverlay(){document.getElementById('center-overlay').style.display='none';}
 function advCombo(seq){
@@ -2037,7 +2068,7 @@ function startBreak(){
   showCenterOverlay('REST');
   const restEl=()=>document.getElementById('co-rest-time');
   if(restEl())restEl().textContent=fmtT(bt);
-  breakTimer=setInterval(()=>{bt--;document.getElementById('hud-tmr').textContent=fmtT(bt);if(restEl())restEl().textContent=fmtT(bt);if(bt<=0){clearInterval(breakTimer);hideCenterOverlay();S.sess.lastHitAt=Date.now();S.sess.round++;S.sess.timeLeft=DIFF[S.sess.diff].dur;S.sess.active=true;updateHUD();startRoundTimer();if(S.sess.mode!=='libre'){rendNextMoves();}}},1000);
+  breakTimer=setInterval(()=>{bt--;document.getElementById('hud-tmr').textContent=fmtT(bt);if(restEl())restEl().textContent=fmtT(bt);if(bt<=0){clearInterval(breakTimer);coBusyUntil=0;hideCenterOverlay();S.sess.lastHitAt=Date.now();S.sess.round++;S.sess.timeLeft=DIFF[S.sess.diff].dur;S.sess.active=true;updateHUD();startRoundTimer();if(S.sess.mode!=='libre'){rendNextMoves();}}},1000);
 }
 function updateHUD(){
   const s=S.sess,mult=getMultiplier();
