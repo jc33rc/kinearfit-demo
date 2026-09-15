@@ -468,8 +468,8 @@ const KP={NOSE:0,LE:1,RE:2,LEAR:3,REAR:4,LS:5,RS:6,LELB:7,RELB:8,LW:9,RW:10,LH:1
 let MOVES={
   JAB:  {color:'#1A56FF',label:'JAB',   kp:KP.LW, offX:-.14,offY:-.12,velThr:38, size:.13,velType:'total', atkDir:'up'},
   CROSS:{color:'#FF4D00',label:'CROSS', kp:KP.RW, offX: .14,offY:-.14,velThr:38, size:.14,velType:'total', atkDir:'up'},
-  HOOK_L:{color:'#F77F00',label:'HOOK', kp:KP.LW, offX:-.14,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left', radiusMult:1},
-  HOOK_R:{color:'#F77F00',label:'HOOK', kp:KP.RW, offX: .14,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'right', radiusMult:1},
+  HOOK_L:{color:'#F77F00',label:'HOOK', kp:KP.LW, offX:-.14,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
+  HOOK_R:{color:'#F77F00',label:'HOOK', kp:KP.RW, offX: .14,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
   HOOK_BODY_L:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.LW, offX:-.14,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'right', requireLow:true},
   HOOK_BODY_R:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.RW, offX: .14,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'left', requireLow:true},
   UPPER:{color:'#FFD60A',label:'UPPERCUT', kp:KP.RW, offX: .04,offY:-.06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
@@ -905,7 +905,7 @@ function tutorialProcess(){
     const kp=currKpts[idx];if(!kp||kp.score<(isLeg?0.15:0.3))continue;
     const kpx={x:kp.x*c.width,y:kp.y*c.height};
     if(mv.velType==='lateral'){
-      const radius=mv.size*c.width*(mv.radiusMult||1.8);
+      const radius=mv.size*c.width*1.8;
       const closeNow=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<radius;
       let crossed=false;
       const pv=prevKpts&&prevKpts[idx];
@@ -1335,7 +1335,7 @@ function processHits(){
       const kpx={x:kp.x*c.width,y:kp.y*c.height};
       if(mv.velType==='lateral'){
         // Hooks/patadas laterales/codazos: radio mas amplio y chequeo de cruce de trayectoria.
-        const radius=mv.size*c.width*(mv.radiusMult||1.8);
+        const radius=mv.size*c.width*1.8;
         const closeNow=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<radius;
         let crossed=false;
         const pv=prevKpts&&prevKpts[idx];
