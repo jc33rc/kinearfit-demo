@@ -482,9 +482,7 @@ let MOVES={
   // Target centrado, asi que la posicion en pantalla no puede indicar lateralidad:
   // por eso aceptan ambos lados en vez de exigir el dominante.
   ELBOW:{color:'#A855F7',label:'ELBOW', kp:KP.RELB, kpAlt:KP.LELB, offX: 0, offY:-.16,velThr:9, size:.13,velType:'lateral', atkDir:'lateral', needFolded:true},
-  KNEE: {color:'#FF1744',label:'KNEE',  kp:KP.RK,   kpAlt:KP.LK,   offX: 0, offY: .12,velThr:20, size:.15,velType:'rise',    atkDir:'up',      forceTravel:true},
-  DOGEL:{color:'#00B87A',label:'DODGE ←',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'},
-  DOGER:{color:'#00B87A',label:'DODGE →',kp:-1,offX:0,offY:.2,velThr:0,size:0,velType:'total'}
+  KNEE: {color:'#FF1744',label:'KNEE',  kp:KP.RK,   kpAlt:KP.LK,   offX: 0, offY: .12,velThr:20, size:.15,velType:'rise',    atkDir:'up',      forceTravel:true}
 };
 // Textos del tutorial adaptados a la lateralidad del usuario.
 // Para diestro: mano adelantada = izquierda, mano de poder = derecha. Para zurdo, al revés.
@@ -505,8 +503,7 @@ const TUTORIAL_MOVES=[
   {mk:'KICKS', en:'ROUND KICK', title:'PATADA CIRCULAR', desc:()=>'Patea en arco con la pierna '+leadLeg()+', girando la cadera. Lánzala rápido: despacio pierde fuerza y equilibrio.'},
   {mk:'KICKS_2', en:'ROUND KICK', title:'PATADA CIRCULAR (otra pierna)', desc:()=>'La misma patada en arco, ahora con la pierna '+otherLeg()+'. El objetivo aparece al otro lado.'},
   {mk:'ELBOW', en:'ELBOW', title:'CODAZO',         desc:()=>'Codazo en arco al mentón, con el brazo cerrado y el puño pegado a la cabeza. Con cualquiera de los dos brazos.'},
-  {mk:'KNEE', en:'KNEE', title:'RODILLAZO',      desc:()=>'Sube la rodilla al plexo, de golpe y por el centro. Con cualquiera de las dos piernas.'},
-  {mk:'DOGEL', en:'DODGE', title:'ESQUIVA',        desc:()=>'Inclina el tronco en diagonal hacia la esquina segura.'}
+  {mk:'KNEE', en:'KNEE', title:'RODILLAZO',      desc:()=>'Sube la rodilla al plexo, de golpe y por el centro. Con cualquiera de las dos piernas.'}
 ];
 function moveDesc(m){return typeof m.desc==='function'?m.desc():m.desc;}
 const RUTINAS=[
@@ -535,15 +532,15 @@ const RUTINAS=[
   // ===== AVANZADO (6) =====
   {id:'clasico_completo', name:'Clásico Completo', seq:['JAB','CROSS','HOOK_L','UPPER','HOOK_BODY_L'], level:'Avanzado',
    fact:'Las manos se alternan golpe a golpe: así la cadera rota en ambos sentidos y no se pierde potencia.'},
-  {id:'esquiva_contra', name:'Esquiva y Contraataque', seq:['JAB','CROSS','DOGER','HOOK_L','CROSS'], level:'Avanzado',
-   fact:'Esquivar y contraatacar en menos de un segundo es la base de la defensa activa en boxeo.'},
+  {id:'arriba_abajo', name:'Arriba y Abajo', seq:['CROSS','HOOK_BODY_L','CROSS','HOOK_L'], level:'Avanzado',
+   fact:'Cambiar de altura exige flexionar las piernas en el golpe al cuerpo y volver a subir para el siguiente: el trabajo también es de piernas.'},
   {id:'demoledor', name:'El Demoledor', seq:['JAB','CROSS','HOOK_BODY_L','UPPER','HOOK_L','CROSS'], level:'Avanzado',
    fact:'Golpear al cuerpo antes de ir a la cabeza baja la guardia del rival: táctica clásica de boxeo.'},
   {id:'muay_thai_mix', name:'Muay Thai Mix', seq:['JAB','CROSS','HOOK_L','KICKF','CROSS','KICKS'], level:'Avanzado',
    fact:'Combinar cinco golpes distintos en secuencia entrena la transición fluida entre manos y piernas.'},
   {id:'doble_patada', name:'Doble Patada', seq:['CROSS','KICKF','JAB','KICKS'], level:'Avanzado',
    fact:'El FRONT KICK empuja hacia adelante y el ROUND KICK cruza de lado: cambiar entre los dos obliga a reorientar todo el cuerpo.'},
-  {id:'combate_total', name:'Combate Total', seq:['JAB','CROSS','DOGER','HOOK_L','UPPER','KICKS','CROSS','KICKF'], level:'Avanzado',
+  {id:'combate_total', name:'Combate Total', seq:['JAB','CROSS','HOOK_L','UPPER','KICKS','CROSS','KICKF'], level:'Avanzado',
    fact:'Un asalto de boxeo dura tres minutos, y casi nadie golpea todo el tiempo: se alterna entre atacar, moverse y recuperar.'},
   // ===== CORTA DISTANCIA: CODOS Y RODILLAS (6) =====
   // Regla de diseno: el codazo nunca va despues de un gancho (misma trayectoria en arco),
@@ -669,7 +666,6 @@ const BADGES=[
   {id:'fk', icon:'',name:'Primera Patada',cat:'Golpes',desc:'Lanzaste tu primera patada.',         c:s=>s.totalKicks>=1},
   {id:'fd', icon:'',name:'Primera Sesión',cat:'Racha', desc:'Completaste tu primer entrenamiento.',         c:s=>s.totalSessions>=1},
   {id:'rh', icon:'',name:'Guerrero',      cat:'Tiempo',desc:'Completaste una ronda en nivel Avanzado.',         c:s=>s.hardRounds>=1},
-  {id:'dg', icon:'',name:'Primera Esquiva',cat:'Golpes',desc:'Esquivaste por primera vez.',       c:s=>s.totalDodges>=1},
   {id:'exp',icon:'',name:'Explorador',    cat:'Golpes',desc:'Probaste los dos modos de entrenamiento.',          c:s=>s.modesUsed>=2}
 ];
 
@@ -717,21 +713,21 @@ function getSeriesTier(series,statVal){
 let S={
   screen:'splash',
   user:{name:'',age:25,wt:70,ht:170,dom:'right',level:'beginner'},
-  stats:{totalHits:0,totalKicks:0,totalDodges:0,totalCombos:0,eliteCombos:0,
+  stats:{totalHits:0,totalKicks:0,totalCombos:0,eliteCombos:0,
          totalSessions:0,totalRounds:0,hardRounds:0,totalTime:0,streak:0,streakShields:1,
          totalCalories:0,calLog:{},
          modesUsed:0,modesSet:new Set(),lastSession:{hits:0,dur:0,score:0,comboMax:0,calories:0},xp:0},
   badges:new Set(),
   sess:{active:false,mode:'libre',diff:'medium',round:1,totalRounds:3,
         timeLeft:180,score:0,hits:0,comboStr:0,comboMax:0,
-        kicks:0,dodges:0,combos:0,combIdx:0,selCombo:0,startTime:0},
+        kicks:0,combos:0,combIdx:0,selCombo:0,startTime:0},
   mode:'combos',diff:'medium',selCombo:0,obStep:1,
   tutorial:{mk:null,count:0}
 };
 
 // ======== STORAGE ========
 function save(){const st={...S.stats};st.modesSet=[...st.modesSet];localStorage.setItem('kf3_stats',JSON.stringify(st));localStorage.setItem('kf3_user',JSON.stringify(S.user));localStorage.setItem('kf3_badges',JSON.stringify([...S.badges]));}
-function load(){try{const st=JSON.parse(localStorage.getItem('kf3_stats')||'{}');if(st.modesSet)st.modesSet=new Set(st.modesSet);else st.modesSet=new Set();S.stats={...S.stats,...st};const u=JSON.parse(localStorage.getItem('kf3_user')||'{}');S.user={...S.user,...u};const b=JSON.parse(localStorage.getItem('kf3_badges')||'[]');S.badges=new Set(b);}catch(e){}}
+function load(){try{const st=JSON.parse(localStorage.getItem('kf3_stats')||'{}');if(st.modesSet)st.modesSet=new Set(st.modesSet);else st.modesSet=new Set();S.stats={...S.stats,...st};const u=JSON.parse(localStorage.getItem('kf3_user')||'{}');S.user={...S.user,...u};const b=JSON.parse(localStorage.getItem('kf3_badges')||'[]');S.badges=new Set(b);S.badges.delete('dg');}catch(e){}} // 'dg' era Primera Esquiva, que ya no existe
 
 // ======== NAV ========
 function goTo(id){
@@ -887,40 +883,13 @@ function initTutorial(){
 function tutorialProcess(){
   const mk=S.tutorial.mk;if(!mk)return;
   const now=Date.now();
-  if(mk==='DOGEL'){
-    if(!dodgeActive)activateDodge('DOGEL',now);
-    return;
-  }
   const mv=MOVES[mk];if(!mv||mv.kp<0)return;
   const cKey='tut_'+mk;
   if((now-(hitCool[cKey]||0))<getHitCD())return;
   const c=document.getElementById('ar-canvas');
   const tp=getTargetPos(mk);
-  // Movimientos libres: se prueba cada keypoint candidato; basta con que uno acierte.
-  let landed=false;
-  for(const idx of kpCandidates(mv)){
-    const isLeg=(idx===KP.RK||idx===KP.LK||idx===KP.RA||idx===KP.LA);
-    if(calcVel(idx,mv.velType)<mv.velThr)continue;
-    if(!strikeGate(mv,idx))continue;
-    const kp=currKpts[idx];if(!kp||kp.score<(isLeg?0.15:0.3))continue;
-    const kpx={x:kp.x*c.width,y:kp.y*c.height};
-    if(mv.velType==='lateral'){
-      const radius=mv.size*c.width*1.8;
-      const closeNow=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<radius;
-      let crossed=false;
-      const pv=prevKpts&&prevKpts[idx];
-      if(pv&&pv.score>0.25){
-        const pvx={x:pv.x*c.width,y:pv.y*c.height};
-        const verticalOk=Math.abs(kpx.y-tp.y)<radius*1.3;
-        crossed=verticalOk&&((pvx.x-tp.x)*(kpx.x-tp.x)<=0);
-      }
-      landed=closeNow||crossed;
-    } else {
-      landed=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<mv.size*c.width;
-    }
-    if(landed)break;
-  }
-  if(!landed)return;
+  // Misma deteccion que en la rutina: un movimiento exige lo mismo en los dos sitios.
+  if(!detectStrike(mk,c))return;
   hitCool[cKey]=now;
   S.tutorial.count++;
   S.tutorial.lastHit=now;
@@ -1016,7 +985,6 @@ function validateTravel(mv,c,idx){
 }
 let hitEffects=[],pearDamage=0,pearFlash=0,pearTargetX=0,pearTargetY=0;
 let pearBounce={x:0,y:0,vx:0,vy:0},pearPos={x:0,y:0};
-let dodgeActive=false,dodgeZoneData=null,dodgeT=0;
 let sessTimer=null,breakTimer=null,audioCtx=null;
 const hitCool={};function getHitCD(){const m=(DIFF[S.sess.diff]&&DIFF[S.sess.diff].mult)||1;return Math.round(380/m);}
 
@@ -1027,12 +995,11 @@ async function startSession(mode,diff){
   posState='ok';posCandidate='ok';posSince=0;
   lastPower=0;lastPowerAt=0;bestPower=0;powerSmooth=0;
   for(const k in hitCool)delete hitCool[k];  // clear stale cooldowns from previous sessions
-  kptHistory=[];dodgeZoneData=null;dodgeT=0;
-  S.sess={active:false,mode,diff,round:1,totalRounds:3,timeLeft:DIFF[diff].dur,score:0,hits:0,comboStr:0,comboMax:0,kicks:0,dodges:0,combos:0,combIdx:0,selCombo:S.selCombo,startTime:Date.now(),activeSeconds:0};
+  kptHistory=[];
+  S.sess={active:false,mode,diff,round:1,totalRounds:3,timeLeft:DIFF[diff].dur,score:0,hits:0,comboStr:0,comboMax:0,kicks:0,combos:0,combIdx:0,selCombo:S.selCombo,startTime:Date.now(),activeSeconds:0};
   // El tutorial no cuenta: la insignia Explorador se refiere a libre y guiado.
   if(mode!=='tutorial'){S.stats.modesSet.add(mode);S.stats.modesUsed=S.stats.modesSet.size;}
   pearDamage=0;pearFlash=0;pearBounce={x:0,y:0,vx:0,vy:0};
-  dodgeActive=false;dodgeZoneData=null;
   goTo('session');document.getElementById('bottom-nav').style.display='none';
   document.getElementById('loading-overlay').style.display='flex';
   document.getElementById('hud').style.display='none';
@@ -1162,7 +1129,6 @@ async function detectLoop(){
           if(S.sess.mode==='tutorial')tutorialProcess();
           else processHits();
         }
-        if(dodgeActive)checkDodgeSuccess();
         if(S.sess.active&&S.sess.mode!=='tutorial')checkPassiveGuardMove();
         // Update pear position to follow head
         const nose=kpts[0];
@@ -1313,100 +1279,51 @@ function processHits(){
     const cmk=seq[s.combIdx];if(!cmk)return;
     const mv=MOVES[cmk];
     if(!mv){return;}
-    if(mv.kp===-1){activateDodge(cmk,now);return;}
     if((now-(hitCool[cmk]||0))<getHitCD())return;
-    // Legs (knees/ankles) are harder for the pose model to detect and move slower than fists,
-    // so kicks use lower velocity + confidence thresholds than punches.
-    const tp=getTargetPos(cmk);
-    // Movimientos libres: se prueba cada keypoint candidato; el primero que acierte cuenta.
-    let landed=false,hitKpx=null;
-    for(const idx of kpCandidates(mv)){
-      // Piernas (rodilla/tobillo): el modelo las detecta peor y se mueven mas lento que los
-      // punos, asi que usan umbrales de velocidad y confianza mas bajos.
-      const isKickMove=(idx===KP.RK||idx===KP.LK||idx===KP.RA||idx===KP.LA);
-      const velNeeded=isKickMove?Math.min(mv.velThr,18):mv.velThr;
-      const scoreNeeded=isKickMove?0.15:0.3;
-      if(calcVel(idx,mv.velType)<velNeeded)continue;
-      // Exige recorrido real en la direccion de ataque (rechaza temblor de guardia,
-      // movimientos de retorno y cualquier cosa que no haya ido hacia el target).
-      if(!validateTravel(mv,c,idx))continue;
-      if(!strikeGate(mv,idx))continue;
-      const kp=currKpts[idx];if(!kp||kp.score<scoreNeeded)continue;
-      const kpx={x:kp.x*c.width,y:kp.y*c.height};
-      if(mv.velType==='lateral'){
-        // Hooks/patadas laterales/codazos: radio mas amplio y chequeo de cruce de trayectoria.
-        const radius=mv.size*c.width*1.8;
-        const closeNow=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<radius;
-        let crossed=false;
-        const pv=prevKpts&&prevKpts[idx];
-        if(pv&&pv.score>0.25){
-          const pvx={x:pv.x*c.width,y:pv.y*c.height};
-          const verticalOk=Math.abs(kpx.y-tp.y)<radius*1.3;
-          const crossedX=(pvx.x-tp.x)*(kpx.x-tp.x)<=0; // cambio de signo = cruzo el centro
-          crossed=verticalOk&&crossedX;
-        }
-        landed=closeNow||crossed;
-      } else {
-        landed=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<mv.size*c.width;
-      }
-      if(landed){hitKpx=kpx;break;}
-    }
-    if(landed&&hitKpx){
+    const hitKpx=detectStrike(cmk,c);
+    if(hitKpx){
       hitCool[cmk]=now;doHit(cmk,hitKpx);advCombo(seq);
     }
   }
 }
 
-// ======== DODGE ZONE ========
-function activateDodge(mk,now){
-  if(dodgeActive)return;
-  dodgeActive=true;dodgeT=now;
-  const c=document.getElementById('ar-canvas');
-  const body=getBodyCenter();
-  const cx=body?body.x*c.width:c.width*0.5;
-  const cy=body?body.y*c.height:c.height*0.4;
-  // Diagonal: danger corner based on move (DOGEL=top-left danger -> move to bottom-right; DOGER=top-right danger -> move to bottom-left)
-  // Para un zurdo se espeja el par completo: si solo se invierte el peligro,
-  // el refugio queda del mismo lado y la esquiva deja de tener sentido.
-  const asLeft=((mk==='DOGEL')!==(S.user.dom==='left'));
-  const dangerCorner=asLeft?'tl':'tr';
-  const safeCorner  =asLeft?'br':'bl';
-  dodgeZoneData={cx,cy,w:c.width*0.44,h:c.height*0.36,dir:mk==='DOGEL'?'left':'right',dangerCorner,safeCorner};
-}
-function checkDodgeSuccess(){
-  if(!dodgeZoneData||!currKpts)return;
-  const c=document.getElementById('ar-canvas');
-  const body=getBodyCenter();if(!body)return;
-  const bx=body.x*c.width,by=body.y*c.height;
-  const dz=dodgeZoneData;
-  // Diagonal movement: must shift horizontally AND vertically toward safe corner
-  const dxThr=dz.w*0.18,dyThr=dz.h*0.14;
-  const dx=bx-dz.cx,dy=by-dz.cy;
-  const wantRight=dz.safeCorner==='br'||dz.safeCorner==='tr';
-  const wantDown=dz.safeCorner==='br'||dz.safeCorner==='bl';
-  const movedRight=dx>dxThr,movedLeft=dx<-dxThr,movedDown=dy>dyThr;
-  const diagonalOk=(wantRight?movedRight:movedLeft)&&(wantDown?movedDown:true);
-  const elapsed=(Date.now()-dodgeT)/1000;
-  const isTutorial=S.sess.mode==='tutorial';
-  if(diagonalOk){
-    dodgeActive=false;const pos={x:dz.cx+dx,y:dz.cy+dy};dodgeZoneData=null;
-    S.sess.dodges++;S.sess.score+=30;
-    S.sess.comboStr++;S.sess.comboMax=Math.max(S.sess.comboMax,S.sess.comboStr);
-    S.sess.lastHitAt=Date.now();
-    addEffect(pos,'#00B87A','DODGE!');playSound('dodge');
-    updateHUD();
-    if(isTutorial){
-      S.tutorial.count++;
-      const ce=document.getElementById('tut-count');
-      if(ce)ce.textContent=S.tutorial.count;
+// Deteccion unica de un golpe. La usan la rutina y el tutorial, para que un movimiento
+// pida exactamente lo mismo en los dos sitios. Devuelve la posicion del acierto o null.
+function detectStrike(mk,c){
+  const mv=MOVES[mk];if(!mv||!currKpts)return null;
+  const tp=getTargetPos(mk);
+  // Movimientos libres: se prueba cada keypoint candidato; el primero que acierte cuenta.
+  for(const idx of kpCandidates(mv)){
+    // Piernas (rodilla/tobillo): el modelo las detecta peor y se mueven mas lento que los
+    // punos, asi que usan umbrales de velocidad y confianza mas bajos.
+    const isKickMove=(idx===KP.RK||idx===KP.LK||idx===KP.RA||idx===KP.LA);
+    const velNeeded=isKickMove?Math.min(mv.velThr,18):mv.velThr;
+    const scoreNeeded=isKickMove?0.15:0.3;
+    if(calcVel(idx,mv.velType)<velNeeded)continue;
+    // Exige recorrido real en la direccion de ataque (rechaza temblor de guardia,
+    // movimientos de retorno y cualquier cosa que no haya ido hacia el target).
+    if(!validateTravel(mv,c,idx))continue;
+    if(!strikeGate(mv,idx))continue;
+    const kp=currKpts[idx];if(!kp||kp.score<scoreNeeded)continue;
+    const kpx={x:kp.x*c.width,y:kp.y*c.height};
+    if(mv.velType==='lateral'){
+      // Hooks/patadas laterales/codazos: radio mas amplio y chequeo de cruce de trayectoria.
+      const radius=mv.size*c.width*1.8;
+      const closeNow=Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<radius;
+      let crossed=false;
+      const pv=prevKpts&&prevKpts[idx];
+      if(pv&&pv.score>0.25){
+        const pvx={x:pv.x*c.width,y:pv.y*c.height};
+        const verticalOk=Math.abs(kpx.y-tp.y)<radius*1.3;
+        const crossedX=(pvx.x-tp.x)*(kpx.x-tp.x)<=0; // cambio de signo = cruzo el centro
+        crossed=verticalOk&&crossedX;
+      }
+      if(closeNow||crossed)return kpx;
     } else {
-      advCombo((COMBOS[S.sess.selCombo]&&COMBOS[S.sess.selCombo].seq)||[]);
+      if(Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<mv.size*c.width)return kpx;
     }
-  } else if(elapsed>2.2){
-    dodgeActive=false;dodgeZoneData=null;
-    S.sess.score=Math.max(0,S.sess.score-8);S.sess.comboStr=0;updateHUD();
-    if(!isTutorial)advCombo((COMBOS[S.sess.selCombo]&&COMBOS[S.sess.selCombo].seq)||[]);
   }
+  return null;
 }
 
 // ======== GUARD / MOVE (passive monitor — runs throughout session) ========
@@ -1520,15 +1437,6 @@ function onTouch(e){
       doHit(mks[S.sess.hits%mks.length],{x,y});
     }
   } else {
-    if(dodgeActive&&dodgeZoneData){
-      const dz=dodgeZoneData;
-      if(Math.abs(x-dz.cx)>dz.w*0.5||Math.abs(y-dz.cy)>dz.h*0.5){
-        dodgeActive=false;const pos={x:dz.cx,y:dz.cy};dodgeZoneData=null;
-        S.sess.dodges++;S.sess.score+=30;S.sess.comboStr++;S.sess.comboMax=Math.max(S.sess.comboMax,S.sess.comboStr);
-        addEffect(pos,'#00B87A','DODGE!');playSound('dodge');updateHUD();
-        advCombo((COMBOS[S.sess.selCombo]&&COMBOS[S.sess.selCombo].seq)||[]);return;
-      }
-    }
     const seq=(COMBOS[S.sess.selCombo]&&COMBOS[S.sess.selCombo].seq)||[];
     const cmk=seq[S.sess.combIdx];if(!cmk)return;
     const mv=MOVES[cmk];if(!mv||mv.kp<0)return;
@@ -1548,8 +1456,7 @@ function initCanvas(){
   arRunning=true;hitEffects=[];kptHistory=[];initCanvasTouch();
   requestAnimationFrame(arLoop);
 }
-// Si pasan mas de COMBO_TIMEOUT sin acertar, la racha se rompe. Sin esto el
-// contador solo bajaba al fallar una esquiva, y en rutinas sin esquivas nunca.
+// Si pasan mas de COMBO_TIMEOUT sin acertar, la racha se rompe.
 const COMBO_TIMEOUT=2000;
 function checkComboTimeout(){
   const s=S.sess;
@@ -1583,9 +1490,9 @@ function arLoop(){
   // AR layers
   updatePearPhysics();
   checkComboTimeout();
-  if(S.sess.mode==='tutorial'){drawTutorialTarget(c,ctx);drawDodgeZone(c,ctx);}
+  if(S.sess.mode==='tutorial'){drawTutorialTarget(c,ctx);}
   else if(S.sess.mode==='libre'){drawPear(c,ctx);drawPower(c,ctx);}
-  else{drawTargets(c,ctx);drawDodgeZone(c,ctx);}
+  else{drawTargets(c,ctx);}
   drawEffects(c,ctx);
   drawTimeRing(c,ctx);
   requestAnimationFrame(arLoop);
@@ -1903,97 +1810,6 @@ function drawTutorialTarget(c,ctx){
   ctx.restore();
 }
 
-// ======== DODGE ARROW ========
-function drawDodgeZone(c,ctx){
-  if(!dodgeActive||!dodgeZoneData)return;
-  var dz=dodgeZoneData;
-  var elapsed=(Date.now()-dodgeT)/1000;
-  var urgency=Math.min(1,elapsed/2.2);
-  var pulse=0.5+Math.sin(Date.now()/120)*0.3*(1+urgency);
-  // Corner coordinates
-  var corners={
-    tl:{x:0,y:0},tr:{x:c.width,y:0},bl:{x:0,y:c.height},br:{x:c.width,y:c.height}
-  };
-  var danger=corners[dz.dangerCorner],safe=corners[dz.safeCorner];
-  var arrowX=c.width*0.5+(safe.x-c.width*0.5)*0.42;
-  var arrowY=c.height*0.45+(safe.y-c.height*0.5)*0.42;
-  var dirX=Math.sign(safe.x-c.width*0.5)||1;
-  var dirY=Math.sign(safe.y-c.height*0.5)||1;
-  var aSize=c.width*0.12;
-  var ang=Math.atan2(dirY,dirX);
-
-  ctx.save();
-
-  // Diagonal split: 45 deg line through center, perpendicular to the danger->safe axis
-  var L=Math.hypot(c.width,c.height);
-  ctx.save();
-  ctx.translate(c.width*0.5,c.height*0.5);
-  ctx.rotate(ang);
-
-  ctx.globalAlpha=0.25+urgency*0.2;
-  ctx.fillStyle='#FF3B30';
-  ctx.fillRect(-L,-L,L,L*2);
-
-  ctx.globalAlpha=0.10;
-  ctx.fillStyle='#00B87A';
-  ctx.fillRect(0,-L,L,L*2);
-
-  ctx.globalAlpha=0.45;
-  ctx.strokeStyle='#FFFFFF';
-  ctx.lineWidth=2;
-  ctx.beginPath();ctx.moveTo(0,-L);ctx.lineTo(0,L);ctx.stroke();
-  ctx.restore();
-
-  ctx.globalAlpha=1;
-
-  // Diagonal arrow pointing to safe corner
-  ctx.save();ctx.translate(arrowX,arrowY);ctx.rotate(ang);
-  ctx.strokeStyle='#00B87A';
-  ctx.fillStyle='#00B87A';
-  ctx.lineWidth=aSize*0.22;
-  ctx.lineCap='round';
-  ctx.lineJoin='round';
-  ctx.shadowColor='#00B87A';
-  ctx.shadowBlur=20;
-  ctx.globalAlpha=0.7+pulse*0.3;
-
-  // Arrow shaft
-  ctx.beginPath();
-  ctx.moveTo(-aSize*0.7,0);
-  ctx.lineTo(aSize*0.3,0);
-  ctx.stroke();
-
-  // Arrow head (filled triangle)
-  ctx.beginPath();
-  ctx.moveTo(aSize*0.9,0);
-  ctx.lineTo(aSize*0.2,-aSize*0.55);
-  ctx.lineTo(aSize*0.2,aSize*0.55);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
-
-  ctx.shadowBlur=0;
-
-  // DODGE label, large and centered
-  ctx.globalAlpha=0.9;
-  ctx.fillStyle='white';
-  ctx.font='bold '+Math.round(c.width*0.06)+'px DM Sans,sans-serif';
-  ctx.textAlign='center';
-  ctx.textBaseline='middle';
-  ctx.shadowColor='#00B87A';ctx.shadowBlur=18;
-  ctx.fillText('INCLÍNATE',c.width*0.5,c.height*0.5-aSize*1.4);
-  ctx.shadowBlur=0;
-
-  // Countdown bar at bottom
-  var barW=c.width*0.5*(1-urgency);
-  ctx.globalAlpha=0.7;
-  ctx.fillStyle=urgency<0.6?'#00B87A':'#FF3B30';
-  ctx.fillRect(c.width/2-barW/2, c.height*0.88, barW, 5);
-
-  ctx.restore();
-}
-
-
 // ======== AR GLOVES ========
 function drawGloves(c,ctx){
   if(!currKpts)return;
@@ -2063,7 +1879,7 @@ function drawEffects(c,ctx){
     ctx.textAlign='center';ctx.textBaseline='middle';
     ctx.shadowColor=e.color;ctx.shadowBlur=16;
     const mult=getMultiplier();
-    const pts=e.label.includes('DODGE')?30:(e.label.startsWith('KICK')?25:15);
+    const pts=e.label.startsWith('KICK')?25:15;
     ctx.fillText('+'+pts*(mult>1?mult:1),e.x,e.y-p*60);
     ctx.shadowBlur=0;ctx.restore();
   }
@@ -2116,7 +1932,7 @@ function endSession(fromTutorial){
   hideCenterOverlay();
   S.sess.active=false;arRunning=false;
   if(camStream){camStream.getTracks().forEach(t=>t.stop());camStream=null;}
-  detector=null;currKpts=null;prevKpts=null;dodgeActive=false;dodgeZoneData=null;kptHistory=[];
+  detector=null;currKpts=null;prevKpts=null;kptHistory=[];
   guardLowSince=null;lastBodyX=null;staticSince=null;activeNotice=null;noticeCooldownUntil=0;
   document.getElementById('tutorial-banner').style.display='none';document.getElementById('tut-exit').style.display='none';
   if(fromTutorial||S.sess.mode==='tutorial'){
@@ -2125,7 +1941,7 @@ function endSession(fromTutorial){
   }
   const s=S.sess,dur=Math.floor((Date.now()-s.startTime)/1000);
   const sessionCal=Math.round(calcCalories(s.diff,s.activeSeconds||0));
-  S.stats.totalHits+=s.hits;S.stats.totalKicks+=s.kicks;S.stats.totalDodges+=s.dodges;
+  S.stats.totalHits+=s.hits;S.stats.totalKicks+=s.kicks;
   S.stats.totalCombos+=s.combos;S.stats.totalSessions+=1;
     // Si la sesion se culmino, la ronda en curso tambien se completo.
   const roundsDone=s.completed?s.round:s.round-1;
@@ -2190,7 +2006,6 @@ function playSound(type){
       kicks_2:    {f:100,d:.2, t:'sine',    vol:.52}, // Lateral profundo
       elbow:      {f:145,d:.13,t:'square',  vol:.50}, // Seco y corto
       knee:       {f:95, d:.19,t:'sine',    vol:.54}, // Grave, impacto de cuerpo
-      dodge:      {f:320,d:.06,t:'sine',    vol:.26}, // Ligero
     };
     const c=cfgs[type]||cfgs.jab,now=audioCtx.currentTime;
     osc.frequency.setValueAtTime(c.f,now);osc.frequency.exponentialRampToValueAtTime(28,now+c.d);
