@@ -470,8 +470,8 @@ let MOVES={
   CROSS:{color:'#FF4D00',label:'CROSS', kp:KP.RW, offX: .14,offY:-.14,velThr:38, size:.14,velType:'total', atkDir:'up'},
   HOOK_L:{color:'#F77F00',label:'HOOK', kp:KP.LW, offX:-.14,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
   HOOK_R:{color:'#F77F00',label:'HOOK', kp:KP.RW, offX: .14,offY:-.08,velThr:14, size:.15,velType:'lateral', atkDir:'left'},
-  HOOK_BODY_L:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.LW, offX:-.14,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'left', requireLow:true},
-  HOOK_BODY_R:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.RW, offX: .14,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'right', requireLow:true},
+  HOOK_BODY_L:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.LW, offX:-.14,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'right', requireLow:true},
+  HOOK_BODY_R:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.RW, offX: .14,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'left', requireLow:true},
   UPPER:{color:'#FFD60A',label:'UPPERCUT', kp:KP.RW, offX: .04,offY:-.06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
   KICKF:{color:'#00E5C0',label:'FRONT KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total', atkDir:'up'},
   KICKS:{color:'#E040FB',label:'ROUND KICK →',kp:KP.RA, offX: .14,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
@@ -758,12 +758,12 @@ function applyDom(d){
   if(d==='left'){MOVES.JAB.kp=KP.RW;MOVES.JAB.offX=.14;MOVES.CROSS.kp=KP.LW;MOVES.CROSS.offX=-.14;MOVES.HOOK_L.kp=KP.RW;MOVES.HOOK_L.offX=.14;MOVES.HOOK_R.kp=KP.LW;MOVES.HOOK_R.offX=-.14;MOVES.HOOK_BODY_L.kp=KP.RW;MOVES.HOOK_BODY_L.offX=.14;MOVES.HOOK_BODY_R.kp=KP.LW;MOVES.HOOK_BODY_R.offX=-.14;MOVES.UPPER.kp=KP.LW;MOVES.UPPER.offX=-.04;MOVES.KICKF.kp=KP.LK;MOVES.KICKS.kp=KP.LA;MOVES.KICKS.offX=-.14;
     // Mirror the attack directions too, otherwise travel validation fails for lefties
     MOVES.HOOK_L.atkDir='right';MOVES.HOOK_R.atkDir='left';
-    MOVES.HOOK_BODY_L.atkDir='right';MOVES.HOOK_BODY_R.atkDir='left';
+    MOVES.HOOK_BODY_L.atkDir='left';MOVES.HOOK_BODY_R.atkDir='right';
     MOVES.KICKS_2.kp=KP.RA;MOVES.KICKS_2.offX=.14;MOVES.KICKS_2.atkDir='right';
     MOVES.KICKS.atkDir='left';}
   else{MOVES.JAB.kp=KP.LW;MOVES.JAB.offX=-.14;MOVES.CROSS.kp=KP.RW;MOVES.CROSS.offX=.14;MOVES.HOOK_L.kp=KP.LW;MOVES.HOOK_L.offX=-.14;MOVES.HOOK_R.kp=KP.RW;MOVES.HOOK_R.offX=.14;MOVES.HOOK_BODY_L.kp=KP.LW;MOVES.HOOK_BODY_L.offX=-.14;MOVES.HOOK_BODY_R.kp=KP.RW;MOVES.HOOK_BODY_R.offX=.14;MOVES.UPPER.kp=KP.RW;MOVES.UPPER.offX=.04;MOVES.KICKF.kp=KP.RK;MOVES.KICKS.kp=KP.RA;MOVES.KICKS.offX=.14;
     MOVES.HOOK_L.atkDir='left';MOVES.HOOK_R.atkDir='right';
-    MOVES.HOOK_BODY_L.atkDir='left';MOVES.HOOK_BODY_R.atkDir='right';
+    MOVES.HOOK_BODY_L.atkDir='right';MOVES.HOOK_BODY_R.atkDir='left';
     MOVES.KICKS_2.kp=KP.LA;MOVES.KICKS_2.offX=-.14;MOVES.KICKS_2.atkDir='left';
     MOVES.KICKS.atkDir='right';}
 }
