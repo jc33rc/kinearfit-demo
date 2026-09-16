@@ -1998,7 +1998,7 @@ function endSession(fromTutorial){
 }
 
 // ======== AUDIO — Diferenciado por golpe ========
-function initAudio(){if(!audioCtx)try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+function initAudio(){if(!audioCtx)try{audioCtx=new(window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});impactSetup();}catch(e){}} // Prepara el sonido al iniciar, no en el primer golpe
 // Sonido de impacto sintetizado en tres capas, sin archivos:
 //  - chasquido: ruido filtrado, el contacto del guante o la tibia
 //  - cuerpo: ruido grave-medio, lo que da peso en el parlante de un celular
@@ -2006,64 +2006,72 @@ function initAudio(){if(!audioCtx)try{audioCtx=new(window.AudioContext||window.w
 //    el parlante no reproduzca graves (por debajo de ~150 Hz casi no suenan)
 // Parametros por movimiento en cfgs: sn=chasquido, bd=cuerpo, th=golpe
 // (F=frecuencia, V=volumen, D=duracion en segundos; t0/t1=tono inicial y final).
-let impactBus=null,noiseBuf=null,hitVariant=0;
+// Sincronia: ataque instantaneo, sin compresor (tiene retardo de anticipacion y
+// "aplasta" el golpe siguiente) y cada golpe corta la cola del anterior, para que
+// en combos rapidos cada impacto suene limpio y a tiempo.
+let impactBus=null,noiseBuf=null,satCurve=null,hitVariant=0,lastVoice=null;
 function impactSetup(){
-  if(impactBus)return;
-  const comp=audioCtx.createDynamicsCompressor();
-  comp.threshold.value=-20;comp.knee.value=6;comp.ratio.value=6;comp.attack.value=.002;comp.release.value=.12;
-  const out=audioCtx.createGain();out.gain.value=1.9;
-  comp.connect(out);out.connect(audioCtx.destination);impactBus=comp;
+  if(impactBus||!audioCtx)return;
+  // Recorte suave al final: evita saturar el parlante sin retrasar nada
+  const clip=audioCtx.createWaveShaper(),cc=new Float32Array(1024);
+  for(let i=0;i<1024;i++){const x=i/511.5-1;cc[i]=Math.tanh(x*1.3)/Math.tanh(1.3);}
+  clip.curve=cc;
+  const out=audioCtx.createGain();out.gain.value=1.15;
+  out.connect(clip);clip.connect(audioCtx.destination);impactBus=out;
+  satCurve=new Float32Array(512);
+  for(let i=0;i<512;i++){const x=i/255.5-1;satCurve[i]=Math.tanh(x*1.8)/Math.tanh(1.8);}
   // Ruido con generador determinista (xorshift), igual en cada sesion
   const len=Math.floor(audioCtx.sampleRate*.6);noiseBuf=audioCtx.createBuffer(1,len,audioCtx.sampleRate);
   const d=noiseBuf.getChannelData(0);let x=2463534242;
   for(let i=0;i<len;i++){x^=x<<13;x>>>=0;x^=x>>>17;x^=x<<5;x>>>=0;d[i]=(x/4294967296)*2-1;}
 }
-function impactEnv(g,now,vol,att,dur){
-  g.gain.setValueAtTime(.0001,now);
-  g.gain.exponentialRampToValueAtTime(Math.max(vol,.0002),now+att);
-  g.gain.exponentialRampToValueAtTime(.0001,now+att+dur);
+function impactEnv(g,now,vol,dur){
+  g.gain.setValueAtTime(vol,now);
+  g.gain.exponentialRampToValueAtTime(.0001,now+dur);
 }
 function playSound(type){
   if(!audioCtx)return;
   try{
     impactSetup();
     const cfgs={
-      jab:        {snF:2600,snV:.90,snD:.035, bdF:1400,bdV:.55,bdD:.06, t0:160,t1:75,thV:.35,thD:.06}, // Ligero y seco
-      cross:      {snF:2100,snV:.95,snD:.045, bdF:1100,bdV:.80,bdD:.09, t0:140,t1:65,thV:.55,thD:.08}, // Potente
-      hook_l:     {snF:1900,snV:.90,snD:.050, bdF:1000,bdV:.85,bdD:.10, t0:130,t1:62,thV:.60,thD:.09}, // Pesado, con arco
-      hook_r:     {snF:1900,snV:.90,snD:.050, bdF:1000,bdV:.85,bdD:.10, t0:130,t1:62,thV:.60,thD:.09},
-      hook_body_l:{snF:1300,snV:.70,snD:.050, bdF:850, bdV:.95,bdD:.12, t0:115,t1:58,thV:.70,thD:.10}, // Sordo, al cuerpo
-      hook_body_r:{snF:1300,snV:.70,snD:.050, bdF:850, bdV:.95,bdD:.12, t0:115,t1:58,thV:.70,thD:.10},
-      upper:      {snF:2300,snV:.95,snD:.040, bdF:1200,bdV:.70,bdD:.08, t0:150,t1:70,thV:.50,thD:.07}, // Seco, de abajo
-      kickf:      {snF:1100,snV:.60,snD:.050, bdF:800, bdV:1.0,bdD:.14, t0:105,t1:55,thV:.75,thD:.12}, // Empuje profundo
-      kicks:      {snF:1700,snV:1.0,snD:.060, bdF:900, bdV:1.0,bdD:.13, t0:110,t1:56,thV:.75,thD:.11}, // Tibia al muslo
-      kicks_2:    {snF:1700,snV:1.0,snD:.060, bdF:900, bdV:1.0,bdD:.13, t0:110,t1:56,thV:.75,thD:.11},
-      elbow:      {snF:3200,snV:1.0,snD:.030, bdF:1600,bdV:.55,bdD:.05, t0:170,t1:85,thV:.35,thD:.05}, // Corte seco
-      knee:       {snF:1200,snV:.65,snD:.050, bdF:800, bdV:1.0,bdD:.13, t0:105,t1:55,thV:.75,thD:.11}, // Pesado, sordo
+      jab:        {snF:2600,snV:.90,snD:.030, bdF:1400,bdV:.55,bdD:.05, t0:160,t1:75,thV:.35,thD:.05}, // Ligero y seco
+      cross:      {snF:2100,snV:.95,snD:.040, bdF:1100,bdV:.80,bdD:.07, t0:140,t1:65,thV:.55,thD:.07}, // Potente
+      hook_l:     {snF:1900,snV:.90,snD:.045, bdF:1000,bdV:.85,bdD:.07, t0:130,t1:62,thV:.60,thD:.07}, // Pesado, con arco
+      hook_r:     {snF:1900,snV:.90,snD:.045, bdF:1000,bdV:.85,bdD:.07, t0:130,t1:62,thV:.60,thD:.07},
+      hook_body_l:{snF:1300,snV:.70,snD:.045, bdF:850, bdV:.95,bdD:.08, t0:115,t1:58,thV:.70,thD:.08}, // Sordo, al cuerpo
+      hook_body_r:{snF:1300,snV:.70,snD:.045, bdF:850, bdV:.95,bdD:.08, t0:115,t1:58,thV:.70,thD:.08},
+      upper:      {snF:2300,snV:.95,snD:.035, bdF:1200,bdV:.70,bdD:.06, t0:150,t1:70,thV:.50,thD:.06}, // Seco, de abajo
+      kickf:      {snF:1100,snV:.60,snD:.045, bdF:800, bdV:1.0,bdD:.10, t0:105,t1:55,thV:.75,thD:.09}, // Empuje profundo
+      kicks:      {snF:1700,snV:1.0,snD:.050, bdF:900, bdV:1.0,bdD:.09, t0:110,t1:56,thV:.75,thD:.09}, // Tibia al muslo
+      kicks_2:    {snF:1700,snV:1.0,snD:.050, bdF:900, bdV:1.0,bdD:.09, t0:110,t1:56,thV:.75,thD:.09},
+      elbow:      {snF:3200,snV:1.0,snD:.025, bdF:1600,bdV:.55,bdD:.04, t0:170,t1:85,thV:.35,thD:.04}, // Corte seco
+      knee:       {snF:1200,snV:.65,snD:.045, bdF:800, bdV:1.0,bdD:.09, t0:105,t1:55,thV:.75,thD:.09}, // Pesado, sordo
     };
     const c=cfgs[type]||cfgs.jab,now=audioCtx.currentTime;
-    // Tres variantes en orden fijo para que golpes seguidos no suenen identicos
-    const v=hitVariant++%3,pm=[1,.94,1.06][v],off=[.02,.21,.40][v];
+    // El golpe nuevo corta la cola del anterior en unos milisegundos
+    if(lastVoice)lastVoice.gain.setTargetAtTime(0,now,.005);
+    const voice=audioCtx.createGain();voice.gain.value=1;voice.connect(impactBus);lastVoice=voice;
+    // Textura distinta en cada golpe (otro tramo del ruido), sin cambiar el tono
+    const off=[.02,.21,.40][hitVariant++%3],end=now+Math.max(c.snD,c.bdD,c.thD)+.02;
     // Chasquido
     const sn=audioCtx.createBufferSource();sn.buffer=noiseBuf;
-    const snf=audioCtx.createBiquadFilter();snf.type='bandpass';snf.frequency.value=c.snF*pm;snf.Q.value=.9;
-    const sng=audioCtx.createGain();impactEnv(sng,now,c.snV,.001,c.snD);
-    sn.connect(snf);snf.connect(sng);sng.connect(impactBus);sn.start(now,off,c.snD+.03);
+    const snf=audioCtx.createBiquadFilter();snf.type='bandpass';snf.frequency.value=c.snF;snf.Q.value=.9;
+    const sng=audioCtx.createGain();impactEnv(sng,now,c.snV,c.snD);
+    sn.connect(snf);snf.connect(sng);sng.connect(voice);sn.start(now,off);sn.stop(end);
     // Cuerpo
     const bd=audioCtx.createBufferSource();bd.buffer=noiseBuf;
-    const bdf=audioCtx.createBiquadFilter();bdf.type='lowpass';bdf.frequency.value=c.bdF*pm;bdf.Q.value=.7;
-    const bdg=audioCtx.createGain();impactEnv(bdg,now,c.bdV,.003,c.bdD);
-    bd.connect(bdf);bdf.connect(bdg);bdg.connect(impactBus);bd.start(now,off+.1,c.bdD+.03);
+    const bdf=audioCtx.createBiquadFilter();bdf.type='lowpass';bdf.frequency.value=c.bdF;bdf.Q.value=.7;
+    const bdg=audioCtx.createGain();impactEnv(bdg,now,c.bdV,c.bdD);
+    bd.connect(bdf);bdf.connect(bdg);bdg.connect(voice);bd.start(now,off+.1);bd.stop(end);
     // Golpe grave saturado
     const th=audioCtx.createOscillator();th.type='sine';
-    th.frequency.setValueAtTime(c.t0*pm,now);th.frequency.exponentialRampToValueAtTime(c.t1*pm,now+c.thD);
-    const sat=audioCtx.createWaveShaper(),curve=new Float32Array(512);
-    for(let i=0;i<512;i++){const x=i/255.5-1;curve[i]=Math.tanh(x*1.8)/Math.tanh(1.8);}
-    sat.curve=curve;
-    const thg=audioCtx.createGain();impactEnv(thg,now,c.thV,.002,c.thD);
-    th.connect(sat);sat.connect(thg);thg.connect(impactBus);th.start(now);th.stop(now+c.thD+.03);
+    th.frequency.setValueAtTime(c.t0,now);th.frequency.exponentialRampToValueAtTime(c.t1,now+c.thD);
+    const sat=audioCtx.createWaveShaper();sat.curve=satCurve;
+    const thg=audioCtx.createGain();impactEnv(thg,now,c.thV,c.thD);
+    th.connect(sat);sat.connect(thg);thg.connect(voice);th.start(now);th.stop(end);
   }catch(e){}
 }
+
 
 
 // ======== BADGES ========
