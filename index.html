@@ -474,10 +474,10 @@ let MOVES={
   HOOK_BODY_R:{color:'#FF9E2C',label:'BODY HOOK', kp:KP.RW, offX: .14,offY: .18,velThr:14, size:.15,velType:'lateral', atkDir:'left', requireLow:true},
   UPPER:{color:'#FFD60A',label:'UPPERCUT', kp:KP.RW, offX: .04,offY:-.06,velThr:62, size:.12,velType:'upward', atkDir:'up'},
   KICKF:{color:'#00E5C0',label:'FRONT KICK ↑',kp:KP.RK, offX:  0, offY: .32,velThr:28, size:.15,velType:'total', atkDir:'up'},
-  KICKS:{color:'#E040FB',label:'ROUND KICK →',kp:KP.RA, offX: .14,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
+  KICKS:{color:'#E040FB',label:'LOW KICK →',kp:KP.RA, offX: .14,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'right'},
   // Misma patada lateral con la otra pierna. Es lateral, asi que la posicion en pantalla
   // indica sola cual pierna: no necesita texto ni color extra.
-  KICKS_2:{color:'#E040FB',label:'ROUND KICK \u2190',kp:KP.LA, offX:-.14,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'left'},
+  KICKS_2:{color:'#E040FB',label:'LOW KICK \u2190',kp:KP.LA, offX:-.14,offY: .38,velThr:28, size:.15,velType:'lateral', atkDir:'left'},
   // ---- Movimientos LIBRES (kpAlt): se ejecutan con cualquiera de los dos lados. ----
   // Target centrado, asi que la posicion en pantalla no puede indicar lateralidad:
   // por eso aceptan ambos lados en vez de exigir el dominante.
@@ -500,8 +500,8 @@ const TUTORIAL_MOVES=[
   {mk:'HOOK_BODY_R', en:'BODY HOOK', title:'GANCHO AL CUERPO PODER',desc:()=>'Gancho al costado, a la altura del hígado, con la '+power()+'. Agáchate un poco.'},
   {mk:'UPPER', en:'UPPERCUT', title:'GANCHO ASCENDENTE',          desc:()=>'Puño de abajo hacia arriba, al mentón, con la mano '+power()+'. Golpe corto y seco: frena en el target, no sigas de largo.'},
   {mk:'KICKF', en:'FRONT KICK', title:'PATADA FRONTAL', desc:()=>'Levanta la rodilla y patea hacia adelante con la pierna '+leadLeg()+'.'},
-  {mk:'KICKS', en:'ROUND KICK', title:'PATADA CIRCULAR', desc:()=>'Patea en arco con la pierna '+leadLeg()+', girando la cadera. Lánzala rápido: despacio pierde fuerza y equilibrio.'},
-  {mk:'KICKS_2', en:'ROUND KICK', title:'PATADA CIRCULAR (otra pierna)', desc:()=>'La misma patada en arco, ahora con la pierna '+otherLeg()+'. El objetivo aparece al otro lado.'},
+  {mk:'KICKS', en:'LOW KICK', title:'PATADA BAJA', desc:()=>'Patea en arco a la altura del muslo con la pierna '+leadLeg()+', girando la cadera. Lánzala rápido: despacio pierde fuerza y equilibrio.'},
+  {mk:'KICKS_2', en:'LOW KICK', title:'PATADA BAJA (otra pierna)', desc:()=>'La misma patada en arco, ahora con la pierna '+otherLeg()+'. El objetivo aparece al otro lado.'},
   {mk:'ELBOW', en:'ELBOW', title:'CODAZO',         desc:()=>'Codazo en arco al mentón, con el brazo cerrado y el puño pegado a la cabeza. Con cualquiera de los dos brazos.'},
   {mk:'KNEE', en:'KNEE', title:'RODILLAZO',      desc:()=>'Sube la rodilla al plexo, de golpe y por el centro. Con cualquiera de las dos piernas.'}
 ];
@@ -523,12 +523,12 @@ const RUTINAS=[
    fact:'Volver al CROSS después del HOOK es lo que hace real al combo: el rival espera que termines, y ahí entra el último golpe.'},
   {id:'cross_hook_upper', name:'Cross-Hook-Upper', seq:['CROSS','HOOK_L','UPPER'], level:'Intermedio',
    fact:'El UPPERCUT se ejecuta mejor cuando el cuerpo ya rotó con el HOOK anterior: encadena impulso.'},
-  {id:'jab_upper_cross', name:'Jab-Upper-Hook', seq:['JAB','UPPER','HOOK_L'], level:'Intermedio',
-   fact:'JAB, UPPERCUT y HOOK: cada golpe entra por un ángulo distinto, y las manos se alternan.'},
+  {id:'jab_upper_body', name:'Jab-Upper-Body', seq:['JAB','UPPER','HOOK_BODY_L'], level:'Intermedio',
+   fact:'JAB, UPPERCUT y BODY HOOK: cada golpe entra por un ángulo y una altura distintos, y las manos se alternan.'},
   {id:'muay_thai_basico', name:'Muay Thai Básico', seq:['JAB','CROSS','KICKF'], level:'Intermedio',
    fact:'En Muay Thai, el FRONT KICK (teep) se usa para mantener distancia y cortar el avance del rival.'},
-  {id:'patada_lateral', name:'Patada Circular', seq:['CROSS','HOOK_L','KICKS','JAB','KICKS'], level:'Intermedio',
-   fact:'El ROUND KICK gana potencia con la velocidad: lanzarlo despacio le quita fuerza y equilibrio.'},
+  {id:'patada_lateral', name:'Patada Baja', seq:['CROSS','HOOK_L','KICKS','JAB','KICKS'], level:'Intermedio',
+   fact:'El LOW KICK gana potencia con la velocidad: lanzarlo despacio le quita fuerza y equilibrio.'},
   // ===== AVANZADO (6) =====
   {id:'clasico_completo', name:'Clásico Completo', seq:['JAB','CROSS','HOOK_L','UPPER','HOOK_BODY_L'], level:'Avanzado',
    fact:'Las manos se alternan golpe a golpe: así la cadera rota en ambos sentidos y no se pierde potencia.'},
@@ -539,7 +539,7 @@ const RUTINAS=[
   {id:'muay_thai_mix', name:'Muay Thai Mix', seq:['JAB','CROSS','HOOK_L','KICKF','CROSS','KICKS'], level:'Avanzado',
    fact:'Combinar cinco golpes distintos en secuencia entrena la transición fluida entre manos y piernas.'},
   {id:'doble_patada', name:'Doble Patada', seq:['CROSS','KICKF','JAB','KICKS'], level:'Avanzado',
-   fact:'El FRONT KICK empuja hacia adelante y el ROUND KICK cruza de lado: cambiar entre los dos obliga a reorientar todo el cuerpo.'},
+   fact:'El FRONT KICK empuja hacia adelante y el LOW KICK cruza de lado: cambiar entre los dos obliga a reorientar todo el cuerpo.'},
   {id:'combate_total', name:'Combate Total', seq:['JAB','CROSS','HOOK_L','UPPER','KICKS','CROSS','KICKF'], level:'Avanzado',
    fact:'Un asalto de boxeo dura tres minutos, y casi nadie golpea todo el tiempo: se alterna entre atacar, moverse y recuperar.'},
   // ===== CORTA DISTANCIA: CODOS Y RODILLAS (6) =====
