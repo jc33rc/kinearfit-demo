@@ -1717,29 +1717,41 @@ function drawPower(c,ctx){
 function hexToRgb(h){const r=parseInt(h.slice(1,3),16),g=parseInt(h.slice(3,5),16),b=parseInt(h.slice(5,7),16);return[r,g,b];}
 function adjustHex(h,a){const[r,g,b]=hexToRgb(h);const cl=v=>Math.max(0,Math.min(255,v+a));return`rgb(${cl(r)},${cl(g)},${cl(b)})`;}
 
-function drawSphere3D(ctx,x,y,radius,color){
-  // Outer glow
-  const glow=ctx.createRadialGradient(x,y,radius*.4,x,y,radius*2);
-  glow.addColorStop(0,color+'50');glow.addColorStop(1,'transparent');
-  ctx.beginPath();ctx.arc(x,y,radius*2,0,Math.PI*2);ctx.fillStyle=glow;ctx.fill();
-  // Sphere body (light from top-left)
-  const grad=ctx.createRadialGradient(x-radius*.32,y-radius*.38,radius*.04,x,y,radius);
-  grad.addColorStop(0,'rgba(255,255,255,.92)');
-  grad.addColorStop(.22,adjustHex(color,70));
-  grad.addColorStop(.55,color);
-  grad.addColorStop(.85,adjustHex(color,-50));
-  grad.addColorStop(1,adjustHex(color,-90));
-  ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);ctx.fillStyle=grad;ctx.fill();
-  // Edge ring
-  ctx.beginPath();ctx.arc(x,y,radius,0,Math.PI*2);
-  ctx.strokeStyle=adjustHex(color,30);ctx.lineWidth=2;ctx.globalAlpha=.6;ctx.stroke();ctx.globalAlpha=1;
-  // Specular highlight
-  const sx=x-radius*.28,sy=y-radius*.32;
-  const spec=ctx.createRadialGradient(sx,sy,0,sx,sy,radius*.32);
-  spec.addColorStop(0,'rgba(255,255,255,.85)');spec.addColorStop(1,'rgba(255,255,255,0)');
-  ctx.beginPath();ctx.arc(sx,sy,radius*.32,0,Math.PI*2);ctx.fillStyle=spec;ctx.fill();
+// Objetivo en neon oscuro: la misma esfera, sin aros ni reflejo blanco. El color nace
+// brillante en el centro y se apaga hacia el fondo de la app; un halo corto da el brillo
+// sin que el objetivo parezca mas grande que su zona. Ajustes en NEON.
+const NEON={bg:'#080A12', core:.10, mid:.30, edge:.55, glow:.30, glowReach:1.4};
+const sphereCache={};
+function mixRgb(a,b,t,alpha){
+  const A=hexToRgb(a),B=hexToRgb(b),m=i=>Math.round(A[i]+(B[i]-A[i])*t);
+  return alpha==null?`rgb(${m(0)},${m(1)},${m(2)})`:`rgba(${m(0)},${m(1)},${m(2)},${alpha})`;
 }
-
+// Se dibuja una sola vez por color y tamano; cada cuadro solo copia la imagen.
+// El brillo en canvas es costoso en celular, y bajar los fps cambiaria la deteccion.
+function buildSphere(color,R){
+  const ext=Math.ceil(R*NEON.glowReach)+2,cv=document.createElement('canvas');
+  cv.width=cv.height=ext*2;const g=cv.getContext('2d'),c=ext;
+  const glow=g.createRadialGradient(c,c,R*.9,c,c,R*NEON.glowReach);
+  glow.addColorStop(0,mixRgb(color,color,0,NEON.glow));
+  glow.addColorStop(.4,mixRgb(color,color,0,NEON.glow*.35));
+  glow.addColorStop(1,mixRgb(color,color,0,0));
+  g.beginPath();g.arc(c,c,R*NEON.glowReach,0,Math.PI*2);g.fillStyle=glow;g.fill();
+  const body=g.createRadialGradient(c,c-R*.12,R*.04,c,c,R);
+  body.addColorStop(0,mixRgb(color,'#FFFFFF',NEON.core));
+  body.addColorStop(.45,color);
+  body.addColorStop(.8,mixRgb(color,NEON.bg,NEON.mid));
+  body.addColorStop(1,mixRgb(color,NEON.bg,NEON.edge));
+  g.beginPath();g.arc(c,c,R,0,Math.PI*2);g.fillStyle=body;g.fill();
+  return {cv:cv,R:R,ext:ext};
+}
+function drawSphere3D(ctx,x,y,radius,color){
+  if(!(radius>0))return;
+  // Se construye un poco mas grande que lo pedido para escalar hacia abajo (mas nitido)
+  const R=Math.ceil(radius*1.25/16)*16,key=color+'|'+R;
+  const sp=sphereCache[key]||(sphereCache[key]=buildSphere(color,R));
+  const k=radius/sp.R,w=sp.ext*2*k;
+  ctx.drawImage(sp.cv,x-w/2,y-w/2,w,w);
+}
 function drawTargets(c,ctx){
   const s=S.sess,seq=(COMBOS[s.selCombo]&&COMBOS[s.selCombo].seq)||[];
   const cmk=seq[s.combIdx];
@@ -1987,32 +1999,72 @@ function endSession(fromTutorial){
 
 // ======== AUDIO — Diferenciado por golpe ========
 function initAudio(){if(!audioCtx)try{audioCtx=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}
+// Sonido de impacto sintetizado en tres capas, sin archivos:
+//  - chasquido: ruido filtrado, el contacto del guante o la tibia
+//  - cuerpo: ruido grave-medio, lo que da peso en el parlante de un celular
+//  - golpe: tono grave saturado; la saturacion crea armonicos que si se oyen aunque
+//    el parlante no reproduzca graves (por debajo de ~150 Hz casi no suenan)
+// Parametros por movimiento en cfgs: sn=chasquido, bd=cuerpo, th=golpe
+// (F=frecuencia, V=volumen, D=duracion en segundos; t0/t1=tono inicial y final).
+let impactBus=null,noiseBuf=null,hitVariant=0;
+function impactSetup(){
+  if(impactBus)return;
+  const comp=audioCtx.createDynamicsCompressor();
+  comp.threshold.value=-20;comp.knee.value=6;comp.ratio.value=6;comp.attack.value=.002;comp.release.value=.12;
+  const out=audioCtx.createGain();out.gain.value=1.9;
+  comp.connect(out);out.connect(audioCtx.destination);impactBus=comp;
+  // Ruido con generador determinista (xorshift), igual en cada sesion
+  const len=Math.floor(audioCtx.sampleRate*.6);noiseBuf=audioCtx.createBuffer(1,len,audioCtx.sampleRate);
+  const d=noiseBuf.getChannelData(0);let x=2463534242;
+  for(let i=0;i<len;i++){x^=x<<13;x>>>=0;x^=x>>>17;x^=x<<5;x>>>=0;d[i]=(x/4294967296)*2-1;}
+}
+function impactEnv(g,now,vol,att,dur){
+  g.gain.setValueAtTime(.0001,now);
+  g.gain.exponentialRampToValueAtTime(Math.max(vol,.0002),now+att);
+  g.gain.exponentialRampToValueAtTime(.0001,now+att+dur);
+}
 function playSound(type){
   if(!audioCtx)return;
   try{
-    const osc=audioCtx.createOscillator(),g=audioCtx.createGain(),dist=audioCtx.createWaveShaper();
-    const curve=new Float32Array(256);for(let i=0;i<256;i++){const x=(i*2)/256-1;curve[i]=(3+30)*x*30*(Math.PI/180)/(Math.PI+30*Math.abs(x));}
-    dist.curve=curve;osc.connect(dist);dist.connect(g);g.connect(audioCtx.destination);
+    impactSetup();
     const cfgs={
-      jab:        {f:220,d:.07,t:'sawtooth',vol:.34}, // Seco, rápido
-      cross:      {f:160,d:.11,t:'sawtooth',vol:.42}, // Potente
-      hook_l:     {f:120,d:.16,t:'square',  vol:.48}, // Grave, lateral
-      hook_r:     {f:120,d:.16,t:'square',  vol:.48},
-      hook_body_l:{f:105,d:.17,t:'square',  vol:.50}, // Más grave (al cuerpo)
-      hook_body_r:{f:105,d:.17,t:'square',  vol:.50},
-      upper:      {f:200,d:.09,t:'sawtooth',vol:.38}, // Ascendente
-      kickf:      {f:90, d:.22,t:'sine',    vol:.55}, // Grave profundo
-      kicks:      {f:100,d:.2, t:'sine',    vol:.52},
-      kicks_2:    {f:100,d:.2, t:'sine',    vol:.52}, // Lateral profundo
-      elbow:      {f:145,d:.13,t:'square',  vol:.50}, // Seco y corto
-      knee:       {f:95, d:.19,t:'sine',    vol:.54}, // Grave, impacto de cuerpo
+      jab:        {snF:2600,snV:.90,snD:.035, bdF:1400,bdV:.55,bdD:.06, t0:160,t1:75,thV:.35,thD:.06}, // Ligero y seco
+      cross:      {snF:2100,snV:.95,snD:.045, bdF:1100,bdV:.80,bdD:.09, t0:140,t1:65,thV:.55,thD:.08}, // Potente
+      hook_l:     {snF:1900,snV:.90,snD:.050, bdF:1000,bdV:.85,bdD:.10, t0:130,t1:62,thV:.60,thD:.09}, // Pesado, con arco
+      hook_r:     {snF:1900,snV:.90,snD:.050, bdF:1000,bdV:.85,bdD:.10, t0:130,t1:62,thV:.60,thD:.09},
+      hook_body_l:{snF:1300,snV:.70,snD:.050, bdF:850, bdV:.95,bdD:.12, t0:115,t1:58,thV:.70,thD:.10}, // Sordo, al cuerpo
+      hook_body_r:{snF:1300,snV:.70,snD:.050, bdF:850, bdV:.95,bdD:.12, t0:115,t1:58,thV:.70,thD:.10},
+      upper:      {snF:2300,snV:.95,snD:.040, bdF:1200,bdV:.70,bdD:.08, t0:150,t1:70,thV:.50,thD:.07}, // Seco, de abajo
+      kickf:      {snF:1100,snV:.60,snD:.050, bdF:800, bdV:1.0,bdD:.14, t0:105,t1:55,thV:.75,thD:.12}, // Empuje profundo
+      kicks:      {snF:1700,snV:1.0,snD:.060, bdF:900, bdV:1.0,bdD:.13, t0:110,t1:56,thV:.75,thD:.11}, // Tibia al muslo
+      kicks_2:    {snF:1700,snV:1.0,snD:.060, bdF:900, bdV:1.0,bdD:.13, t0:110,t1:56,thV:.75,thD:.11},
+      elbow:      {snF:3200,snV:1.0,snD:.030, bdF:1600,bdV:.55,bdD:.05, t0:170,t1:85,thV:.35,thD:.05}, // Corte seco
+      knee:       {snF:1200,snV:.65,snD:.050, bdF:800, bdV:1.0,bdD:.13, t0:105,t1:55,thV:.75,thD:.11}, // Pesado, sordo
     };
     const c=cfgs[type]||cfgs.jab,now=audioCtx.currentTime;
-    osc.frequency.setValueAtTime(c.f,now);osc.frequency.exponentialRampToValueAtTime(28,now+c.d);
-    g.gain.setValueAtTime(c.vol,now);g.gain.exponentialRampToValueAtTime(.001,now+c.d);
-    osc.type=c.t;osc.start(now);osc.stop(now+c.d);
+    // Tres variantes en orden fijo para que golpes seguidos no suenen identicos
+    const v=hitVariant++%3,pm=[1,.94,1.06][v],off=[.02,.21,.40][v];
+    // Chasquido
+    const sn=audioCtx.createBufferSource();sn.buffer=noiseBuf;
+    const snf=audioCtx.createBiquadFilter();snf.type='bandpass';snf.frequency.value=c.snF*pm;snf.Q.value=.9;
+    const sng=audioCtx.createGain();impactEnv(sng,now,c.snV,.001,c.snD);
+    sn.connect(snf);snf.connect(sng);sng.connect(impactBus);sn.start(now,off,c.snD+.03);
+    // Cuerpo
+    const bd=audioCtx.createBufferSource();bd.buffer=noiseBuf;
+    const bdf=audioCtx.createBiquadFilter();bdf.type='lowpass';bdf.frequency.value=c.bdF*pm;bdf.Q.value=.7;
+    const bdg=audioCtx.createGain();impactEnv(bdg,now,c.bdV,.003,c.bdD);
+    bd.connect(bdf);bdf.connect(bdg);bdg.connect(impactBus);bd.start(now,off+.1,c.bdD+.03);
+    // Golpe grave saturado
+    const th=audioCtx.createOscillator();th.type='sine';
+    th.frequency.setValueAtTime(c.t0*pm,now);th.frequency.exponentialRampToValueAtTime(c.t1*pm,now+c.thD);
+    const sat=audioCtx.createWaveShaper(),curve=new Float32Array(512);
+    for(let i=0;i<512;i++){const x=i/255.5-1;curve[i]=Math.tanh(x*1.8)/Math.tanh(1.8);}
+    sat.curve=curve;
+    const thg=audioCtx.createGain();impactEnv(thg,now,c.thV,.002,c.thD);
+    th.connect(sat);sat.connect(thg);thg.connect(impactBus);th.start(now);th.stop(now+c.thD+.03);
   }catch(e){}
 }
+
 
 // ======== BADGES ========
 function checkBadges(){
