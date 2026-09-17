@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <title>KinearFit</title>
@@ -26,8 +26,8 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .screen.active{display:flex}
 .scroll-content{flex:1;overflow-y:auto;padding:0 20px 100px;-webkit-overflow-scrolling:touch}
 .scroll-content::-webkit-scrollbar{display:none}
-.status-bar{height:44px;background:var(--bg);display:flex;align-items:center;justify-content:space-between;padding:0 20px;flex-shrink:0}
-.notch{width:88px;height:26px;background:#000;border-radius:13px}
+/* Margen superior real: respeta el notch y la barra de estado del celular, sin simular una */
+.top-safe{height:max(16px,env(safe-area-inset-top));flex-shrink:0}
 .card{background:rgba(255,255,255,0.05);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.1);border-radius:20px;padding:18px}
 .card-accent{background:rgba(255,69,0,0.1);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid rgba(255,69,0,0.35)}
 .btn{display:block;width:100%;background:var(--accent);color:white;border:none;border-radius:14px;font-family:var(--font);font-weight:800;font-size:14px;padding:16px;cursor:pointer;text-align:center}
@@ -158,7 +158,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 </div>
 <!-- HOME -->
 <div class="screen" id="screen-home">
-  <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
+  <div class="top-safe"></div>
   <div class="scroll-content" style="padding-top:4px">
     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px"><div><div style="font-size:13px;color:var(--muted);font-weight:500">Hola</div><div class="heading" id="h-greeting" style="margin-top:2px">Entrenador</div></div><div class="streak-badge"><span style="font-size:20px">🔥</span><div><div style="font-size:18px;font-weight:900;color:var(--accent);line-height:1" id="h-streak">0</div><div style="font-size:9px;color:var(--muted);font-weight:600;letter-spacing:1px">DÍAS</div></div></div></div>
     <div class="card" id="week-card" style="margin-bottom:16px;display:none">
@@ -177,7 +177,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 </div>
 <!-- TRAIN -->
 <div class="screen" id="screen-train">
-  <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
+  <div class="top-safe"></div>
   <div class="scroll-content" style="padding-top:4px">
     <div class="heading" style="margin-bottom:20px">Entrenar</div>
     <div class="mode-grid"><div class="mode-card active" id="mc-combos" onclick="selMode('combos')" style="position:relative"><div style="position:absolute;top:8px;right:8px;background:var(--accent);color:white;font-size:9px;font-weight:800;padding:2px 8px;border-radius:8px;letter-spacing:.3px">RECOMENDADO</div><div style="width:50px;height:50px;margin-bottom:10px"><svg class="ico-mode" aria-hidden="true" focusable="false" width="50" height="50" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="-2.41 -2.41 104.72 104.72">
@@ -224,7 +224,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 </div>
 <!-- TUTORIAL SELECT -->
 <div class="screen" id="screen-tutorial-select">
-  <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
+  <div class="top-safe"></div>
   <div class="scroll-content" style="padding-top:4px">
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px"><button onclick="goTo('train')" style="background:none;border:none;color:var(--accent);font-size:22px;cursor:pointer;padding:0">‹</button><div class="heading" style="margin:0">Tutorial</div></div>
     <div class="muted-text" style="margin-bottom:20px">Elige un golpe y practícalo solo, a tu ritmo.</div>
@@ -274,7 +274,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 </div>
 <!-- POST SESSION -->
 <div class="screen" id="screen-post">
-  <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
+  <div class="top-safe"></div>
   <div class="scroll-content" style="padding-top:0">
     <div style="text-align:center;padding:28px 0 20px"><span style="font-size:52px">🏁</span><div class="heading" style="margin-top:8px">¡Sesión Completada!</div><div class="muted-text" style="margin-top:4px">Excelente trabajo</div></div>
     <div class="card card-accent" style="text-align:center;margin-bottom:16px"><div class="label" style="margin-bottom:4px">Puntaje Total</div><div style="font-size:44px;font-weight:900;color:var(--accent);letter-spacing:-2px" id="ps-score">0</div></div>
@@ -336,7 +336,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 
 <!-- BADGES -->
 <div class="screen" id="screen-badges">
-  <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
+  <div class="top-safe"></div>
   <div class="scroll-content" style="padding-top:4px">
     <div class="heading" style="margin-bottom:4px">Insignias</div>
     <div class="muted-text" style="margin-bottom:16px"><span style="color:var(--accent);font-weight:700" id="bc">0</span> desbloqueadas</div>
@@ -349,7 +349,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 </div>
 <!-- PROFILE -->
 <div class="screen" id="screen-profile">
-  <div class="status-bar"><span style="font-size:13px;font-weight:700;color:var(--text)">9:41</span><div class="notch"></div><span style="font-size:11px;color:var(--text)">●●● 🔋</span></div>
+  <div class="top-safe"></div>
   <div class="scroll-content" style="padding-top:4px">
     <div style="display:flex;align-items:center;gap:16px;margin-bottom:24px"><img id="pf-avatar" alt="KinearFit" style="width:64px;height:64px;border-radius:50%;flex-shrink:0;object-fit:cover;box-shadow:0 4px 20px rgba(255,77,0,.35)"><div><div style="font-size:22px;font-weight:900;color:var(--text);letter-spacing:-.5px" id="pf-name">Entrenador</div><div style="display:flex;gap:8px;align-items:center;margin-top:4px"><span class="chip" id="pf-level">Novato</span><span class="muted-text" style="font-size:12px" id="pf-streak">🔥 0 días</span></div></div><button onclick="openEditProfile()" aria-label="Editar perfil" style="margin-left:auto;flex-shrink:0;width:38px;height:38px;border-radius:19px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:15px;line-height:1;cursor:pointer">✎</button></div>
     <div class="card" style="margin-bottom:16px"><div class="label" style="margin-bottom:14px">Estadísticas</div><div id="pf-stats"></div></div>
