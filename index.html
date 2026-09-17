@@ -890,9 +890,9 @@ function rendTutorialMoves(){
 // descargar nada aparte). Se decodifican solo al abrir la pantalla y se liberan al salir, para
 // que el video no compita con la camara y la deteccion al practicar.
 // Hook, body hook y low kick de la otra extremidad usan por ahora el mismo video.
-const TUT_VIDEO={GUARD:'guard',JAB:'cross',CROSS:'jab',   // intercambiados: visualmente el clip 'jab' se lee como cross y viceversa
-  HOOK_L:'hook',HOOK_R:'hook',HOOK_BODY_L:'body_hook',HOOK_BODY_R:'body_hook',
+const TUT_VIDEO={GUARD:'guard',JAB:'jab',CROSS:'cross',HOOK_L:'hook',HOOK_R:'hook',HOOK_BODY_L:'body_hook',HOOK_BODY_R:'body_hook',
   UPPER:'uppercut',KICKF:'front_kick',KICKS:'low_kick',KICKS_2:'low_kick',ELBOW:'elbow',KNEE:'knee'};
+const TUT_VIDEO_SIN_ESPEJO=['jab','cross'];
 // La guardia no es un golpe: se muestra primero en la lista y solo tiene "Entendido".
 const GUARD_MOVE={mk:'GUARD',en:'GUARD',title:'GUARDIA',desc:()=>'Pierna '+otherLeg()+' adelante, pies al ancho de los hombros. Manos arriba cubriendo la cara, codos cerrados y mentón abajo.'};
 let tmMk=null,tmUrl=null;
@@ -911,10 +911,11 @@ function openTutorialMove(mk){
   const guard=mk==='GUARD';
   document.getElementById('tm-practice').style.display=guard?'none':'';
   document.getElementById('tm-cancel').textContent=guard?'Entendido':'Cancelar';
-  // En los videos el pie adelantado queda a la derecha de la pantalla. La camara funciona como
-  // espejo, asi que para un diestro (pie izquierdo adelante) se espeja y la guardia coincide.
-  const v=document.getElementById('tm-video');
-  v.style.transform=S.user.dom==='left'?'none':'scaleX(-1)';
+  // Clips que para un diestro se ven correctos sin espejar (validado por JC en el celular).
+  // Para un zurdo se aplica lo contrario, asi cada clip muestra su guardia.
+  const v=document.getElementById('tm-video'),key=TUT_VIDEO[mk];
+  const mirrorRight=!TUT_VIDEO_SIN_ESPEJO.includes(key);
+  v.style.transform=((S.user.dom==='left')!==mirrorRight)?'scaleX(-1)':'none';
   releaseTutorialVideo();
   tmUrl=tutorialVideoUrl(TUT_VIDEO[mk]);
   // play() dentro del mismo toque: el ahorro de bateria del iPhone puede bloquear el autoplay
