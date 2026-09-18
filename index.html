@@ -86,12 +86,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 .level-btn{flex:1;background:var(--white);border:1.5px solid var(--border);border-radius:12px;padding:12px 6px;font-family:var(--font);font-weight:700;font-size:12px;color:var(--muted);cursor:pointer;text-align:center}
 .level-btn.active{background:var(--accent);border-color:var(--accent);color:white}
 #bottom-nav{position:fixed;bottom:0;left:0;right:0;height:68px;background:rgba(8,10,18,0.92);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-top:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;justify-content:space-around;z-index:100}
-.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:8px 16px}
+.nav-item{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:6px 16px}
 .nav-icon{display:flex;color:var(--muted)}
-.nav-icon .ico{width:24px;height:24px;display:block}
+.nav-icon .ico{width:28px;height:28px;display:block}
 .nav-item.active .nav-icon{color:var(--accent)}
 .ico-mode{display:block;color:var(--accent)}
-.nav-label{font-size:10px;font-weight:700;color:var(--muted)}
+.nav-label{font-size:11px;font-weight:700;color:var(--muted)}
 .nav-item.active .nav-label{color:var(--accent)}
 .nav-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);display:none}
 .nav-item.active .nav-dot{display:block}
@@ -185,7 +185,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <div id="op3" style="display:none">
       <div class="card" style="margin-bottom:12px"><div style="font-size:32px;margin-bottom:10px">📱</div><div style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:4px">Configuración de cámara</div><div class="muted-text" style="line-height:1.6">Para que KinearFit detecte tus movimientos:</div></div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">1</div><div style="font-size:13px;color:var(--text)">Apoya el teléfono a <strong>1 metro</strong> a la altura de la cadera</div></div>
+        <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">1</div><div style="font-size:13px;color:var(--text)">Apoya el teléfono a <strong>1,5 metros</strong> a la altura de la cadera</div></div>
         <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">2</div><div style="font-size:13px;color:var(--text)"><strong>Buena iluminación</strong> frontal — sin contraluz</div></div>
         <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">3</div><div style="font-size:13px;color:var(--text)">Visible de <strong>cabeza hasta las rodillas</strong> — patadas incluidas</div></div>
       </div>
@@ -426,6 +426,9 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
 <script>
 // ======== CONSTANTS ========
 const DIFF={easy:{dur:60,rest:30,spd:'Lenta',mult:0.8,level:'Principiante',met:5.5},medium:{dur:180,rest:45,spd:'Media',mult:1.0,level:'Intermedio',met:7.8},hard:{dur:300,rest:30,spd:'Rápida',mult:1.25,level:'Avanzado',met:9.8}};
+// Un segundo cuenta como activo solo si hubo un golpe validado en esta ventana: estar
+// parado en la ronda ya no suma calorias.
+const ACTIVE_WINDOW=10000;
 // Calorie estimate (ACSM / Compendium of Physical Activities): kcal/min = MET × 3.5 × kg ÷ 200
 function calcCalories(diffKey,activeSeconds){
   const met=(DIFF[diffKey]&&DIFF[diffKey].met)||7.0;
@@ -773,7 +776,7 @@ function getSeriesTier(series,statVal){
 // ======== STATE ========
 let S={
   screen:'splash',
-  user:{name:'',age:25,wt:70,ht:170,dom:'right',level:'beginner',sound:true},
+  user:{name:'',age:25,wt:70,ht:170,dom:'right',level:'beginner',sound:false},   // el sonido arranca apagado; se activa en el perfil
   stats:{totalHits:0,totalKicks:0,totalCombos:0,eliteCombos:0,
          totalSessions:0,totalRounds:0,hardRounds:0,totalTime:0,streak:0,streakShields:1,
          totalCalories:0,calLog:{},
@@ -1067,7 +1070,9 @@ function validateTravel(mv,c,idx){
   const sMin=0.2;
   // Solo cuentan los cuadros posteriores al ultimo acierto de esta extremidad: el recorrido
   // de un golpe ya validado no puede servirle al siguiente.
-  const since=limbHit[idx]||0;
+  // Ningun golpe puede validarse con el movimiento del golpe anterior, aunque lo haya
+  // lanzado la otra mano: el uppercut ya no le sirve al hook, ni el codazo al cross.
+  const since=Math.max(limbHit[idx]||0,lastHitTs);
   const frames=kptHistory.filter(f=>!(f.t<=since));
   if(frames.length<3)return false; // need some history
   const end=frames[frames.length-1][idx];
@@ -1109,7 +1114,7 @@ let sessTimer=null,breakTimer=null,audioCtx=null;
 // limbHit: momento del ultimo acierto de cada extremidad (por keypoint). Una misma mano o
 // pierna no valida un golpe nuevo con el movimiento del anterior: espera getHitCD(), el mismo
 // tiempo que ya separa los dos jabs de Doble Jab, y su recorrido se mide desde que vuelve.
-const limbHit={};
+const limbHit={};let lastHitTs=0;   // lastHitTs: ultimo acierto de la secuencia, sea de la extremidad que sea
 const hitCool={};function getHitCD(){const m=(DIFF[S.sess.diff]&&DIFF[S.sess.diff].mult)||1;return Math.round(380/m);}
 
 async function startSession(mode,diff){
@@ -1119,7 +1124,7 @@ async function startSession(mode,diff){
   posState='ok';posCandidate='ok';posSince=0;
   lastPower=0;lastPowerAt=0;bestPower=0;powerSmooth=0;
   for(const k in hitCool)delete hitCool[k];  // clear stale cooldowns from previous sessions
-  for(const k in limbHit)delete limbHit[k];
+  for(const k in limbHit)delete limbHit[k];lastHitTs=0;
   kptHistory=[];
   S.sess={active:false,mode,diff,round:1,totalRounds:3,timeLeft:DIFF[diff].dur,score:0,hits:0,comboStr:0,comboMax:0,kicks:0,combos:0,combIdx:0,selCombo:S.selCombo,startTime:Date.now(),activeSeconds:0};
   // El tutorial no cuenta: la insignia Explorador se refiere a libre y guiado.
@@ -1455,9 +1460,9 @@ function detectStrike(mk,c){
         const crossedX=(pvx.x-tp.x)*(kpx.x-tp.x)<=0; // cambio de signo = cruzo el centro
         crossed=verticalOk&&crossedX;
       }
-      if(closeNow||crossed){limbHit[idx]=now;return kpx;}
+      if(closeNow||crossed){limbHit[idx]=now;lastHitTs=now;return kpx;}
     } else {
-      if(Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<mv.size*c.width){limbHit[idx]=now;return kpx;}
+      if(Math.hypot(kpx.x-tp.x,kpx.y-tp.y)<mv.size*c.width){limbHit[idx]=now;lastHitTs=now;return kpx;}
     }
   }
   return null;
@@ -2010,7 +2015,7 @@ function drawEffects(c,ctx){
 // ======== SESSION TIMER ========
 function startRoundTimer(){
   clearInterval(sessTimer);
-  sessTimer=setInterval(()=>{if(!S.sess.active)return;S.sess.timeLeft--;S.sess.activeSeconds=(S.sess.activeSeconds||0)+1;updateHUD();if(S.sess.timeLeft<=0){clearInterval(sessTimer);if(S.sess.round<S.sess.totalRounds)startBreak();else{S.sess.completed=true;endSession();}}},1000);
+  sessTimer=setInterval(()=>{if(!S.sess.active)return;S.sess.timeLeft--;if(Date.now()-(S.sess.lastHitAt||0)<=ACTIVE_WINDOW)S.sess.activeSeconds=(S.sess.activeSeconds||0)+1;/* solo cuenta si hubo golpe reciente */updateHUD();if(S.sess.timeLeft<=0){clearInterval(sessTimer);if(S.sess.round<S.sess.totalRounds)startBreak();else{S.sess.completed=true;endSession();}}},1000);
 }
 function startBreak(){
   S.sess.active=false;let bt=DIFF[S.sess.diff].rest;
