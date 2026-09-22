@@ -198,7 +198,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);font-famil
     <div id="op3" style="display:none">
       <div class="card" style="margin-bottom:12px"><div style="color:var(--accent)"><svg class="ic" style="width:34px;height:34px" aria-hidden="true"><use href="#ic-camara"/></svg></div><div style="font-size:16px;font-weight:800;color:var(--text);margin-bottom:4px">Configuración de cámara</div><div class="muted-text" style="line-height:1.6">Para que KinearFit detecte tus movimientos:</div></div>
       <div style="display:flex;flex-direction:column;gap:10px">
-        <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">1</div><div style="font-size:13px;color:var(--text)">Apoya el teléfono a <strong>1,5 metros</strong> a la altura de la cadera</div></div>
+        <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">1</div><div style="font-size:13px;color:var(--text)">Apoya el teléfono a la altura de la cadera y aléjate hasta que tu <strong>cara quede justo debajo del reloj</strong></div></div>
         <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">2</div><div style="font-size:13px;color:var(--text)"><strong>Buena iluminación</strong> frontal — sin contraluz</div></div>
         <div class="card" style="display:flex;align-items:center;gap:12px"><div style="width:32px;height:32px;border-radius:50%;background:var(--accent);color:white;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;flex-shrink:0">3</div><div style="font-size:13px;color:var(--text)">Visible de <strong>cabeza hasta las rodillas</strong> — patadas incluidas</div></div>
       </div>
@@ -907,18 +907,9 @@ function showRoutineIntro(i){
   document.getElementById('ri-content').style.display='flex';
   document.getElementById('ri-countdown').style.display='none';
 }
-function beginCountdown(){
-  document.getElementById('ri-content').style.display='none';
-  const cd=document.getElementById('ri-countdown');
-  cd.style.display='block';
-  let n=3;cd.textContent=n;
-  const iv=setInterval(()=>{
-    n--;
-    if(n>0){cd.textContent=n;}
-    else if(n===0){cd.textContent='¡VA!';}
-    else{clearInterval(iv);startSession(S.mode,S.diff);}
-  },800);
-}
+// La cuenta regresiva ya no va aqui: pasa a la sesion, con la camara encendida, para
+// que la persona se ubique con la guia de encuadre mientras cuenta.
+function beginCountdown(){startSession(S.mode,S.diff);}
 
 // ======== TUTORIAL (single-move practice) ========
 function openTutorial(){
@@ -1149,16 +1140,18 @@ async function startSession(mode,diff){
   initAudio();
   setLoad(5,'Activando cámara...','Permiso de cámara necesario');
   await startCamera();
-  setLoad(35,'Cargando IA MoveNet...','~3MB — solo primera vez');
+  setLoad(35,'Cargando IA MoveNet...','');
   await loadMoveNet();
   setLoad(100,'¡Listo!','');
   await sleep(350);
   document.getElementById('loading-overlay').style.display='none';
-  initCanvas();S.sess.active=true;
-  S.sess.startTime=Date.now(); // el reloj arranca con la rutina, no en la carga
+  initCanvas();
   if(mode==='tutorial'){
+    S.sess.active=true;
+    S.sess.startTime=Date.now(); // el reloj arranca con la rutina, no en la carga
     document.getElementById('hud').style.display='none';
     initTutorial();
+    detectLoop();
   } else {
     document.getElementById('hud').style.display='flex';
     updateHUD();
@@ -1166,9 +1159,15 @@ async function startSession(mode,diff){
     document.getElementById('hb-libre').style.display='none';
     document.getElementById('hb-combo').style.display=libre?'none':'flex';
     if(!libre){rendNextMoves();}
+    detectLoop();
+    // Ronda 1: cuenta de 5 a 1 con la guia de encuadre (ovalo + puntos). Mientras cuenta,
+    // la sesion no esta activa: no hay golpes, calorias ni avisos.
+    await guideCountdown();
+    if(!arRunning)return;                      // salio durante la cuenta
+    S.sess.active=true;
+    S.sess.startTime=Date.now(); // el reloj arranca con la rutina, no en la carga
     startRoundTimer();
   }
-  detectLoop();
 }
 function setLoad(p,t,s){document.getElementById('load-bar').style.width=p+'%';document.getElementById('load-pct').textContent=p+'%';document.getElementById('load-title').textContent=t;document.getElementById('load-sub').textContent=s;}
 function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
@@ -1198,6 +1197,80 @@ async function loadMoveNet(){
 // El texto va como texto (puede venir de un error); el visto se agrega aparte como icono.
 function setTrkBadge(lvl,txt,ok){document.getElementById('t-dot').style.background=['#FF3B30','#F77F00','#00B87A'][lvl];const el=document.getElementById('t-txt');el.textContent=txt;if(ok)el.insertAdjacentHTML('beforeend',' '+ico('check'));}
 
+// ======== GUIA DE ENCUADRE ========
+// Regla de JC: la cara justo debajo del reloj. Asi todos se ven del mismo tamano en pantalla
+// sin importar la estatura, que es como se calibro la deteccion. Valores para afinar probando
+// (fracciones del alto de pantalla).
+const FRAME={gap:.01, ovalH:.13, ovalAspect:.72, closeAt:.25, far:.10, farLegs:.20};
+// Convierte un punto de la deteccion a donde se ve en pantalla (la camara se muestra recortada).
+// Es la misma cuenta que arLoop usa para dibujar el video; solo sirve para mostrar, la
+// deteccion sigue igual.
+function camDisplayMap(c){
+  const v=document.getElementById('cam-video');
+  const vw=(v&&v.videoWidth)||480,vh=(v&&v.videoHeight)||640,cw=c.width,ch=c.height;
+  const vAR=vw/vh,cAR=cw/ch;let sx=0,sy=0,sw=vw,sh=vh;
+  if(vAR>cAR){sw=Math.round(vh*cAR);sx=Math.round((vw-sw)/2);}
+  else{sh=Math.round(vw/cAR);sy=Math.round((vh-sh)/2);}
+  return k=>({x:cw*(1-(((1-k.x)*vw)-sx)/sw),y:ch*((k.y*vh-sy)/sh)});
+}
+// El ovalo "Rostro" va justo debajo del reloj del HUD.
+function frameGeom(c){
+  const t=document.getElementById('hud-tmr');
+  const r=t&&t.getBoundingClientRect();
+  const below=(r&&r.height)?r.bottom:c.height*.14;
+  const h=c.height*FRAME.ovalH,w=h*FRAME.ovalAspect,top=below+c.height*FRAME.gap;
+  return {cx:c.width/2,cy:top+h/2,w:w,h:h,top:top,bottom:top+h};
+}
+// Solo los 12 puntos del cuerpo: los de la cara caerian dentro del ovalo.
+const GUIDE_PTS=[KP.LS,KP.RS,KP.LELB,KP.RELB,KP.LW,KP.RW,KP.LH,KP.RH,KP.LK,KP.RK,KP.LA,KP.RA];
+let guideOn=false,guideFadeAt=0;
+function guideCountdown(){
+  return new Promise(res=>{
+    guideOn=true;guideFadeAt=0;let n=5;showGuideCount(n);
+    const iv=setInterval(()=>{
+      if(!arRunning){clearInterval(iv);guideOn=false;guideFadeAt=0;hideCenterOverlay();res();return;}
+      n--;
+      if(n>0)showGuideCount(n);
+      else if(n===0){showGuideCount('¡YA!');guideOn=false;guideFadeAt=Date.now();}
+      else{clearInterval(iv);hideCenterOverlay();res();}
+    },1000);
+  });
+}
+function showGuideCount(t){
+  const ov=document.getElementById('center-overlay');if(!ov)return;
+  ov.innerHTML='<div style="margin-top:44vh;text-align:center"><div class="co-big" style="color:var(--accent);font-size:84px">'+t+'</div><div class="co-sub">Tracking corporal en tu celular</div></div>';
+  ov.style.display='flex';
+}
+function drawGuide(c,ctx){
+  let a=1;
+  if(!guideOn){
+    if(!guideFadeAt)return;
+    a=1-(Date.now()-guideFadeAt)/600;
+    if(a<=0){guideFadeAt=0;return;}
+  }
+  const g=frameGeom(c),map=camDisplayMap(c);
+  const nose=currKpts&&currKpts[KP.NOSE];
+  let inside=false;
+  if(nose&&nose.score>0.3){const p=map(nose),dx=(p.x-g.cx)/(g.w/2),dy=(p.y-g.cy)/(g.h/2);inside=dx*dx+dy*dy<=1;}
+  const col=inside?'#00B87A':'#FFFFFF';
+  ctx.save();ctx.globalAlpha=a;
+  ctx.strokeStyle=col;ctx.lineWidth=3;ctx.shadowColor=col;ctx.shadowBlur=14;
+  ctx.beginPath();ctx.ellipse(g.cx,g.cy,g.w/2,g.h/2,0,0,Math.PI*2);ctx.stroke();
+  ctx.shadowBlur=0;ctx.fillStyle=col;ctx.globalAlpha=a*.75;
+  ctx.font='800 '+Math.round(g.h*.11)+'px DM Sans,sans-serif';ctx.textAlign='center';
+  ctx.fillText('ROSTRO',g.cx,g.bottom-g.h*.12);
+  ctx.globalAlpha=a;
+  if(currKpts){
+    ctx.fillStyle='#00D4FF';ctx.shadowColor='#00D4FF';ctx.shadowBlur=12;
+    const r=Math.max(4,c.width*.012);
+    for(const i of GUIDE_PTS){
+      const k=currKpts[i];if(!k||k.score<0.3)continue;
+      const p=map(k);ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
 // ======== POSITION GUIDANCE (non-blocking, non-spammy) ========
 // Ideal framing: head + knees visible. Too close = knees not seen. Too far = body too small.
 let posState='ok', posCandidate='ok', posSince=0;
@@ -1219,18 +1292,20 @@ function evaluatePosition(kpts,avg){
   const lk=kpts[KP.LK], rk=kpts[KP.RK];
   const headVisible = nose && nose.score>0.3;
   const kneesVisible = (lk&&lk.score>0.3) || (rk&&rk.score>0.3);
-  // Body size proxy: vertical span from head to shoulders relative to frame height.
-  let tooFar=false;
-  if(headVisible && ls && rs && ls.score>0.3 && rs.score>0.3){
-    const shoulderY=(ls.y+rs.y)/2;
-    const headToShoulder=Math.abs(shoulderY-nose.y); // normalized 0-1
-    // If head and shoulders occupy a very small vertical slice, the user is far away.
-    if(headToShoulder<0.07) tooFar=true;
+  // La cara debe quedar justo debajo del reloj. Por encima: demasiado cerca (estricto).
+  // Por debajo se tolera retroceder, y mas en rutinas con patadas.
+  let headHigh=false,tooFar=false;
+  const cv=document.getElementById('ar-canvas');
+  if(headVisible&&cv){
+    const g=frameGeom(cv),ny=camDisplayMap(cv)(nose).y;
+    if(ny<g.top+g.h*FRAME.closeAt)headHigh=true;
+    else if(ny>g.bottom+cv.height*(routineUsesLegs()?FRAME.farLegs:FRAME.far))tooFar=true;
   }
   let state='ok';
   // Las rodillas solo importan si la rutina en curso usa piernas. Entrenando
   // solo tren superior, en un espacio chico, exigirlas seria un estorbo.
   if(!kneesVisible && routineUsesLegs()) state='close';
+  else if(headHigh) state='closeHead';
   else if(tooFar) state='far';
   commitPos(state);
 }
@@ -1260,6 +1335,7 @@ function commitPos(state){
     switch(state){
       case 'ok':    setTrkBadge(2,'Posición',true); hidePosOverlay(); break;
       case 'close': setTrkBadge(1,'Aléjate'); showPosOverlay('ALÉJATE','Que se te vean las rodillas'); break;
+      case 'closeHead': setTrkBadge(1,'Aléjate'); showPosOverlay('ALÉJATE','Tu cara debe quedar debajo del reloj'); break;
       case 'far':   setTrkBadge(1,'Acércate'); showPosOverlay('ACÉRCATE','Te ves muy pequeño en cuadro'); break;
       case 'lost':  setTrkBadge(0,'Ajusta posición'); showPosOverlay('AJUSTA TU POSICIÓN','No te veo bien'); break;
     }
@@ -1618,10 +1694,12 @@ function arLoop(){
   // AR layers
   updatePearPhysics();
   checkComboTimeout();
-  if(S.sess.mode==='tutorial'){drawTutorialTarget(c,ctx);}
+  if(guideOn){}                               // cuenta regresiva: solo la guia de encuadre
+  else if(S.sess.mode==='tutorial'){drawTutorialTarget(c,ctx);}
   else if(S.sess.mode==='libre'){drawPear(c,ctx);drawPower(c,ctx);}
   else{drawTargets(c,ctx);}
   drawEffects(c,ctx);
+  drawGuide(c,ctx);
   drawTimeRing(c,ctx);
   requestAnimationFrame(arLoop);
 }
