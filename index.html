@@ -1233,8 +1233,12 @@ function guideFaceIn(){
   const g=frameGeom(c),p=camDisplayMap(c)(nose),dx=(p.x-g.cx)/(g.w/2),dy=(p.y-g.cy)/(g.h/2);
   return dx*dx+dy*dy<=1;
 }
+function guideHipsOk(){
+  const lh=currKpts&&currKpts[KP.LH],rh=currKpts&&currKpts[KP.RH];
+  return (lh&&lh.score>0.3)||(rh&&rh.score>0.3);
+}
 function guideKneesOk(){
-  if(!routineUsesLegs())return true;
+  if(!requiresKnees())return true;
   const lk=currKpts&&currKpts[KP.LK],rk=currKpts&&currKpts[KP.RK];
   return (lk&&lk.score>0.3)||(rk&&rk.score>0.3);
 }
@@ -1259,10 +1263,10 @@ function guideCountdown(){
     guideStart=count;                          // lo usa el boton Empezar
     poll=setInterval(()=>{
       if(!arRunning){guideOn=false;guideFadeAt=0;finish();return;}
-      const face=guideFaceIn(),knees=guideKneesOk();
-      if(face&&knees){if(!inSince)inSince=Date.now();if(Date.now()-inSince>=GUIDE_HOLD_MS){count();return;}}
+      const face=guideFaceIn(),hips=guideHipsOk(),knees=guideKneesOk();
+      if(face&&hips&&knees){if(!inSince)inSince=Date.now();if(Date.now()-inSince>=GUIDE_HOLD_MS){count();return;}}
       else inSince=0;
-      const sub=!face?'Pon tu cara en el óvalo':(!knees?'Que se vean tus rodillas':'Quédate así');
+      const sub=!face?'Pon tu cara en el óvalo':(!hips?'Aléjate un poco':(!knees?'Que se vean tus rodillas':'Quédate así'));
       const btn=Date.now()-t0>=GUIDE_FALLBACK_MS;
       const key=sub+btn;
       if(key!==msg){msg=key;showGuidePlace(sub,btn);}
@@ -1290,7 +1294,7 @@ function guideTutorial(){
   const t0=Date.now();let inSince=0;
   const poll=setInterval(()=>{
     if(!arRunning||!guideOn){clearInterval(poll);return;}
-    if(guideFaceIn()){if(!inSince)inSince=Date.now();}else inSince=0;
+    if(guideFaceIn()&&guideHipsOk()){if(!inSince)inSince=Date.now();}else inSince=0;
     if((inSince&&Date.now()-inSince>=GUIDE_TUT_HOLD_MS)||Date.now()-t0>=GUIDE_FALLBACK_MS){
       clearInterval(poll);guideOn=false;guideFadeAt=Date.now();
     }
@@ -1306,7 +1310,7 @@ function drawGuide(c,ctx){
   const g=frameGeom(c),map=camDisplayMap(c);
   const nose=currKpts&&currKpts[KP.NOSE];
   let inside=false;
-  if(nose&&nose.score>0.3){const p=map(nose),dx=(p.x-g.cx)/(g.w/2),dy=(p.y-g.cy)/(g.h/2);inside=dx*dx+dy*dy<=1;}
+  if(nose&&nose.score>0.3){const p=map(nose),dx=(p.x-g.cx)/(g.w/2),dy=(p.y-g.cy)/(g.h/2);inside=dx*dx+dy*dy<=1&&guideHipsOk();}
   const col=inside?'#00B87A':'#FFFFFF';
   ctx.save();ctx.globalAlpha=a;
   ctx.strokeStyle=col;ctx.lineWidth=3;ctx.shadowColor=col;ctx.shadowBlur=14;
@@ -1343,6 +1347,9 @@ function routineUsesLegs(){
   if(!r||!r.seq)return true;
   return r.seq.some(function(m){return LEG_MOVES.indexOf(m)>=0;});
 }
+// En libre no se exigen rodillas: la pera va a la altura de la cabeza y casi nunca se patea.
+// La tolerancia para retroceder (routineUsesLegs) si se mantiene, por si alguien patea.
+function requiresKnees(){return routineUsesLegs()&&!(S.sess&&S.sess.mode==='libre');}
 function evaluatePosition(kpts,avg){
   // If we can barely see the person at all, that's the priority message.
   if(avg<0.25){ commitPos('lost'); return; }
@@ -1362,7 +1369,7 @@ function evaluatePosition(kpts,avg){
   let state='ok';
   // Las rodillas solo importan si la rutina en curso usa piernas. Entrenando
   // solo tren superior, en un espacio chico, exigirlas seria un estorbo.
-  if(!kneesVisible && routineUsesLegs()) state='close';
+  if(!kneesVisible && requiresKnees()) state='close';
   else if(headHigh) state='closeHead';
   else if(tooFar) state='far';
   commitPos(state);
