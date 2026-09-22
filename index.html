@@ -1151,6 +1151,7 @@ async function startSession(mode,diff){
     S.sess.startTime=Date.now(); // el reloj arranca con la rutina, no en la carga
     document.getElementById('hud').style.display='none';
     initTutorial();
+    guideTutorial();
     detectLoop();
   } else {
     document.getElementById('hud').style.display='flex';
@@ -1223,23 +1224,77 @@ function frameGeom(c){
 }
 // Solo los 12 puntos del cuerpo: los de la cara caerian dentro del ovalo.
 const GUIDE_PTS=[KP.LS,KP.RS,KP.LELB,KP.RELB,KP.LW,KP.RW,KP.LH,KP.RH,KP.LK,KP.RK,KP.LA,KP.RA];
-let guideOn=false,guideFadeAt=0;
+let guideOn=false,guideFadeAt=0,guideStart=null;
+const GUIDE_HOLD_MS=500,GUIDE_FALLBACK_MS=10000,GUIDE_TUT_HOLD_MS=1000;
+// La persona esta ubicada: cara dentro del ovalo y, si la rutina tiene patadas, rodillas visibles.
+function guideFaceIn(){
+  const c=document.getElementById('ar-canvas'),nose=currKpts&&currKpts[KP.NOSE];
+  if(!c||!nose||nose.score<0.3)return false;
+  const g=frameGeom(c),p=camDisplayMap(c)(nose),dx=(p.x-g.cx)/(g.w/2),dy=(p.y-g.cy)/(g.h/2);
+  return dx*dx+dy*dy<=1;
+}
+function guideKneesOk(){
+  if(!routineUsesLegs())return true;
+  const lk=currKpts&&currKpts[KP.LK],rk=currKpts&&currKpts[KP.RK];
+  return (lk&&lk.score>0.3)||(rk&&rk.score>0.3);
+}
+// Rutinas y libre (ronda 1): UBICATE hasta que la persona este ubicada, luego 3-2-1.
+// Si a los 10 s no se detecta, aparece "Empezar". Salirse durante la cuenta no la reinicia.
 function guideCountdown(){
   return new Promise(res=>{
-    guideOn=true;guideFadeAt=0;let n=5;showGuideCount(n);
-    const iv=setInterval(()=>{
-      if(!arRunning){clearInterval(iv);guideOn=false;guideFadeAt=0;hideCenterOverlay();res();return;}
-      n--;
-      if(n>0)showGuideCount(n);
-      else if(n===0){showGuideCount('¡YA!');guideOn=false;guideFadeAt=Date.now();}
-      else{clearInterval(iv);hideCenterOverlay();res();}
-    },1000);
+    guideOn=true;guideFadeAt=0;
+    const t0=Date.now();let inSince=0,counting=false,poll=null,msg='';
+    const finish=()=>{clearInterval(poll);guideStart=null;hideCenterOverlay();res();};
+    const count=()=>{
+      if(counting)return;counting=true;clearInterval(poll);guideStart=null;
+      let n=3;showGuideCount(n);
+      const iv=setInterval(()=>{
+        if(!arRunning){clearInterval(iv);guideOn=false;guideFadeAt=0;finish();return;}
+        n--;
+        if(n>0)showGuideCount(n);
+        else if(n===0){showGuideCount('¡YA!');guideOn=false;guideFadeAt=Date.now();}
+        else{clearInterval(iv);finish();}
+      },1000);
+    };
+    guideStart=count;                          // lo usa el boton Empezar
+    poll=setInterval(()=>{
+      if(!arRunning){guideOn=false;guideFadeAt=0;finish();return;}
+      const face=guideFaceIn(),knees=guideKneesOk();
+      if(face&&knees){if(!inSince)inSince=Date.now();if(Date.now()-inSince>=GUIDE_HOLD_MS){count();return;}}
+      else inSince=0;
+      const sub=!face?'Pon tu cara en el óvalo':(!knees?'Que se vean tus rodillas':'Quédate así');
+      const btn=Date.now()-t0>=GUIDE_FALLBACK_MS;
+      const key=sub+btn;
+      if(key!==msg){msg=key;showGuidePlace(sub,btn);}
+    },100);
   });
+}
+function guideStartNow(){if(guideStart)guideStart();}
+function showGuidePlace(sub,btn){
+  const ov=document.getElementById('center-overlay');if(!ov)return;
+  ov.innerHTML='<div style="margin-top:40vh;text-align:center"><div class="co-big" style="color:var(--accent);font-size:56px">UBÍCATE</div>'+
+    '<div class="co-sub">'+sub+'</div>'+
+    '<div style="font-size:11px;font-weight:700;letter-spacing:1.5px;color:rgba(255,255,255,.45);margin-top:14px;text-transform:uppercase">Tracking corporal en tu celular</div>'+
+    (btn?'<button class="btn" style="pointer-events:auto;margin:22px auto 0;display:block;width:auto;padding:12px 34px" onclick="guideStartNow()">Empezar</button>':'')+'</div>';
+  ov.style.display='flex';
 }
 function showGuideCount(t){
   const ov=document.getElementById('center-overlay');if(!ov)return;
   ov.innerHTML='<div style="margin-top:44vh;text-align:center"><div class="co-big" style="color:var(--accent);font-size:84px">'+t+'</div><div class="co-sub">Tracking corporal en tu celular</div></div>';
   ov.style.display='flex';
+}
+// Tutorial: sin cuenta ni letrero. La guia se va sola cuando la cara lleva un segundo en el
+// ovalo (o a los 10 s, para no dejar a nadie sin practicar).
+function guideTutorial(){
+  guideOn=true;guideFadeAt=0;
+  const t0=Date.now();let inSince=0;
+  const poll=setInterval(()=>{
+    if(!arRunning||!guideOn){clearInterval(poll);return;}
+    if(guideFaceIn()){if(!inSince)inSince=Date.now();}else inSince=0;
+    if((inSince&&Date.now()-inSince>=GUIDE_TUT_HOLD_MS)||Date.now()-t0>=GUIDE_FALLBACK_MS){
+      clearInterval(poll);guideOn=false;guideFadeAt=Date.now();
+    }
+  },100);
 }
 function drawGuide(c,ctx){
   let a=1;
@@ -1261,11 +1316,14 @@ function drawGuide(c,ctx){
   ctx.fillText('ROSTRO',g.cx,g.bottom-g.h*.12);
   ctx.globalAlpha=a;
   if(currKpts){
-    ctx.fillStyle='#00D4FF';ctx.shadowColor='#00D4FF';ctx.shadowBlur=12;
-    const r=Math.max(4,c.width*.012);
+    const r=Math.max(7,c.width*.023);
     for(const i of GUIDE_PTS){
       const k=currKpts[i];if(!k||k.score<0.3)continue;
-      const p=map(k);ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();
+      const p=map(k);
+      ctx.fillStyle='#00D4FF';ctx.shadowColor='#00D4FF';ctx.shadowBlur=16;
+      ctx.beginPath();ctx.arc(p.x,p.y,r,0,Math.PI*2);ctx.fill();
+      ctx.shadowBlur=0;ctx.fillStyle='#FFFFFF';
+      ctx.beginPath();ctx.arc(p.x,p.y,r*.45,0,Math.PI*2);ctx.fill();
     }
   }
   ctx.restore();
@@ -1355,7 +1413,7 @@ async function detectLoop(){
         pushKptHistory(kpts);
         var avg=((kpts[KP.LS]&&kpts[KP.LS].score||0)+(kpts[KP.RS]&&kpts[KP.RS].score||0)+(kpts[KP.LW]&&kpts[KP.LW].score||0)+(kpts[KP.RW]&&kpts[KP.RW].score||0))/4;
         evaluatePosition(kpts,avg);
-        if(S.sess.active&&prevKpts){
+        if(S.sess.active&&prevKpts&&!guideOn){
           if(S.sess.mode==='tutorial')tutorialProcess();
           else processHits();
         }
