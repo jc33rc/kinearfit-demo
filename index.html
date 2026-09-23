@@ -1112,6 +1112,9 @@ function strikeGate(mv,idx){
   const reach=Math.hypot(wr.x-sh.x,wr.y-sh.y);
   return reach<upper*1.2; // brazo cerrado
 }
+// Version de prueba "rectos": margen de la regla. 1 = sube al menos lo que se mueve de lado.
+// Mas alto = mas estricto. Si queda demasiado restrictiva, este archivo se descarta.
+const RECTO_MOVES=['JAB','CROSS'],RECTO_RATIO=1.0;
 function validateTravel(mv,c,idx){
   if(!mv.atkDir)return true; // moves without a defined direction skip this check
   // Kicks bypass travel validation entirely (ankle keypoint too unstable; velocity+contact
@@ -1152,6 +1155,9 @@ function validateTravel(mv,c,idx){
   // Punches: require travel mostly in the attack direction.
   const minTravel=c.width*0.09;
   if(dist<minTravel)return false;
+  // Golpes rectos (jab y cross): el recorrido tiene que ser al menos tan vertical como
+  // horizontal. Un golpe lanzado de lado, con algo de subida, ya no cuenta.
+  if(RECTO_MOVES.some(k=>MOVES[k]===mv)&&Math.abs(dy)<RECTO_RATIO*Math.abs(dx))return false;
   switch(mv.atkDir){
     case 'up':    return dy < -minTravel*0.5;
     case 'down':  return dy >  minTravel*0.5;
