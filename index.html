@@ -1112,11 +1112,6 @@ function strikeGate(mv,idx){
   const reach=Math.hypot(wr.x-sh.x,wr.y-sh.y);
   return reach<upper*1.2; // brazo cerrado
 }
-// Version de prueba "rectos": en el jab y el cross el antebrazo apunta hacia arriba al tocar el
-// objetivo (la muneca queda por encima del codo). En un hook el antebrazo va casi horizontal,
-// con el codo abierto al costado. RECTO_RATIO: 1 = el antebrazo sube al menos lo que se abre
-// de lado; mas alto = mas estricto. Si queda demasiado restrictiva, este archivo se descarta.
-const RECTO_MOVES=['JAB','CROSS'],RECTO_RATIO=1.0;
 function validateTravel(mv,c,idx){
   if(!mv.atkDir)return true; // moves without a defined direction skip this check
   // Kicks bypass travel validation entirely (ankle keypoint too unstable; velocity+contact
@@ -1157,15 +1152,6 @@ function validateTravel(mv,c,idx){
   // Punches: require travel mostly in the attack direction.
   const minTravel=c.width*0.09;
   if(dist<minTravel)return false;
-  // Golpes rectos (jab y cross): al tocar, el antebrazo tiene que apuntar hacia arriba, no de
-  // lado como en un hook. Si el codo no se ve con confianza, no se bloquea el golpe.
-  if(RECTO_MOVES.some(k=>MOVES[k]===mv)){
-    const el=frames[frames.length-1][idx===KP.LW?KP.LELB:KP.RELB];
-    if(el&&el.score>=0.3){
-      const fdx=Math.abs(end.x-el.x)*c.width,fdy=(el.y-end.y)*c.height;
-      if(fdy<RECTO_RATIO*fdx)return false;
-    }
-  }
   switch(mv.atkDir){
     case 'up':    return dy < -minTravel*0.5;
     case 'down':  return dy >  minTravel*0.5;
